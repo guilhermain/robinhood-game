@@ -430,13 +430,11 @@ const T=32, PAREDE=1, LIVRE=0;
 // desktop ganha mapa largo. Colunas e linhas tem que ser impares, senao a
 // borda cai em cima da fileira de pilares.
 let COLS=19, ROWS=13;
-function impar(v,min,max){ v=Math.floor(v); if(v%2===0) v--; return Math.min(max,Math.max(min,v)); }
-function medirMapa(){
-  const larg=Math.min(window.innerWidth,600)-26;              // padding do app + bordas
-  const alt =Math.max(240, window.innerHeight-320);           // sobra do topo, painel e botoes
-  const tile=window.innerWidth<500 ? 26 : 32;                 // px de tela por tile
-  return [impar(larg/tile,11,25), impar(alt/tile,9,17)];
-}
+// Mapa de tamanho fixo. Antes a grade nascia do tamanho da tela, e qualquer
+// zoom mudava a grade e refazia o cenario. Agora o mapa e sempre o mesmo e a
+// tela so muda a escala de exibicao. Impar para a fileira de pilares fechar.
+const MAPA_COLS=15, MAPA_ROWS=15;
+function medirMapa(){ return [MAPA_COLS, MAPA_ROWS]; }
 const cv=document.getElementById('tela'), cx=cv.getContext('2d');
 cx.imageSmoothingEnabled=false;
 
@@ -650,6 +648,21 @@ function novaGrade(){
   }
   for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++)
     if(g[y][x].t===LIVRE && Math.random()<0.52) g[y][x]=novoBloco();
+
+  // Todo bau precisa de pelo menos um lado livre. Sem isto quase metade deles
+  // nascia emparedada por rochas: parecia bau dentro da pedra e o heroi
+  // ignorava, porque so bombardeia o que tem um vizinho onde pisar.
+  const livre=(x,y)=> g[y] && g[y][x] && g[y][x].t!==PAREDE && !g[y][x].bloco;
+  for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++){
+    const c=g[y][x];
+    if(!c.bloco || !EH_BAU(c.bloco)) continue;
+    if(VIZ.some(([dx,dy])=>livre(x+dx,y+dy))) continue;
+    const abriveis=VIZ.map(([dx,dy])=>[x+dx,y+dy])
+      .filter(([nx,ny])=>g[ny] && g[ny][nx] && g[ny][nx].t!==PAREDE && !EH_BAU(g[ny][nx].bloco));
+    if(!abriveis.length) continue;
+    const [ax,ay]=abriveis[Math.floor(Math.random()*abriveis.length)];
+    g[ay][ax]={t:LIVRE};
+  }
   return g;
 }
 const parede=(x,y)=> !grade[y]?.[x] || grade[y][x].t===PAREDE;
@@ -735,17 +748,37 @@ function pensar(h,dt){
       if(vizinhoDeBau(h.gx,h.gy) && seguro(h.gx,h.gy)){ h.estado='bombardear'; break; }
       let p=caminho(h,vizinhoDeBau);
       if(p){ h.path=p; h.estado='andar'; h.destino='bau'; break; }
+      // nenhum bau a vista: cava por onde abre caminho para um, nao a esmo
+      const perto=(x,y)=>VIZ.some(([dx,dy])=>{
+        const c=grade[y+dy]&&grade[y+dy][x+dx];
+        return c && c.bloco && !EH_BAU(c.bloco) && VIZ.some(([ex,ey])=>{
+          const d=grade[y+dy+ey]&&grade[y+dy+ey][x+dx+ex];
+          return d && d.bloco && EH_BAU(d.bloco);
+        });
+      });
+      if(perto(h.gx,h.gy) && seguro(h.gx,h.gy)){ h.estado='bombardear'; break; }
+      p=caminho(h,perto);
+      if(p){ h.path=p; h.estado='andar'; h.destino='bloco'; break; }
       if(vizinhoDeBloco(h.gx,h.gy) && seguro(h.gx,h.gy)){ h.estado='bombardear'; break; }
       p=caminho(h,vizinhoDeBloco);
       if(p){ h.path=p; h.estado='andar'; h.destino='bloco'; } else h.esperar=400;
       break;
     }
-    case 'bombardear':
+    case 'bombardear': {
+      // Block Pass deixa o heroi pisar dentro do bloco. Plantar ali enterraria
+      // a bomba: ele sai para uma celula livre antes.
+      const aqui=grade[h.gy] && grade[h.gy][h.gx];
+      if(aqui && aqui.bloco){
+        const p=caminho(h,(x,y)=>!bloco(x,y));
+        if(p){ h.path=p; h.estado='andar'; h.destino='bloco'; } else h.esperar=300;
+        break;
+      }
       if(h.minhasBombas>=h.st.bombas){ h.estado='fugir'; break; }
       // Agora o heroi agacha para plantar. A bomba so nasce no quadro em que a
       // mao encosta no chao, senao a animacao mente sobre o que ja aconteceu.
       h.estado='plantando'; h.plantaMs=0; h.soltou=false;
       break;
+    }
     case 'plantando': {
       h.plantaMs += dt;
       const q = Math.min(PLANTA_QUADROS-1, Math.floor(h.plantaMs/PLANTA_MS*PLANTA_QUADROS));
@@ -1402,7 +1435,11 @@ function refazerMapa(inicial){
 }
 
 let redimTimer=null;
-addEventListener('resize',()=>{ clearTimeout(redimTimer); redimTimer=setTimeout(()=>refazerMapa(false),250); });
+// A grade e escolhida UMA vez, na abertura, e nunca mais muda. Antes ela
+// nascia do tamanho da janela, entao zoom mudava o formato do mapa e o
+// cenario virava outro. Agora redimensionar so muda a escala na tela: o
+// aspect-ratio da caixa mais object-fit:contain cuidam de caber.
+addEventListener('resize',()=>{ clearTimeout(redimTimer); redimTimer=setTimeout(pintar,120); });
 
 /* ------------------------------------------------------------------ loop */
 
