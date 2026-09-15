@@ -222,6 +222,30 @@
   .minaCard .preco{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amber)}
   .minaCard .trancada{font-size:11px;color:var(--mute);border:1px solid var(--rule);
     border-radius:2px;padding:7px 11px}
+
+  /* vitrine: recorte ao vivo da mina que esta trabalhando */
+  .vitrine{position:relative;padding:0;border:1px solid var(--rule);border-radius:4px;
+    background:#0F0C08;overflow:hidden;cursor:pointer;display:block;width:100%;
+    flex:1 1 auto;min-height:150px}
+  .vitrine:active{border-color:var(--amber)}
+  .vitrine canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+    image-rendering:pixelated}
+  .vinheta{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(to bottom, rgba(10,8,6,.30) 0%, rgba(10,8,6,0) 34%,
+               rgba(10,8,6,0) 52%, rgba(10,8,6,.88) 100%)}
+  .vitLinha{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:baseline;
+    gap:9px;padding:10px 12px}
+  .vitNome{font-size:13px;font-weight:600;color:var(--chalk)}
+  .vitVivo{font-size:11px;color:var(--mute);flex:1}
+  .vitTaxa{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--gain)}
+
+  .bauTopo{display:flex;align-items:baseline;gap:9px}
+  .bau .n{font-family:"Press Start 2P",monospace;font-size:19px;color:var(--amber);line-height:1}
+  .bauFalta{font-size:11px;color:var(--mute)}
+  .bauTrilho{height:6px;background:#241E17;border:1px solid var(--rule);margin:9px 0 7px;overflow:hidden}
+  .bauTrilho i{display:block;height:100%;background:var(--amber);transition:width .3s}
+  .bauTrilho.cheio i{background:var(--gain)}
+  #hub.tela.on{min-height:calc(100vh - 32px)}
 </style>
 </head>
 <body>
@@ -255,28 +279,39 @@
       <div class="saldo">balance <b id="hubSaldo">0</b></div>
     </div>
 
+    <!-- a mina ao vivo: prova que o trabalho continua enquanto voce olha -->
+    <button class="vitrine" id="hubVitrine">
+      <canvas id="fita" width="560" height="176"></canvas>
+      <div class="vinheta"></div>
+      <div class="vitLinha">
+        <span class="vitNome" id="vitNome">Green Field</span>
+        <span class="vitVivo" id="vitVivo">0 of 0 working</span>
+        <span class="vitTaxa" id="vitTaxa">—</span>
+      </div>
+    </button>
+
     <div class="bau">
-      <div>
-        <div class="n" id="hubBaus">0</div>
+      <div style="flex:1">
+        <div class="bauTopo"><span class="n" id="hubBaus">0</span>
+          <span class="bauFalta" id="hubFalta"></span></div>
+        <div class="bauTrilho"><i id="hubBarra" style="width:0%"></i></div>
         <div class="r">chests in the reward vault</div>
       </div>
       <button id="hubClaim" onclick="ir('claim')">Claim</button>
     </div>
 
     <div class="grade">
-      <button class="modulo largo" onclick="ir('minas')">
-        <div><div class="k">Mines</div><div class="v" id="hubMina">nobody working</div></div>
-        <div class="selo" id="hubTaxa">0/h</div>
+      <button class="modulo" onclick="ir('minas')">
+        <div class="k">Mines</div><div class="v" id="hubMina">1 mine</div>
+      </button>
+      <button class="modulo" onclick="ir('equipe')">
+        <div class="k">Squad</div><div class="v" id="hubEquipe">0 in the mine</div>
       </button>
       <button class="modulo" onclick="ir('loja')">
-        <div class="k">Shop</div><div class="v">packs of 1, 5 and 10 heroes</div>
+        <div class="k">Shop</div><div class="v">packs of 1, 5 and 10</div>
       </button>
       <button class="modulo" onclick="ir('inventario')">
         <div class="k">Heroes</div><div class="v" id="hubInv">no heroes yet</div>
-      </button>
-      <button class="modulo largo" onclick="ir('equipe')">
-        <div><div class="k">Squad</div><div class="v">who goes down the mine</div></div>
-        <div class="selo" id="hubEquipe">0/15</div>
       </button>
     </div>
   </section>
@@ -1277,14 +1312,26 @@ function pintar(){
   document.getElementById('lojaSaldo').textContent=saldo;
   document.getElementById('claimSaldo').textContent=saldo;
   document.getElementById('hubBaus').textContent=bausCofre;
-  document.getElementById('hubClaim').disabled = bausCofre<MIN_SAQUE;
+  const pronto = bausCofre>=MIN_SAQUE;
+  document.getElementById('hubClaim').disabled = !pronto;
+  document.getElementById('hubFalta').textContent =
+    pronto ? 'ready to claim' : `${MIN_SAQUE-bausCofre} to go \u00b7 min ${MIN_SAQUE}`;
+  const trilho=document.getElementById('hubBarra');
+  trilho.style.width=Math.min(100, bausCofre/MIN_SAQUE*100).toFixed(0)+'%';
+  trilho.parentElement.classList.toggle('cheio', pronto);
+
   document.getElementById('hubInv').textContent =
     inventario.length? inventario.length+(inventario.length===1?' hero':' heroes') : 'no heroes yet';
-  document.getElementById('hubEquipe').textContent=emMina+'/'+(minas.length*VAGAS);
+  document.getElementById('hubEquipe').textContent =
+    emMina ? `${emMina} in the mine` : 'nobody down there';
   document.getElementById('hubMina').textContent =
-    emMina? `${acordados} of ${emMina} working · ${minas.length} mine${minas.length>1?'s':''}`
-          : `nobody working · ${minas.length} mine${minas.length>1?'s':''}`;
-  document.getElementById('hubTaxa').textContent = horas>0.02 ? (bausTotais/horas).toFixed(1)+'/h' : '—';
+    minas.length+(minas.length>1?' mines':' mine')+' \u00b7 '+(minas.length*VAGAS)+' slots';
+
+  // vitrine
+  document.getElementById('vitNome').textContent=vista.def.nome;
+  document.getElementById('vitVivo').textContent =
+    emMina ? `${acordados} of ${emMina} working` : 'nobody working';
+  document.getElementById('vitTaxa').textContent = horas>0.02 ? (bausTotais/horas).toFixed(1)+'/h' : '—';
 
   document.getElementById('minaTitulo').textContent=vista.def.nome;
   document.getElementById('bPontos').textContent=vista.achados;
@@ -1358,6 +1405,32 @@ addEventListener('resize',()=>{ clearTimeout(redimTimer); redimTimer=setTimeout(
 /* ------------------------------------------------------------------ loop */
 
 let bausTotais=0;
+
+// A vitrine do menu e um recorte do proprio canvas da mina, desenhado no
+// mesmo quadro. Nao e imagem parada nem simulacao a parte: e o jogo rodando.
+const fita=document.getElementById('fita');
+const fx=fita.getContext('2d');
+fx.imageSmoothingEnabled=false;
+function pintarFita(){
+  // o canvas acompanha a caixa: sem isso sobra faixa preta em cima e embaixo
+  const caixa=fita.parentElement;
+  const cxs=caixa.clientWidth, cys=caixa.clientHeight;
+  if(cxs && cys){
+    const alvo=Math.min(1, 560/cxs);
+    const L=Math.max(120,Math.round(cxs*alvo)), A=Math.max(80,Math.round(cys*alvo));
+    if(fita.width!==L || fita.height!==A){ fita.width=L; fita.height=A; fx.imageSmoothingEnabled=false; }
+  }
+  const alvoL=fita.width, alvoA=fita.height;
+  const escala=Math.max(alvoL/cv.width, alvoA/cv.height);
+  const larg=alvoL/escala, alt=alvoA/escala;
+  // segue o primeiro heroi acordado; sem ninguem, mostra o meio do mapa
+  const vivo=(minas[minaAtual].ativos.find(h=>h.estado!=='dormir')||minas[minaAtual].ativos[0]);
+  let cxx=vivo? vivo.px+T/2 : cv.width/2, cyy=vivo? vivo.py+T/2 : cv.height/2;
+  const sx=Math.max(0, Math.min(cv.width-larg, cxx-larg/2));
+  const sy=Math.max(0, Math.min(cv.height-alt, cyy-alt/2));
+  fx.imageSmoothingEnabled=false;
+  fx.drawImage(cv, sx, sy, larg, alt, 0, 0, alvoL, alvoA);
+}
 let ultimo=performance.now(), accRep=0, accHud=0;
 
 function loop(agora){
@@ -1387,7 +1460,8 @@ function loop(agora){
   }
   accHud+=bruto; if(accHud>=400){ accHud=0; pintar(); }
 
-  if(telaAtual==='mina') desenhar();
+  if(telaAtual==='mina'){ desenhar(); }
+  else if(telaAtual==='hub'){ desenhar(); pintarFita(); }
   requestAnimationFrame(loop);
 }
 
@@ -1398,6 +1472,7 @@ refazerMapa(true);
 // Demo: um de cada personagem ja no inventario, senao a arte do topo nunca
 // aparece (S. Legendary sai 0,04% das vezes). Sai quando a economia for pra valer.
 ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))));
+document.getElementById('hubVitrine').onclick=()=>entrarMina(minas[minaAtual].def.id);
 montarLoja(); pintar();
 requestAnimationFrame(loop);
 </script>
