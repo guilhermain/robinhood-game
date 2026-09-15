@@ -15,7 +15,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#12100C; --panel:#1D1913; --rule:#3A3227; --rule2:#241E17;
@@ -26,7 +26,7 @@
   html,body{min-height:100%}
   body{
     background:var(--ink);color:var(--chalk);
-    font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;
+    font-family:"Archivo",system-ui,sans-serif;font-size:14px;
     -webkit-user-select:none;user-select:none;touch-action:manipulation;
   }
   .app{max-width:800px;margin:0 auto;padding:12px 12px calc(20px + env(safe-area-inset-bottom));
@@ -58,24 +58,7 @@
   .saldo b{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amber);font-weight:400}
 
   /* --------------------------------------------------------------- hub */
-  .bau{border:1px solid var(--amber);background:linear-gradient(#2A2117,#1D1710);
-    padding:15px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .bau .n{font-family:"Press Start 2P",monospace;font-size:19px;color:var(--amber);line-height:1}
-  .bau .r{font-size:11px;color:var(--mute);margin-top:8px}
-  .bau button{background:var(--amber);color:#1A1408;border:0;border-radius:3px;
-    padding:12px 15px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
-  .bau button:disabled{background:var(--rule);color:var(--mute)}
 
-  .grade{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .modulo{background:var(--panel);border:1px solid var(--rule);border-radius:4px;
-    padding:15px 13px;text-align:left;cursor:pointer;color:var(--chalk);font-family:inherit;
-    display:flex;flex-direction:column;gap:7px;min-height:92px;justify-content:center}
-  .modulo:active{border-color:var(--amber);background:#2A2117}
-  .modulo .k{font-size:15px;font-weight:600}
-  .modulo .v{font-size:11px;color:var(--mute);line-height:1.5}
-  .modulo.largo{grid-column:1/3;flex-direction:row;align-items:center;justify-content:space-between}
-  .modulo.largo .v{margin-top:5px}
-  .selo{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--gain)}
 
   /* -------------------------------------------------------------- minas */
   .mina{display:grid;grid-template-columns:4px 1fr auto;gap:0 11px;
@@ -201,58 +184,16 @@
   .mina{display:grid;grid-template-columns:4px 1fr auto;gap:0 11px;padding:0 12px 0 0;
     border-bottom:1px solid var(--rule2);align-items:center}
   .mina:last-child{border-bottom:0}
-  .espia{grid-column:2;grid-row:1/4;display:none}
-  .minaCard{position:relative;display:grid;grid-template-columns:4px 104px 1fr auto;
-    gap:0 11px;align-items:center;padding:11px 12px 11px 0;border-bottom:1px solid var(--rule2)}
-  .minaCard:last-child{border-bottom:0}
-  .minaCard .faixa{grid-row:1/3;width:4px;border-radius:0 2px 2px 0;align-self:stretch}
-  .quadro{grid-row:1/3;position:relative;width:104px;height:52px;overflow:hidden;
-    border:1px solid var(--rule);background:#0F0C08}
-  .quadro canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
-  .quadro.trancado canvas{filter:grayscale(.22) brightness(.66) contrast(1.05)}
-  .quadro .cadeado{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-    background:radial-gradient(circle at 50% 50%, rgba(10,8,6,.62) 0%, rgba(10,8,6,.18) 62%)}
-  .quadro.trancado .cadeado{display:flex}
-  .quadro .cadeado svg{width:26px;height:26px;filter:drop-shadow(0 1px 3px rgba(0,0,0,1))}
-  .minaCard .k{grid-column:3;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
-  .minaCard .k em{font-style:normal;font-size:10px;color:var(--gain);border:1px solid var(--gain);
-    padding:1px 5px;border-radius:2px;font-weight:400}
-  .minaCard .v{grid-column:3;font-size:11px;color:var(--mute);margin-top:4px}
-  .minaCard .dir{grid-column:4;grid-row:1/3;display:flex;align-items:center;gap:8px}
-  .minaCard .preco{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amber)}
-  .minaCard .trancada{font-size:11px;color:var(--mute);border:1px solid var(--rule);
-    border-radius:2px;padding:7px 11px}
 
-  /* vitrine: recorte ao vivo da mina que esta trabalhando */
   /* A largura da vitrine sai da altura maxima e da proporcao do mapa. Se ela
      esticasse ate a largura toda, o mapa quadrado ficaria com faixa preta dos
      dois lados. */
-  .vitrine{padding:0;border:1px solid var(--rule);border-radius:4px;
-    background:#0F0C08;overflow:hidden;cursor:pointer;display:block;margin:0 auto;
-    width:min(100%, calc(51vh * var(--ar, 1)))}
-  .vitrine:active{border-color:var(--amber)}
-  .vitQuadro{position:relative;width:100%;aspect-ratio:var(--ar, 1);background:#0F0C08}
   /* contain garante que nada distorce nem e cortado, mesmo se a caixa e o mapa
      nao tiverem exatamente a mesma proporcao por causa de borda e arredondamento */
-  .vitrine canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
-    image-rendering:pixelated;object-fit:contain}
   .palco{aspect-ratio:var(--ar, 1);width:min(100%, calc(74vh * var(--ar, 1)));margin:0 auto}
   .palco canvas#tela{width:100%;height:100%;display:block;object-fit:contain}
-  .vitLinha{display:flex;align-items:baseline;gap:9px;padding:10px 12px;
-    border-top:1px solid var(--rule);background:#171310;text-align:left}
-  .vitNome{font-size:13px;font-weight:600;color:var(--chalk)}
-  .vitVivo{font-size:11px;color:var(--mute);flex:1}
-  .vitTaxa{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--gain)}
-  .vitLimpas{font-size:11px;color:var(--mute);white-space:nowrap}
 
-  .bauTopo{display:flex;align-items:baseline;gap:9px}
-  .bau .n{font-family:"Press Start 2P",monospace;font-size:19px;color:var(--amber);line-height:1}
-  .bauFalta{font-size:11px;color:var(--mute)}
-  .bauTrilho{height:6px;background:#241E17;border:1px solid var(--rule);margin:9px 0 7px;overflow:hidden}
-  .bauTrilho i{display:block;height:100%;background:var(--amber);transition:width .3s}
-  .bauTrilho.cheio i{background:var(--gain)}
   /* sobrando espaco, o conjunto fica centrado em vez de empurrado pro topo */
-  #hub.tela.on{min-height:calc(100vh - 32px);justify-content:center}
 
   /* rodape do menu: espaco reservado para o @ do X e o contrato do $BSTOCK */
   .rodape{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:22px}
@@ -274,8 +215,8 @@
   .atrib span{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)}
   .atrib b{color:var(--chalk);font-weight:600}
   .ico{width:15px;height:15px;flex:none;image-rendering:pixelated;
-    background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAgCAMAAACioYPHAAAA/1BMVEWXZBxkaGqXnZ1wTBrdnBlpIhTfYA/s7c7/2h/fd1v56GHZpFHSoZXxHhIsKhqwHhXw2pt/hIaTd1O5jSqtjVp5fYC9w8IAAAADAgHZIxgmJyoWFxf8/e3tJxuLEgvsqBoyNTdER0r5dAD9jAD4tBszBwX/6TG1NQP/2yEpFwvRGhD/3Bc1JAv4tyOxGxJICQZQNQ8+QUSECwnIRQRTVlnJjBj+xCP511X/9q6TVyxmORqPZxOqaDW6hxc6PUFIJxYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABfAD3nAAAAQHRSTlP//////////////////////////////wD/////////////////////////////////////////////////////0khfawAABO1JREFUeNrNmGl3qjoUhsPoVNue4d6GebQKBcWqWKf6///V2Qm4hJDUa++Xs13LCUge3j1kB/TylxtqfMe1fXMo3DbxaZbokBvObHsWumJAy3y0LOv7gFltRWGJAPFvhH4qmf4NQJhAkqVg7XfvviWLSCOMFVU9bTab08lTCxFgpsCVmhqpdwOaQRDI8j+StLa6U+MJMQrV+tGeejQcbsu4LMv8JAL0f5v0M+IqqBNAnQcIswGdLBFb+1Z7cvi1eErn6XxSKTeZG/BaMIRY2X7Y9vPI83LvIIhBLP8ry+IYfw/7tt0P37uAMJ4vEcC1JAXB0mo5kPINBgPdcQkUXrgOMYawUNRhz7btkaqWuSIChEkkMaC72jw8bFZdBSv9CB3Rz/cfm4AEaT7o2b3BePw0Ifo5jmEYjpM2CUG/4fbZtnsj1csBUJBFkIKWOMPfp9RYBSv5enIQrNcQh77p+6bVFFB7Gj8QbdLx2NU0l/IRQqLhFRDib/j8PMzjUkUKb3oLbt0E8y2TT7jSI2r6qgP4E26dKLgEOGpWY+rJ0zgdAOAgTY2mAeGkrWDueZ6axweuRFZQG4HknTCNojAGC6NoygCaMgUk6gHh52crS/DEcFJ9MBroAEiC70poXABxov3aDoe56oF6BbcMWcHyc7lcBkvT5BNOo9Drv4L1vbBBSAEDGUJMXvv+Vb+Gi0nQpSkjX1tBnOxGVMFY3Z0pHBtpwEflq/m6hCvge319A3t9BcJVE9CSfsgQg5+VelnSHhwUHFNAltAZXxXE59F2m6vEDocDOhxOKGtVKvAOZPDaN02W0AV7d9/1iPB99HofhDDS4S9ypAKE7IA1hLgXLjwnmAGcOwbXGgri/Wg784jFcQ5WlhsuoNkFDMNQD1fg4D7wQajbQNgHJ6/g7zCsXGz568CskhdnaM8A4olmdBAdI3W1yeU8/DgazvK4Isw94ENFy8WQIZ+S/MPnAM5ms7f+ZhrFNR8ljKPppv8Gh+osNiVYgP2ABN/5eMwYQLwwOBqm2vVGCOAJnVRKSN4RMwaJwKX/2OCzLpWMMj1QwF4F2KOAD/R7XahNaQmAS4g/TTsOSJy3CiwLSH+lbqPI4OwxSTIUExHVOEYJMwLgXfOj4rsPMPDBz76ZZMpuB4RZe/iJazhNxJSmsNYEpIbynMiXqwW7TgPfJ8N3Abzt4np80zcxThBSlKOOzkyzoF0BAc2dw7vGVjqMDwQwhlKTsIeCLt8F8HaS1ICwAIHtFUVDREOr3W1dNSTauSlxMEuRHIiL1Y2isUsJ5vBdAG+XmYaPyCz7ilCoIVHQdRechpXGYHwqON0AFvL9h0LdBsRJoSGkD5QECzU0qr6LhUgQCFieEs5SjDt8na5YvNSxLVGyR+h43O0TRkP3qqHLa5lqQMTbjuAOX/csYbPAJURHEumtrnWizelql5L85XixOGy80kMKd9OFb/KJ2y0eoQZxeGbrNfTSqSPwL2m4yBpySgTdKL7JJ2xYeYRnZYc0tl5X3b6x4LbEsKfLZx6zwnUIv+QTt/w8DZW9UnQAiYauYFcOCpan7Ksdu4VrOtE54k0Tl7DopGO14xQMjw/lr+ILPuhErKpWAKP5cue2k/OQoEgwB1D8VAMrGyFf7Viz9WHd/eijg3Lfk49E7F+La/8H8OUbgDeuuAF3L+BfY38AvQABbi4ra2YAAAAASUVORK5CYII=);
-    background-size:75px 15px;background-repeat:no-repeat}
+    background-image:url(data:image/png;base64,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);
+    background-size:90px 15px;background-repeat:no-repeat}
   .ico.power{background-position:0 0}
   .ico.stam {background-position:-15px 0}
   .ico.speed{background-position:-30px 0}
@@ -283,10 +224,83 @@
   .ico.range{background-position:-60px 0}
   .heroi .chips{grid-column:3/5}
   .heroi .energia{grid-column:3/5}
+
+  /* ---------------------------------------------------- casca do aplicativo */
+  body{font-family:"Archivo",system-ui,sans-serif;font-size:14px;letter-spacing:.005em}
+  .app{padding-top:0;padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+
+  .chapa{position:sticky;top:0;z-index:20;display:flex;align-items:center;
+    justify-content:space-between;gap:12px;padding:11px 2px 12px;
+    background:linear-gradient(var(--ink) 72%, rgba(18,16,12,0));
+    border-bottom:1px solid var(--rule2)}
+  .marcaTopo{display:flex;align-items:center;gap:8px;background:none;border:0;padding:4px 2px;
+    color:var(--chalk);font-family:"Press Start 2P",monospace;font-size:12px;cursor:pointer}
+  .marcaTopo svg{width:20px;height:20px;shape-rendering:crispEdges;flex:none}
+  .leitura{display:flex;align-items:center;gap:12px}
+  .carteira{font-size:12px;color:var(--mute);white-space:nowrap}
+  .carteira b{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--chalk);font-weight:400}
+  .cofre{display:flex;align-items:center;gap:7px;background:#221B12;border:1px solid var(--amber);
+    border-radius:3px;padding:6px 10px;cursor:pointer;font-family:inherit}
+  .cofre b{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amber);font-weight:400}
+  .cofre.pronto{background:#2E2513;box-shadow:0 0 0 1px rgba(232,163,61,.35)}
+  .trilhoMini{width:34px;height:4px;background:#3A3227;overflow:hidden;display:block}
+  .trilhoMini i{display:block;height:100%;width:0;background:var(--amber)}
+  .cofre.pronto .trilhoMini i{background:var(--gain)}
+
+  .abas{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;
+    grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule2);
+    border-top:1px solid var(--rule);padding-bottom:env(safe-area-inset-bottom)}
+  .abas button{display:flex;flex-direction:column;align-items:center;gap:4px;
+    background:var(--ink);border:0;padding:10px 4px 11px;color:var(--mute);
+    font-family:inherit;font-size:11px;cursor:pointer}
+  .abas button[aria-current="true"]{color:var(--amber);background:#1A1610;
+    box-shadow:inset 0 2px 0 var(--amber)}
+  .abas .ico{opacity:.55}
+  .abas button[aria-current="true"] .ico{opacity:1}
+
+  /* titulo de aba: sem caixa alta, com a regua abaixo em vez de moldura */
+  .tituloAba{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:2px 0 2px}
+  .linhaMina{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .relogioMina{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--mute)}
+  .ico.coin{background-position:-75px 0}
+
+  .contaAba{font-size:12px;color:var(--mute);white-space:nowrap}
+  .contaAba b{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--chalk);font-weight:400}
+  .voltar{background:none;border:0;color:var(--mute);font-family:inherit;font-size:12px;
+    cursor:pointer;padding:6px 0;text-decoration:underline;text-underline-offset:3px}
+  .voltar:active{color:var(--amber)}
+
+  /* seletor de mina: uma faixa que rola, em vez de duas fileiras de botao */
+  .faixaMinas{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;
+    scrollbar-width:none;-ms-overflow-style:none}
+  .faixaMinas::-webkit-scrollbar{display:none}
+  .faixaMinas button{flex:none;display:inline-flex;align-items:center;min-height:34px;
+    padding:0 11px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+    color:var(--mute);font-family:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+  .faixaMinas button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#2A2117}
+  .faixaMinas button:disabled{opacity:.5}
+  /* o painel da mina encosta no mapa: uma peca so */
+  .board{border-bottom:0}
+  .palco{border:1px solid var(--rule);border-top:0}
+  .palco canvas#tela{border:0}
 </style>
 </head>
 <body>
 <div class="app">
+  <header class="chapa" id="chapa">
+    <button class="marcaTopo" onclick="ir('mina')" aria-label="BOMBSTOCK">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="30" y="10" width="3" height="4" fill="#41C07A"/><rect x="35" y="4" width="3" height="10" fill="#41C07A"/><rect x="40" y="8" width="3" height="6" fill="#41C07A"/><rect x="26" y="14" width="4" height="3" fill="#E8A33D"/><rect x="22" y="17" width="4" height="3" fill="#E8A33D"/><circle cx="19" cy="31" r="12" fill="#1A1610" stroke="#EDE6D6" stroke-width="2"/></svg>
+      <span>BOMBSTOCK</span>
+    </button>
+    <div class="leitura">
+      <button class="cofre" onclick="ir('claim')" id="chipCofre">
+        <i class="ico coin"></i><b id="chipMoedas">0</b>
+        <span class="trilhoMini"><i id="chipBarra"></i></span>
+      </button>
+      <span class="carteira">balance <b id="chipSaldo">0</b></span>
+    </div>
+  </header>
+
 
   <!-- ------------------------------------------------------- menu inicial -->
   <section class="tela on" id="menu">
@@ -319,68 +333,14 @@
   </section>
 
   <!-- ---------------------------------------------------------------- hub -->
-  <section class="tela" id="hub">
-    <div class="topo">
-      <div class="titulo-tela" style="display:flex;align-items:center;gap:8px"><svg class="logo" style="width:22px;height:22px" viewBox="0 0 48 48" aria-hidden="true"><rect x="30" y="10" width="3" height="4" fill="#41C07A"/><rect x="35" y="4" width="3" height="10" fill="#41C07A"/><rect x="40" y="8" width="3" height="6" fill="#41C07A"/><rect x="26" y="14" width="4" height="3" fill="#E8A33D"/><rect x="22" y="17" width="4" height="3" fill="#E8A33D"/><circle cx="19" cy="31" r="12" fill="#1A1610" stroke="#EDE6D6" stroke-width="2"/></svg>BOMBSTOCK</div>
-      <div class="saldo">balance <b id="hubSaldo">0</b></div>
-    </div>
-
-    <!-- a mina ao vivo: prova que o trabalho continua enquanto voce olha -->
-    <button class="vitrine" id="hubVitrine">
-      <div class="vitQuadro"><canvas id="fita" width="560" height="176"></canvas></div>
-      <div class="vitLinha">
-        <span class="vitNome" id="vitNome">Green Field</span>
-        <span class="vitVivo" id="vitVivo">0 of 0 working</span>
-        <span class="vitTaxa" id="vitTaxa">—</span>
-        <span class="vitLimpas" id="vitLimpas">0 cleared</span>
-      </div>
-    </button>
-
-    <div class="bau">
-      <div style="flex:1">
-        <div class="bauTopo"><span class="n" id="hubBaus">0</span>
-          <span class="bauFalta" id="hubFalta"></span></div>
-        <div class="bauTrilho"><i id="hubBarra" style="width:0%"></i></div>
-        <div class="r">coins in the reward vault</div>
-      </div>
-      <button id="hubClaim" onclick="ir('claim')">Claim</button>
-    </div>
-
-    <div class="grade">
-      <button class="modulo" onclick="ir('minas')">
-        <div class="k">Mines</div><div class="v" id="hubMina">1 mine</div>
-      </button>
-      <button class="modulo" onclick="ir('equipe')">
-        <div class="k">Squad</div><div class="v" id="hubEquipe">0 in the mine</div>
-      </button>
-      <button class="modulo" onclick="ir('loja')">
-        <div class="k">Shop</div><div class="v">packs of 1, 5 and 10</div>
-      </button>
-      <button class="modulo" onclick="ir('inventario')">
-        <div class="k">Heroes</div><div class="v" id="hubInv">no heroes yet</div>
-      </button>
-    </div>
-  </section>
+  
 
   <!-- -------------------------------------------------------------- minas -->
-  <section class="tela" id="minas">
-    <div class="topo">
-      <button class="voltar" onclick="ir('hub')">&larr; Base</button>
-      <div class="titulo-tela">Mines</div>
-      <div class="saldo">balance <b id="minasSaldo">0</b></div>
-    </div>
-    <div class="lista rolagem" id="minasLista"></div>
-    <p class="aviso-linha">Every mine you own keeps working while you are somewhere else.
-      Which stock a mine shows is visual for now &mdash; every chest pays the same.</p>
-  </section>
+  
 
   <!-- --------------------------------------------------------------- loja -->
   <section class="tela" id="loja">
-    <div class="topo">
-      <button class="voltar" onclick="ir('hub')">← Base</button>
-      <div class="titulo-tela">Shop</div>
-      <div class="saldo">balance <b id="lojaSaldo">0</b></div>
-    </div>
+    <div class="linhaMina"><h2 class="tituloAba">Shop</h2><span class="contaAba">packs of 1, 5 and 10</span></div>
     <div id="pacotes"></div>
     <div class="tabela" id="chances"></div>
     <p class="aviso-linha">Rarity and skills are rolled when the pack opens. Heroes get zero to two skills.</p>
@@ -388,22 +348,14 @@
 
   <!-- ---------------------------------------------------------- inventário -->
   <section class="tela" id="inventario">
-    <div class="topo">
-      <button class="voltar" onclick="ir('hub')">← Base</button>
-      <div class="titulo-tela">Heroes</div>
-      <div class="saldo"><b id="invTotal">0</b></div>
-    </div>
+    <div class="linhaMina"><h2 class="tituloAba">Heroes</h2><span class="contaAba"><b id="invTotal">0</b> collected</span></div>
     <div class="filtros" id="invFiltros"></div>
     <div class="lista rolagem" id="invLista"></div>
   </section>
 
   <!-- -------------------------------------------------------------- equipe -->
   <section class="tela" id="equipe">
-    <div class="topo">
-      <button class="voltar" onclick="ir('hub')">← Base</button>
-      <div class="titulo-tela">Squad</div>
-      <div class="saldo"><b id="eqConta">0/10</b></div>
-    </div>
+    <div class="linhaMina"><h2 class="tituloAba">Squad</h2><span class="contaAba"><b id="eqConta">0/10</b> down the mine</span></div>
     <div class="filtros" id="eqMinas"></div>
     <p class="aviso-linha">Pick the mine, then send heroes down. Up to 10 per mine; everyone
       left out rests and recharges just the same.</p>
@@ -412,11 +364,11 @@
 
   <!-- ---------------------------------------------------------------- mina -->
   <section class="tela" id="mina">
-    <div class="topo">
-      <button class="voltar" onclick="ir('minas')">← Mines</button>
-      <div class="titulo-tela" id="minaTitulo">Mine</div>
-      <div class="saldo" id="bTempo">0m</div>
+    <div class="linhaMina">
+      <h2 class="tituloAba" id="minaTitulo">Mine</h2>
+      <span class="relogioMina" id="bTempo">0m</span>
     </div>
+    <div class="faixaMinas" id="seletorMinas"></div>
     <div class="board">
       <div id="bAtivos"><span>awake</span><b>0/0</b></div>
       <div><span>coins</span><b id="bPontos">0</b></div>
@@ -427,9 +379,7 @@
       <canvas id="tela"></canvas>
       <div id="aviso"></div>
     </div>
-    <div class="barra">
-      <button onclick="equipeDestino=minaAtual; assinaturaLista=&quot;&quot;; ir('equipe')">Squad<b id="minaEquipe">0 in the mine</b></button>
-    </div>
+    
     <details>
       <summary>What each skill does</summary>
       <div class="corpo"><p><b>Jail Breaker</b> +5 damage on jail blocks · <b>Pierce Block</b> the blast goes through blocks · <b>Save Battery</b> 20% chance to spend no energy · <b>Fast Charge</b> recharges faster · <b>Bomb Pass</b> walks over bombs · <b>Block Pass</b> walks through breakable blocks · <b>Treasure Hunter</b> +2 damage</p></div>
@@ -438,11 +388,7 @@
 
   <!-- --------------------------------------------------------------- claim -->
   <section class="tela" id="claim">
-    <div class="topo">
-      <button class="voltar" onclick="ir('hub')">← Base</button>
-      <div class="titulo-tela">Claim</div>
-      <div class="saldo">balance <b id="claimSaldo">0</b></div>
-    </div>
+    <div class="linhaMina"><h2 class="tituloAba">Claim</h2><button class="voltar" onclick="ir('mina')">Back to the mine</button></div>
     <div class="cartao">
       <div class="n" id="claimBaus">0</div>
       <div class="u">coins banked</div>
@@ -452,6 +398,13 @@
     <p class="aviso-linha" id="claimNota"></p>
   </section>
 
+
+  <nav class="abas" id="abas">
+    <button data-tela="mina"><i class="ico bomb"></i>Mine</button>
+    <button data-tela="equipe"><i class="ico stam"></i>Squad</button>
+    <button data-tela="inventario"><i class="ico power"></i>Heroes</button>
+    <button data-tela="loja"><i class="ico coin"></i>Shop</button>
+  </nav>
 </div>
 
 <!-- ------------------------------------------------------ abertura de pacote -->
@@ -1195,13 +1148,46 @@ function contratar(resgatado){
 
 /* =================================================================== telas */
 
+const ABAS=['mina','equipe','inventario','loja'];
 function ir(t){
-  telaAtual=t; assinaturaLista=''; assinaturaMinas='';
+  telaAtual=t; assinaturaLista='';
   for(const s of document.querySelectorAll('.tela')) s.classList.toggle('on', s.id===t);
   window.scrollTo(0,0);
   pintar();
 }
-function entrar(){ ir('hub'); }
+function entrar(){ ir('mina'); }
+
+// Menu inicial nao mostra casca; o resto do jogo mostra sempre.
+function ajustarCasca(){
+  const dentro = telaAtual!=='menu';
+  document.getElementById('chapa').style.display = dentro?'':'none';
+  document.getElementById('abas').style.display  = dentro?'':'none';
+  document.querySelector('.app').style.paddingBottom =
+    dentro ? '' : 'calc(20px + env(safe-area-inset-bottom))';
+  for(const b of document.querySelectorAll('.abas button'))
+    b.setAttribute('aria-current', b.dataset.tela===telaAtual ? 'true' : 'false');
+}
+
+// Seletor de mina dentro da propria tela da mina: as trancadas aparecem com
+// cadeado, entao da para ver o que vem depois sem uma tela so para isso.
+function montarSeletorMinas(){
+  const alvo=document.getElementById('seletorMinas');
+  const sig=MINAS_DEF.map(d=>minas.some(m=>m.def.id===d.id)?'1':'0').join('')+minaAtual;
+  if(alvo.dataset.sig===sig) return;
+  alvo.dataset.sig=sig; alvo.innerHTML='';
+  MINAS_DEF.forEach(def=>{
+    const m=minas.findIndex(x=>x.def.id===def.id);
+    const b=document.createElement('button');
+    b.innerHTML = m<0 ? CADEADO_MINI+def.curto : def.curto;
+    b.disabled = m<0;
+    b.setAttribute('aria-pressed', m===minaAtual);
+    if(m>=0) b.onclick=()=>{ entrarMina(def.id); };
+    alvo.appendChild(b);
+  });
+}
+const CADEADO_MINI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '+
+  'style="width:11px;height:11px;margin-right:5px"><rect x="4" y="10" width="16" height="11" rx="2"/>'+
+  '<path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
 
 /* ---------------------------------------------------------------- minas */
 
@@ -1216,70 +1202,8 @@ const CADEADO='<svg viewBox="0 0 24 24" fill="none" stroke="#EDE6D6" stroke-widt
 // Espiada do cenario: monta uma cena de 5x2 tiles com o chao, a parede e o
 // pilar do tema, mais uma rocha e um bau. Serve para o jogador ver o que esta
 // comprando antes de gastar.
-function pintarEspia(cv, id){
-  const ctx=cv.getContext('2d');
-  ctx.imageSmoothingEnabled=false;
-  const CENA='cen_'+id, P=pecasDe(id);
-  const im=FOLHA[CENA];
-  if(!im || !im.complete || !im.naturalWidth) return false;
-  const t=32, cols=5, rows=2;
-  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++)
-    ctx.drawImage(im, ((x*3+y*2)%4)*t, 0, t,t, x*t, y*t, t,t);
-  ctx.fillStyle='rgba(10,8,6,'+CHAO_ESCURO+')'; ctx.fillRect(0,0,cols*t,rows*t);
-  ctx.drawImage(im, P.pilar*32, 32, t,t, 0, 0, t,t);
-  ctx.drawImage(im, P.borda*32, 32, t,t, 4*t, t, t,t);
-  const ro=FOLHA.rocha;
-  if(ro && ro.complete){
-    const [rx,ry]=rocha48(ROCHA.media);
-    ctx.drawImage(ro, rx,ry, R48,R48, 2*t-RECUO, 0-RECUO, R48,R48);
-    const [rx2,ry2]=rocha48(ROCHA.fraca);
-    ctx.drawImage(ro, rx2,ry2, R48,R48, 1*t-RECUO, t-RECUO, R48,R48);
-  }
-  const ba=BAU_FOLHA.marrom, M=BAU_ART.marrom;
-  if(ba && ba.complete)
-    ctx.drawImage(ba, 0,0, M.W,M.H, 3*t+t/2-M.px, 2*t-M.py+6, M.W,M.H);
-  return true;
-}
 
-function montarMinas(alvo){
-  alvo.innerHTML='';
-  for(const def of MINAS_DEF){
-    const m=minas.find(x=>x.def.id===def.id);
-    const el=document.createElement('div'); el.className='minaCard';
-    // Trancadas de verdade: sem botao de compra. A venda de mina volta quando
-    // a economia definir o preco.
-    const dir = m ? '<button class="forte">Enter</button>'
-                  : '<span class="trancada">Locked</span>';
-    el.innerHTML=`<span class="faixa" style="background:${def.cor}"></span>`+
-      `<div class="quadro${m?'':' trancado'}"><canvas width="160" height="64"></canvas>`+
-      `<span class="cadeado">${CADEADO}</span></div>`+
-      `<div class="k">${def.nome}${def.preco===0?' <em>free</em>':''}</div>`+
-      `<div class="v"></div><div class="dir">${dir}</div>`;
-    const cv=el.querySelector('canvas');
-    if(!pintarEspia(cv, def.id)){
-      // a arte ainda nao carregou: tenta de novo quando terminar
-      const im=FOLHA['cen_'+def.id];
-      if(im) im.addEventListener('load', ()=>pintarEspia(cv, def.id), {once:true});
-    }
-    const b=el.querySelector('button');
-    if(b) b.onclick=()=>entrarMina(def.id);
-    alvo.appendChild(el);
-  }
-}
 
-function pintarMinas(){
-  guardar();
-  document.getElementById('minasSaldo').textContent=saldo;
-  const alvo=document.getElementById('minasLista'), sig=assinaturaMina();
-  if(sig!==assinaturaMinas){ comRolagem(alvo,()=>montarMinas(alvo)); assinaturaMinas=sig; }
-  [...alvo.children].forEach((el,i)=>{
-    const m=minas.find(x=>x.def.id===MINAS_DEF[i].id);
-    el.querySelector('.v').textContent = m
-      ? `${m.ativos.length}/${VAGAS} heroes \u00b7 ${m.ativos.filter(h=>h.estado!=='dormir').length} working`+
-        ` \u00b7 ${Math.round(m.achados)} coins`
-      : 'locked';
-  });
-}
 
 function entrarMina(id){
   minaAtual=minas.findIndex(m=>m.def.id===id);
@@ -1510,47 +1434,20 @@ function pintar(){
   const emMina=totalEmMina(), acordados=totalAcordados();
   const vistaAcordados=vista.ativos.filter(h=>h.estado!=='dormir').length;
 
-  document.getElementById('hubSaldo').textContent=saldo;
-  document.getElementById('lojaSaldo').textContent=saldo;
-  document.getElementById('claimSaldo').textContent=saldo;
-  document.getElementById('hubBaus').textContent=Math.floor(bausCofre);
-  const pronto = bausCofre>=MIN_SAQUE;
-  document.getElementById('hubClaim').disabled = !pronto;
-  document.getElementById('hubFalta').textContent =
-    pronto ? 'ready to claim' : `${Math.ceil(MIN_SAQUE-bausCofre)} to go \u00b7 min ${MIN_SAQUE}`;
-  const trilho=document.getElementById('hubBarra');
-  trilho.style.width=Math.min(100, bausCofre/MIN_SAQUE*100).toFixed(0)+'%';
-  trilho.parentElement.classList.toggle('cheio', pronto);
-
-  document.getElementById('hubInv').textContent =
-    inventario.length? inventario.length+(inventario.length===1?' hero':' heroes') : 'no heroes yet';
-  document.getElementById('hubEquipe').textContent =
-    emMina ? `${emMina} in the mine` : 'nobody down there';
-  document.getElementById('hubMina').textContent =
-    minas.length+(minas.length>1?' mines':' mine')+' \u00b7 '+(minas.length*VAGAS)+' slots';
-
-  // vitrine
-  document.getElementById('vitNome').textContent=vista.def.nome;
-  document.getElementById('vitVivo').textContent =
-    emMina ? `${acordados} of ${emMina} working` : 'nobody working';
-  document.getElementById('vitTaxa').textContent = horas>0.02 ? (bausTotais/horas).toFixed(1)+'/h' : '—';
-  document.getElementById('vitLimpas').textContent =
-    minasLimpas===1 ? '1 cleared' : minasLimpas+' cleared';
-
+  document.getElementById('chipSaldo').textContent=saldo;
+  document.getElementById('chipMoedas').textContent=Math.floor(bausCofre);
+  const chip=document.getElementById('chipCofre');
+  chip.classList.toggle('pronto', bausCofre>=MIN_SAQUE);
+  document.getElementById('chipBarra').style.width=
+    Math.min(100, bausCofre/MIN_SAQUE*100).toFixed(0)+'%';
   document.getElementById('minaTitulo').textContent=vista.def.nome;
-  document.getElementById('bPontos').textContent=Math.floor(vista.achados);
-  document.getElementById('bTaxa').textContent = horas>0.02 ? (vista.achados/horas).toFixed(1) : '—';
-  document.getElementById('bLimpas').textContent = vista.limpas||0;
-  document.getElementById('bTempo').textContent = horas<1 ? Math.round(horas*60)+'m' : horas.toFixed(1)+'h';
-  document.getElementById('bAtivos').querySelector('b').textContent=vistaAcordados+'/'+vista.ativos.length;
-  document.getElementById('minaEquipe').textContent=vista.ativos.length+' in the mine';
-
+  ajustarCasca();
+  if(telaAtual==='mina') montarSeletorMinas();
   const sig=assinatura();
   if(telaAtual==='inventario' && sig!==assinaturaLista)
     comRolagem(document.getElementById('invLista'), pintarInventario);
   if(telaAtual==='equipe' && sig!==assinaturaLista)
     comRolagem(document.getElementById('eqLista'), pintarEquipe);
-  if(telaAtual==='minas') pintarMinas();
   if(telaAtual==='claim') pintarClaim();
   assinaturaLista=sig;
 }
@@ -1636,19 +1533,9 @@ function animarFichas(){
 
 // A vitrine do menu e um recorte do proprio canvas da mina, desenhado no
 // mesmo quadro. Nao e imagem parada nem simulacao a parte: e o jogo rodando.
-const fita=document.getElementById('fita');
-const fx=fita.getContext('2d');
-fx.imageSmoothingEnabled=false;
 // A vitrine mostra o mapa INTEIRO. Recortar seguindo um heroi escondia metade
 // da mina e o corte mudava a cada zoom, porque a grade nasce do tamanho da
 // tela. Agora a caixa tem a proporcao do mapa e o desenho e um por um.
-function pintarFita(){
-  if(fita.width!==cv.width || fita.height!==cv.height){
-    fita.width=cv.width; fita.height=cv.height;
-    fx.imageSmoothingEnabled=false;
-  }
-  fx.drawImage(cv, 0, 0);
-}
 let ultimo=performance.now(), accRep=0, accHud=0;
 
 function loop(agora){
@@ -1681,7 +1568,6 @@ function loop(agora){
 
   if(telaAtual==='equipe'||telaAtual==='inventario') animarFichas();
   if(telaAtual==='mina'){ desenhar(); }
-  else if(telaAtual==='hub'){ desenhar(); pintarFita(); }
   requestAnimationFrame(loop);
 }
 
@@ -1695,7 +1581,6 @@ ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))))
 // Demo: dez Elon extras para encher a mina com o topo da escala e medir o teto.
 const ELON=ELENCO[ELENCO.length-1][0];
 for(let i=0;i<10;i++) inventario.push(novoHeroi(ELENCO.length-1, ELON));
-document.getElementById('hubVitrine').onclick=()=>entrarMina(minas[minaAtual].def.id);
 // Espaco reservado do menu. Preencha os dois e o rodape passa a apontar para
 // o perfil e a copiar o contrato; vazios, ficam como marcacao tracejada.
 const X_HANDLE='';            // ex.: 'bombstock'
@@ -1717,6 +1602,8 @@ function copiarCA(){
   }).catch(()=>{});
 }
 montarRodape();
+for(const b of document.querySelectorAll('.abas button'))
+  b.onclick=()=>ir(b.dataset.tela);
 montarLoja(); pintar();
 requestAnimationFrame(loop);
 </script>
