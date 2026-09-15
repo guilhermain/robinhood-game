@@ -1,0 +1,206 @@
+{
+  "description": "BOMBSTOCK homepage assets. Relative paths work beside bombstock-design-system.html.",
+  "reward_symbols": [
+    "SPCX",
+    "GME",
+    "AMZN",
+    "MSTR",
+    "NVDA",
+    "META"
+  ],
+  "artwork_note": "Stock logos and cutouts are pixel-art reconstructions of the supplied raster mockup, not official vector brand masters. The hero is one fixed image for all rarity states. No rarity color is baked into the sprite.",
+  "assets": [
+    {
+      "file": "bomb.png",
+      "bytes": 29468,
+      "sha256": "6cdaf86983d432d3884130c37b23f3c9751b6d54b577435dfe5087fa283f27af",
+      "width": 195,
+      "height": 254,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "chest-gme.png",
+      "bytes": 34072,
+      "sha256": "a4982727a8643c2d836853d96f618e44cde825eb6c73c59a113c6fb9110f2b40",
+      "width": 193,
+      "height": 177,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "gameplay-bomb.png",
+      "bytes": 26983,
+      "sha256": "f581fe3cffc2924b879c0c9351ac34a4afa0654f8f2d18546bcdba61772ab17b",
+      "width": 480,
+      "height": 270,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "gameplay-chests.png",
+      "bytes": 33466,
+      "sha256": "39c9af21b2069b8c6d73414ce5921dbde37683b367e1c21b71a76ab90dd9c63a",
+      "width": 384,
+      "height": 216,
+      "transparent_background": false,
+      "binary_alpha": true,
+      "source": "Unretouched crop of the actual Green Field prototype screenshot provided by the user."
+    },
+    {
+      "file": "gameplay-mines.png",
+      "bytes": 100035,
+      "sha256": "b0f0d3663ed3b4bacbc78ce8607fb627ee161a7063bc03722b5700a6a948e9a5",
+      "width": 768,
+      "height": 432,
+      "transparent_background": false,
+      "binary_alpha": true,
+      "source": "Unretouched crop of the actual Green Field prototype screenshot provided by the user."
+    },
+    {
+      "file": "hero-elon.png",
+      "bytes": 69185,
+      "sha256": "8d53b061b271069a3c5c56a1c80a21228478d3c09c58663bc6b190daa8b61c77",
+      "width": 204,
+      "height": 319,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "icon-play.svg",
+      "bytes": 268,
+      "sha256": "1f7e4a27377c99d7862c707aa96f254ba891d24b20dbfb5e97e2f5faa2488c29",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "icon-wallet.svg",
+      "bytes": 301,
+      "sha256": "a6bc079840e87ed0fad7d61138936c01959066cdbbead0203607e8f925a13c39",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "logo-amzn.png",
+      "bytes": 19080,
+      "sha256": "4ba4f9b2a16b4e4ef0597bed7a26cd316ab370ba80538d0b8549fac937ff4179",
+      "width": 384,
+      "height": 160,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "logo-gme.png",
+      "bytes": 31393,
+      "sha256": "78aa78d5c13c2b7b299717e918f6c61ec7379a4cbb0ea30d50f0f29e39d08891",
+      "width": 384,
+      "height": 160,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "logo-meta.png",
+      "bytes": 31905,
+      "sha256": "63dc87902ddc9e8db574c7d8c39a08db66949f9da45695d586c403c39c5cb0c5",
+      "width": 384,
+      "height": 160,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "logo-mstr.png",
+      "bytes": 9492,
+      "sha256": "c79524a26bd8f2350d99b2fabaf9b8d63f3034a5e51c00326162ffbd7f43a03c",
+      "width": 384,
+      "height": 160,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "logo-nvda.png",
+      "bytes": 28785,
+      "sha256": "104465ca1de25e5b9a77c82bc8d0c66ef674b17deb7d360ee32f051144438912",
+      "width": 384,
+      "height": 160,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "logo-spcx.png",
+      "bytes": 22706,
+      "sha256": "cff04266ecf366e581e0e5de63273f26b4e6fdde7ba007686ec2a88eb2d7ebca",
+      "width": 384,
+      "height": 160,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "map-scene.png",
+      "bytes": 140227,
+      "sha256": "524c024c45e449daf48bc0d2f4b6c4692b5eb1682448a2be373eb958f04baf35",
+      "width": 432,
+      "height": 324,
+      "transparent_background": false,
+      "binary_alpha": true,
+      "source": "Cropped from the approved quiet homepage reference. Illustrative mine vignette."
+    },
+    {
+      "file": "platform.png",
+      "bytes": 24618,
+      "sha256": "76985a4ac1ee529383bb1e2bdb05cc0ed4946d154e44b4564c035ddfd52c252b",
+      "width": 341,
+      "height": 93,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Isolated/reconstructed from the user-supplied colorful mockup; alpha normalized to hard edges for pixel rendering."
+    },
+    {
+      "file": "prototype-green-field.png",
+      "bytes": 115579,
+      "sha256": "d52501aa6532ca036017e929d2b062fc2a4ba5a3a67dc44457ea2dca7931dc54",
+      "width": 776,
+      "height": 532,
+      "transparent_background": false,
+      "binary_alpha": true,
+      "source": "Unretouched crop of the actual Green Field prototype screenshot provided by the user."
+    },
+    {
+      "file": "rarity-common.svg",
+      "bytes": 419,
+      "sha256": "85f83c8991fc5330a8a2dfcf9ad9fdc7169065ca8dcc5734c9264ff80d46a93f",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "rarity-epic.svg",
+      "bytes": 315,
+      "sha256": "e90c8167a9d93ec6df62fe45b33917345ae3b6ad3089753125e002efa26f1c31",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "rarity-legendary.svg",
+      "bytes": 307,
+      "sha256": "03b31de86946378f10b7011c5ffcf25bd36043a0d7f07303d5444c590ffaf5b1",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "rarity-mythic.svg",
+      "bytes": 390,
+      "sha256": "69412c635d6f40eaa2752edbde4f54166d8bf437b1130b68b67e47fef0fd8460",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "rarity-rare.svg",
+      "bytes": 279,
+      "sha256": "44114e9363733c0d79111debc34aba94065959968a708905a50bc5b0abaeaff4",
+      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    }
+  ]
+}
