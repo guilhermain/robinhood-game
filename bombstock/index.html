@@ -1312,16 +1312,41 @@ function avisar(t){
 
 /* ------------------------------------------------------- mapa e tamanho */
 
+// Zoom do navegador dispara resize, entao isto roda com o jogo em andamento.
+// Sortear um mapa novo aqui apagava o progresso e fazia blocos aparecerem do
+// nada: o mapa antigo e copiado, e so as celulas que passaram a existir nascem.
 function refazerMapa(inicial){
   const [c,r]=medirMapa();
   if(!inicial && c===COLS && r===ROWS) return;
+  const cAnt=COLS, rAnt=ROWS;
   COLS=c; ROWS=r;
   cv.width=COLS*T; cv.height=ROWS*T;
   for(const m of minas){
     usar(m);
-    grade=novaGrade(); baus=[]; bombas=[]; chamas=[]; efeitos=[];
+    const velha=grade;
+    const nova=novaGrade();
+    if(!inicial && velha){
+      const cx0=Math.min(c,cAnt), ry0=Math.min(r,rAnt);
+      for(let y=1;y<ry0-1;y++) for(let x=1;x<cx0-1;x++){
+        const antes=velha[y] && velha[y][x];
+        if(antes && antes.t!==PAREDE && nova[y][x].t!==PAREDE) nova[y][x]=antes;
+      }
+    }
+    grade=nova;
+    const dentro=(x,y)=> x>0 && y>0 && x<c-1 && y<r-1;
+    bombas=bombas.filter(b=>dentro(b.x,b.y) && !nova[b.y][b.x].bloco);
+    chamas=chamas.filter(f=>dentro(f.x,f.y));
+    efeitos=efeitos.filter(e=>dentro(e.x,e.y));
     const equipe=ativos.slice(); ativos=[];
-    for(const h of equipe){ h.naMina=false; h.minhasBombas=0; h.path=null; descer(h); }
+    for(const hh of equipe){
+      hh.minhasBombas=0; hh.path=null;
+      const cel = dentro(hh.gx,hh.gy) && nova[hh.gy][hh.gx];
+      if(cel && cel.t!==PAREDE && !cel.bloco){
+        hh.estado='procurar'; hh.px=hh.gx*T; hh.py=hh.gy*T; ativos.push(hh);
+      } else {
+        hh.naMina=false; descer(hh);      // so quem ficou de fora e reposicionado
+      }
+    }
     guardar();
   }
   pintar();
