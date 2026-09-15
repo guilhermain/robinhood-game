@@ -220,6 +220,8 @@
   .minaCard .v{grid-column:3;font-size:11px;color:var(--mute);margin-top:4px}
   .minaCard .dir{grid-column:4;grid-row:1/3;display:flex;align-items:center;gap:8px}
   .minaCard .preco{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amber)}
+  .minaCard .trancada{font-size:11px;color:var(--mute);border:1px solid var(--rule);
+    border-radius:2px;padding:7px 11px}
 </style>
 </head>
 <body>
@@ -965,9 +967,10 @@ function montarMinas(alvo){
   for(const def of MINAS_DEF){
     const m=minas.find(x=>x.def.id===def.id);
     const el=document.createElement('div'); el.className='minaCard';
+    // Trancadas de verdade: sem botao de compra. A venda de mina volta quando
+    // a economia definir o preco.
     const dir = m ? '<button class="forte">Enter</button>'
-                  : `<span class="preco">${def.preco}</span>`+
-                    `<button ${saldo<def.preco?'disabled':''}>Buy</button>`;
+                  : '<span class="trancada">Locked</span>';
     el.innerHTML=`<span class="faixa" style="background:${def.cor}"></span>`+
       `<div class="quadro${m?'':' trancado'}"><canvas width="160" height="64"></canvas>`+
       `<span class="cadeado">${CADEADO}</span></div>`+
@@ -980,7 +983,7 @@ function montarMinas(alvo){
       if(im) im.addEventListener('load', ()=>pintarEspia(cv, def.id), {once:true});
     }
     const b=el.querySelector('button');
-    b.onclick = m ? ()=>entrarMina(def.id) : ()=>comprarMina(def.id);
+    if(b) b.onclick=()=>entrarMina(def.id);
     alvo.appendChild(el);
   }
 }
@@ -995,7 +998,7 @@ function pintarMinas(){
     el.querySelector('.v').textContent = m
       ? `${m.ativos.length}/${VAGAS} heroes \u00b7 ${m.ativos.filter(h=>h.estado!=='dormir').length} working`+
         ` \u00b7 ${m.achados} chests`
-      : `holds ${VAGAS} more heroes`;
+      : 'locked';
   });
 }
 
@@ -1005,7 +1008,9 @@ function entrarMina(id){
 }
 
 // Comprar mina e comprar vaga: mais 10 herois podem trabalhar ao mesmo tempo.
+const VENDA_DE_MINA=false;   // enquanto false, so a mina gratuita existe
 function comprarMina(id){
+  if(!VENDA_DE_MINA) return;
   const def=MINAS_DEF.find(d=>d.id===id);
   if(!def || saldo<def.preco || minas.some(m=>m.def.id===id)) return;
   saldo-=def.preco;
