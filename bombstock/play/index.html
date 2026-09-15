@@ -288,10 +288,29 @@
   .board{border-bottom:0}
   .palco{border:1px solid var(--rule);border-top:0}
   .palco canvas#tela{border:0}
+
+  .carteiraBtn{background:var(--panel);border:1px solid var(--rule);color:var(--chalk);
+    border-radius:3px;padding:7px 11px;font-family:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
+  .carteiraBtn.ligada{border-color:var(--gain);color:var(--gain)}
+  .carteiraBtn.rede{border-color:var(--loss);color:var(--loss)}
+  .avisoTopo{position:fixed;top:0;left:0;right:0;z-index:40;text-align:center;font-size:12px;
+    padding:9px 12px;background:#2E2513;color:var(--amber);border-bottom:1px solid var(--amber);
+    transform:translateY(-100%);transition:transform .25s}
+  .avisoTopo.on{transform:none}
+  .cotacao{font-size:11px;color:var(--mute);margin-left:auto;white-space:nowrap}
+  .cotacao b{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--gain);font-weight:400}
+  .listaAcao{border:1px solid var(--rule);background:#171310}
+  .listaAcao div{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    padding:10px 12px;border-bottom:1px solid var(--rule2);font-size:12px}
+  .listaAcao div:last-child{border-bottom:0}
+  .listaAcao .tk{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amber)}
+  .listaAcao .mo{color:var(--chalk)}
+  .listaAcao .pr{color:var(--mute)}
 </style>
 </head>
 <body>
 <div class="app">
+  <div class="avisoTopo" id="avisoTopo"></div>
   <header class="chapa" id="chapa">
     <button class="marcaTopo" onclick="ir('mina')" aria-label="BOMBSTOCK">
       <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="30" y="10" width="3" height="4" fill="#41C07A"/><rect x="35" y="4" width="3" height="10" fill="#41C07A"/><rect x="40" y="8" width="3" height="6" fill="#41C07A"/><rect x="26" y="14" width="4" height="3" fill="#E8A33D"/><rect x="22" y="17" width="4" height="3" fill="#E8A33D"/><circle cx="19" cy="31" r="12" fill="#1A1610" stroke="#EDE6D6" stroke-width="2"/></svg>
@@ -303,6 +322,7 @@
         <span class="trilhoMini"><i id="chipBarra"></i></span>
       </button>
       <span class="carteira">balance <b id="chipSaldo">0</b></span>
+      <button class="carteiraBtn" id="btnCarteira" onclick="conectar()">Connect</button>
     </div>
   </header>
 
@@ -371,6 +391,7 @@
   <section class="tela" id="mina">
     <div class="linhaMina">
       <h2 class="tituloAba" id="minaTitulo">Mine</h2>
+      <span class="cotacao" id="cotacaoMina"></span>
       <span class="relogioMina" id="bTempo">0m</span>
     </div>
     <div class="faixaMinas" id="seletorMinas"></div>
@@ -398,6 +419,7 @@
       <div class="n" id="claimBaus">0</div>
       <div class="u">coins banked</div>
     </div>
+    <div class="listaAcao" id="claimPorAcao"></div>
     <div class="tabela" id="claimResumo"></div>
     <button class="primario" id="claimBtn" onclick="sacar()">Claim</button>
     <p class="aviso-linha" id="claimNota"></p>
@@ -936,7 +958,11 @@ function danificar(x,y,h){
   if(EH_BAU(tipo)){
     const paga=TIPOS[tipo].paga||1;
     bausTotais+=paga; bausCofre+=paga; h.achados+=paga;
-    if(minaViva) minaViva.achados+=paga;
+    if(minaViva){
+      minaViva.achados+=paga;
+      const t=acaoDaMina(minaViva.def.id).tick;      // a mina decide a acao
+      cofreAcao[t]=(cofreAcao[t]||0)+paga;
+    }
   }
 }
 // O original limpa o mapa e traz outro. Bloco brotando do nada ao lado do
@@ -1130,11 +1156,118 @@ function desenharHerois(){
   }
 }
 
+
+/* ================================================== camada cripto (leitura)
+   Nesta fase o jogo so LE a chain: carteira, rede e preco. Nada e pago aqui,
+   porque o estado ainda vive no navegador e seria drenavel pelo console.
+   Pagamento de verdade depende do servidor autoritativo. */
+
+const CHAIN={
+  id:'0x1237',                                   // 4663
+  nome:'Robinhood Chain',
+  rpc:'https://rpc.mainnet.chain.robinhood.com',
+  explorer:'https://robinhoodchain.blockscout.com',
+  moeda:{name:'Ether', symbol:'ETH', decimals:18},
+};
+
+// Cada mina paga na acao dela. A gratuita paga em dolar tokenizado.
+const ACAO={
+  verde:{tick:'USDG', addr:'0x5fc5360d0400a0fd4f2af552add042d716f1d168'},
+  NVDA: {tick:'NVDA', addr:'0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec'},
+  GME:  {tick:'GME',  addr:'0x1b0e319c6a659f002271b69db8a7df2f911c153e'},
+  AMZN: {tick:'AMZN', addr:'0x12f190a9f9d7d37a250758b26824b97ce941bf54'},
+  MSTR: {tick:'MSTR', addr:'0xec262a75e413fafd0df80480274532c79d42da09'},
+  META: {tick:'META', addr:'0xc0d6457c16cc70d6790dd43521c899c87ce02f35'},
+  SPCX: {tick:'SPCX', addr:'0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea'},
+};
+const acaoDaMina=id=>ACAO[id]||ACAO.verde;
+
+let carteira=null, redeOk=false, precos={}, saldosAcao={}, ultimoPreco=0;
+
+async function rpc(metodo, params){
+  const r=await fetch(CHAIN.rpc,{method:'POST',headers:{'content-type':'application/json'},
+    body:JSON.stringify({jsonrpc:'2.0',id:1,method:metodo,params})});
+  const j=await r.json();
+  if(j.error) throw new Error(j.error.message);
+  return j.result;
+}
+
+async function conectar(){
+  if(!window.ethereum){
+    avisarTopo('No wallet found. Install MetaMask to connect.');
+    return;
+  }
+  try{
+    const contas=await ethereum.request({method:'eth_requestAccounts'});
+    carteira=contas[0];
+    await garantirRede();
+    ethereum.on && ethereum.on('accountsChanged', c=>{ carteira=c[0]||null; saldosAcao={}; pintar(); });
+    ethereum.on && ethereum.on('chainChanged', ()=>{ garantirRede(); });
+    atualizarCripto();
+  }catch(e){ avisarTopo(e.message||'Connection refused'); }
+  pintar();
+}
+
+async function garantirRede(){
+  try{
+    const atual=await ethereum.request({method:'eth_chainId'});
+    if(atual!==CHAIN.id){
+      try{
+        await ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:CHAIN.id}]});
+      }catch(e){
+        if(e.code===4902){
+          await ethereum.request({method:'wallet_addEthereumChain',params:[{
+            chainId:CHAIN.id, chainName:CHAIN.nome, rpcUrls:[CHAIN.rpc],
+            nativeCurrency:CHAIN.moeda, blockExplorerUrls:[CHAIN.explorer]}]});
+        } else throw e;
+      }
+    }
+    redeOk=true;
+  }catch(e){ redeOk=false; avisarTopo('Switch to '+CHAIN.nome+' to see live data'); }
+  pintar();
+}
+
+async function buscarPrecos(){
+  const addrs=[...new Set(Object.values(ACAO).map(a=>a.addr))].join(',');
+  const r=await fetch(`https://api.geckoterminal.com/api/v2/simple/networks/robinhood/token_price/${addrs}`);
+  const j=await r.json();
+  const mapa=j.data.attributes.token_prices;
+  for(const k in ACAO){ const p=mapa[ACAO[k].addr.toLowerCase()]; if(p) precos[ACAO[k].tick]=parseFloat(p); }
+  ultimoPreco=Date.now();
+}
+
+async function buscarSaldos(){
+  if(!carteira) return;
+  const alvo=carteira.slice(2).padStart(64,'0');
+  for(const k in ACAO){
+    try{
+      const res=await rpc('eth_call',[{to:ACAO[k].addr, data:'0x70a08231'+alvo},'latest']);
+      saldosAcao[ACAO[k].tick]=Number(BigInt(res))/1e18;   // stock token usa 18 casas
+    }catch(e){}
+  }
+}
+
+async function atualizarCripto(){
+  try{ await buscarPrecos(); }catch(e){}
+  try{ await buscarSaldos(); }catch(e){}
+  pintar();
+}
+setInterval(()=>{ if(telaAtual!=='menu') atualizarCripto(); }, 120000);
+buscarPrecos().then(pintar).catch(()=>{});
+
+let avisoTopoT=null;
+function avisarTopo(t){
+  const el=document.getElementById('avisoTopo');
+  el.textContent=t; el.classList.add('on');
+  clearTimeout(avisoTopoT); avisoTopoT=setTimeout(()=>el.classList.remove('on'),4000);
+}
+
 /* ================================================================= estado */
 const PRECOS={1:10, 5:48, 10:90};
 const MIN_SAQUE=40, TAXA_SAQUE=0.03;
 
 let saldo=200, inventario=[], ativos=[], bausCofre=0, sacado=0;
+const cofreAcao={};   // moedas acumuladas por acao, definido pela mina
 let telaAtual='menu', filtroRar=-1, fila=[], filaPos=0;
 
 const nomeRar=i=>RARIDADES[i].nome;
@@ -1211,9 +1344,10 @@ function montarSeletorMinas(){
     const m=minas.findIndex(x=>x.def.id===def.id);
     const b=document.createElement('button');
     const podeComprar = m<0 && VENDA_DE_MINA && saldo>=def.preco;
+    const tk=acaoDaMina(def.id).tick;
     b.innerHTML = m<0
       ? CADEADO_MINI+def.curto+`<span class="precoMina">${def.preco}</span>`
-      : def.curto;
+      : def.curto+`<span class="precoMina">${tk}</span>`;
     b.disabled = m<0 && !podeComprar;
     b.classList.toggle('aComprar', podeComprar);
     b.setAttribute('aria-pressed', m===minaAtual);
@@ -1459,6 +1593,16 @@ function pintarClaim(){
   const bruto=bausCofre;
   const taxa=bruto*TAXA_SAQUE;
   document.getElementById('claimBaus').textContent=Math.floor(bruto);
+  const porAcao=document.getElementById('claimPorAcao');
+  const linhas=Object.keys(cofreAcao).filter(k=>cofreAcao[k]>0).sort();
+  porAcao.innerHTML = linhas.length ? linhas.map(t=>{
+    const pr=precos[t], sal=saldosAcao[t];
+    return `<div><span class="tk">${t}</span>`+
+      `<span class="mo">${cofreAcao[t].toFixed(1)} coins</span>`+
+      `<span class="pr">${pr?'$'+pr.toFixed(2):'price —'}`+
+      `${sal!==undefined?' · wallet '+sal.toFixed(4):''}</span></div>`;
+  }).join('') : '<div><span class="pr">Mine somewhere to earn coins. Each mine pays in its own stock.</span></div>';
+
   document.getElementById('claimResumo').innerHTML=
     `<div><span>minimum to claim</span><span>${MIN_SAQUE} coins</span></div>`+
     `<div><span>claim fee</span><span>3% · ${taxa.toFixed(1)}</span></div>`+
@@ -1473,7 +1617,8 @@ function pintarClaim(){
 function sacar(){
   if(bausCofre<MIN_SAQUE) return;
   sacado += bausCofre*(1-TAXA_SAQUE);
-  bausCofre=0; pintar();
+  bausCofre=0;
+  for(const k in cofreAcao) delete cofreAcao[k]; pintar();
 }
 
 /* --------------------------------------------------------------- pintura */
@@ -1505,6 +1650,19 @@ function pintar(){
   document.getElementById('chipBarra').style.width=
     Math.min(100, bausCofre/MIN_SAQUE*100).toFixed(0)+'%';
   document.getElementById('minaTitulo').textContent=vista.def.nome;
+
+  // carteira
+  const bc=document.getElementById('btnCarteira');
+  bc.classList.toggle('ligada', !!carteira && redeOk);
+  bc.classList.toggle('rede', !!carteira && !redeOk);
+  bc.textContent = !carteira ? 'Connect'
+                 : (!redeOk ? 'Wrong network'
+                 : carteira.slice(0,6)+'…'+carteira.slice(-4));
+
+  // cotacao da acao que esta mina paga
+  const ac=acaoDaMina(vista.def.id), pr=precos[ac.tick];
+  const cot=document.getElementById('cotacaoMina');
+  cot.innerHTML = pr ? `pays in ${ac.tick} <b>$${pr.toFixed(2)}</b>` : `pays in ${ac.tick}`;
   ajustarCasca();
   if(telaAtual==='mina') montarSeletorMinas();
   const sig=assinatura();
