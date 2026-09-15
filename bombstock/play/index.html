@@ -362,8 +362,8 @@
   <section class="tela" id="equipe">
     <div class="linhaMina"><h2 class="tituloAba">Squad</h2><span class="contaAba"><b id="eqConta">0/10</b> down the mine</span></div>
     <div class="filtros" id="eqMinas"></div>
-    <p class="aviso-linha">Pick the mine, then send heroes down. Up to 10 per mine; everyone
-      left out rests and recharges just the same.</p>
+    <p class="aviso-linha">Your squad works one mine at a time. Up to 10 go down; everyone left out
+      rests and recharges just the same. Switch mines on the Mine tab.</p>
     <div class="lista rolagem" id="eqLista"></div>
   </section>
 
@@ -1249,9 +1249,30 @@ const CADEADO='<svg viewBox="0 0 24 24" fill="none" stroke="#EDE6D6" stroke-widt
 
 
 
+// Uma mina por vez: a equipe inteira trabalha em um lugar so. Trocar de mina
+// traz todo mundo junto em vez de deixar gente cavando na anterior.
+function mudarDeMina(destino){
+  guardar();
+  const viajantes=[];
+  for(const m of minas){
+    if(m===destino) continue;
+    for(const h of m.ativos.slice()){ usar(m); subir(h); viajantes.push(h); }
+  }
+  usar(destino);
+  for(const h of viajantes) descer(h);
+  guardar();
+  return viajantes.length;
+}
+
 function entrarMina(id){
-  minaAtual=minas.findIndex(m=>m.def.id===id);
-  equipeDestino=minaAtual; ir('mina');
+  const i=minas.findIndex(m=>m.def.id===id);
+  if(i<0) return;
+  const mudou = minas[minaAtual]!==minas[i];
+  const n = mudou ? mudarDeMina(minas[i]) : 0;
+  minaAtual=i; equipeDestino=i;
+  usar(minas[i]);
+  ir('mina');
+  if(n) avisar(`${n} hero${n>1?'es':''} moved to ${minas[i].def.nome}`);
 }
 
 // Comprar mina e comprar vaga: mais 10 herois podem trabalhar ao mesmo tempo.
@@ -1400,17 +1421,16 @@ function pintarInventario(){
 
 function pintarEquipe(){
   guardar();
-  if(equipeDestino>=minas.length) equipeDestino=0;
-  const destino=minas[equipeDestino];
+  equipeDestino=minaAtual;
+  const destino=minas[minaAtual];
 
-  const chips=document.getElementById('eqMinas'); chips.innerHTML='';
-  minas.forEach((m,i)=>{
-    const b=document.createElement('button');
-    b.textContent=`${m.def.curto} ${m.ativos.length}/${VAGAS}`;
-    b.setAttribute('aria-pressed', i===equipeDestino);
-    b.onclick=()=>{ equipeDestino=i; assinaturaLista=''; pintar(); };
-    chips.appendChild(b);
-  });
+  // Um destino so: a mina em que voce esta. Trocar de mina e feito na aba Mine.
+  const chips=document.getElementById('eqMinas');
+  const rotulo=`${destino.def.nome} \u00b7 ${destino.ativos.length}/${VAGAS}`;
+  if(chips.dataset.rot!==rotulo){
+    chips.dataset.rot=rotulo;
+    chips.innerHTML=`<button aria-pressed="true" onclick="ir('mina')">${rotulo}</button>`;
+  }
   document.getElementById('eqConta').textContent=destino.ativos.length+'/'+VAGAS;
 
   const lista=document.getElementById('eqLista');
