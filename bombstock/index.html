@@ -534,6 +534,7 @@ const BAU_DE={madeira:'marrom', pedra:'vermelho', cofre:'maquina'};
 const BAU_QUEBRA=5;   // quadros 3..7 da sequencia de quebra
 // fogo: 3 linhas de 32 px, 4 instantes. linha 0 centro, 1 braco, 2 ponta
 const FOGO_MS=240, QUEBRA_MS=420, ABRE_MS=860;
+const VIDA_COR='#41C07A';   // barra de vida do bau
 const CHAO_ESCURO=0.34;     // so a camada de chao; os objetos vem por cima
 // Uma folha de bau so; as versoes dificil e muito dificil saem tintas aqui,
 // uma vez, em canvas fora da tela. Pintar por cima a cada quadro seria caro.
@@ -1018,6 +1019,13 @@ function desenhar(){
       const arte=bauTinto(c.bloco), M=bauMedida(c.bloco);
       if(arte) cx.drawImage(arte, q*M.W,0,M.W,M.H,
                             x*T+T/2-M.px, y*T+T-2-M.py, M.W,M.H);
+      // barra de vida, so depois da primeira pancada
+      if(f<1){
+        const L=22, A=3, bx=x*T+(T-L)/2, by=y*T+T-5;
+        cx.fillStyle='rgba(8,6,4,.85)';  cx.fillRect(bx-1,by-1,L+2,A+2);
+        cx.fillStyle='#2A2A2A';          cx.fillRect(bx,by,L,A);
+        cx.fillStyle=VIDA_COR;           cx.fillRect(bx,by,Math.max(1,Math.round(L*f)),A);
+      }
       continue;
     }
     const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : (TIPOS[c.bloco].arte||0);
