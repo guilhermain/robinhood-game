@@ -671,13 +671,13 @@ const TIPOS={
   rocha:  {hp:60,  bau:false, arte:0},   // fraca
   rocha2: {hp:140, bau:false, arte:1},   // media
   rocha3: {hp:300, bau:false, arte:2},   // forte
-  // paga: proporcional a vida, com premio crescente, na mesma taxa por ponto
-  // de vida do Bombcrypto (marrom 0,0143 BCOIN por 80 de vida ate azul 0,33
-  // por 1.300 de vida). Marrom vale 1 moeda.
-  madeira:{hp:80,  bau:true, tinta:null, paga:1},    // facil, folha marrom
-  pedra:  {hp:240, bau:true, tinta:null, paga:3.3},  // dificil, folha vermelha
-  cofre:  {hp:520, bau:true, tinta:null, paga:7.3},  // muito dificil, folha maquina
-  prisao: {hp:600, bau:false},
+  // Vida e pagamento do Bombcrypto, tabela oficial: marrom 80 vale 0,0143
+  // BCOIN, roxo 170 vale 0,033, dourado 800 vale 0,163. Normalizado com o
+  // marrom valendo 1 moeda.
+  madeira:{hp:80,  bau:true, tinta:null, paga:1},     // marrom
+  pedra:  {hp:170, bau:true, tinta:null, paga:2.31},  // roxo
+  cofre:  {hp:800, bau:true, tinta:null, paga:11.4},  // dourado
+  prisao: {hp:2000, bau:false},   // prisao do original
 };
 const EH_BAU=k=>!!(TIPOS[k]&&TIPOS[k].bau);
 const REGEN_MS=120000;   // 0,5 energia por minuto
