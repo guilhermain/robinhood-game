@@ -424,6 +424,19 @@
   /* .button vinha depois e vencia o display:none do menu do celular */
   .site-header .menu-toggle{display:none}
   @media (width < 48rem){ .site-header .menu-toggle{display:inline-flex} }
+
+  /* secao de minas: o menu prometia MINES e apontava para o topo da pagina */
+  .mine-grid{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3);
+    grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+  .mine-card{display:flex;flex-direction:column;gap:.35rem;padding:var(--space-3);
+    background:var(--color-panel);border:2px solid var(--color-ivory);
+    box-shadow:6px 6px 0 var(--color-shadow)}
+  .mine-card--locked{opacity:.62;border-style:dashed}
+  .mine-card__ticker{font-family:var(--font-display);font-size:.65rem;color:var(--color-action)}
+  .mine-card__name{margin:0;font-size:1rem}
+  .mine-card__price{margin:0 0 .5rem;font-size:.85rem;color:var(--color-ivory);opacity:.72}
+  .mine-card__lock{font-size:.8rem;opacity:.8}
+  .mine-card a.button{align-self:flex-start}
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->
@@ -443,7 +456,7 @@
           <li><a class="nav-link" href="#heroes">HEROES</a></li>
           <li><a class="nav-link" href="./play/" data-action="open-squads">SQUADS</a></li>
           <li><a class="nav-link" href="#rewards">REWARDS</a></li>
-          <li><button class="nav-link" type="button" popovertarget="shop-preview">SHOP</button></li>
+          <li><a class="nav-link"  href="./play/#shop">SHOP</a></li>
           <li><a class="nav-link" href="#about">ABOUT</a></li>
         </ul>
       </nav>
@@ -455,7 +468,7 @@
   </header>
 
   <main id="main-content" tabindex="-1">
-    <section class="hero container" id="mines" aria-labelledby="hero-heading">
+    <section class="hero container" id="top" aria-labelledby="hero-heading">
       <div class="hero-copy">
         <p class="hero-eyebrow">BOMBSTOCK / $BSTOCK</p>
         <h1 class="hero-title display" id="hero-heading"><span>BLAST BLOCKS.</span><span>CLAIM STOCKS.</span></h1>
@@ -494,6 +507,48 @@
       </div>
     </section>
 
+    
+    <section class="section container" id="mines">
+      <h2 class="section-title">MINES</h2>
+      <p class="section-lead">One mine is open to everyone. The other six unlock with $BSTOCK.
+        Every mine runs the same map and pays the same &mdash; the stock it shows is the theme.</p>
+      <ul class="mine-grid"><li class="mine-card mine-card--open">
+        <span class="mine-card__ticker">GRATUITA</span>
+        <h3 class="mine-card__name">Green Field</h3>
+        <p class="mine-card__price">Free</p>
+        <a class="button button--primary" href="./play/#mine">Enter</a>
+      </li><li class="mine-card mine-card--locked">
+        <span class="mine-card__ticker">NVDA</span>
+        <h3 class="mine-card__name">NVDA Mine</h3>
+        <p class="mine-card__price">10 $BSTOCK</p>
+        <span class="mine-card__lock">Locked</span>
+      </li><li class="mine-card mine-card--locked">
+        <span class="mine-card__ticker">GME</span>
+        <h3 class="mine-card__name">GME Mine</h3>
+        <p class="mine-card__price">10 $BSTOCK</p>
+        <span class="mine-card__lock">Locked</span>
+      </li><li class="mine-card mine-card--locked">
+        <span class="mine-card__ticker">AMZN</span>
+        <h3 class="mine-card__name">AMZN Mine</h3>
+        <p class="mine-card__price">10 $BSTOCK</p>
+        <span class="mine-card__lock">Locked</span>
+      </li><li class="mine-card mine-card--locked">
+        <span class="mine-card__ticker">MSTR</span>
+        <h3 class="mine-card__name">MSTR Mine</h3>
+        <p class="mine-card__price">10 $BSTOCK</p>
+        <span class="mine-card__lock">Locked</span>
+      </li><li class="mine-card mine-card--locked">
+        <span class="mine-card__ticker">META</span>
+        <h3 class="mine-card__name">META Mine</h3>
+        <p class="mine-card__price">10 $BSTOCK</p>
+        <span class="mine-card__lock">Locked</span>
+      </li><li class="mine-card mine-card--locked">
+        <span class="mine-card__ticker">SPCX</span>
+        <h3 class="mine-card__name">SPCX Mine</h3>
+        <p class="mine-card__price">10 $BSTOCK</p>
+        <span class="mine-card__lock">Locked</span>
+      </li></ul>
+    </section>
     <section class="section container" id="rewards" aria-labelledby="rewards-heading">
       <div class="section-heading"><h2 class="section-title display" id="rewards-heading">STOCK REWARDS</h2><p>Tokenized stocks, earned in the mines.</p></div>
       <div class="stock-grid"><article class="stock-card" data-stock="spcx" aria-labelledby="stock-spcx">
@@ -571,7 +626,7 @@
   <footer class="site-footer" id="about">
     <div class="footer-inner container">
       <div class="footer-copy"><p><strong>BOMBSTOCK / $BSTOCK</strong></p><p>A pixel art mine adventure with tokenized-stock rewards.</p><p>Design preview · Prices, rewards, and attributes are illustrative.</p></div>
-      <nav class="footer-links" aria-label="Footer navigation"><a href="#mines">Mines</a><a href="#heroes">Heroes</a><button class="text-button" type="button" popovertarget="squads-preview">Squads</button><button class="text-button" type="button" popovertarget="shop-preview">Shop</button></nav>
+      <nav class="footer-links" aria-label="Footer navigation"><a href="#mines">Mines</a><a href="#heroes">Heroes</a><a class="text-button"  href="./play/#squad">Squads</a><a class="text-button"  href="./play/#shop">Shop</a></nav>
     </div>
   </footer>
 
@@ -579,8 +634,8 @@
        no additional JavaScript. Replace these hooks with real integrations. -->
   <section class="preview-dialog" id="wallet-preview" popover role="dialog" aria-labelledby="wallet-preview-title"><h2 id="wallet-preview-title">Wallet connection</h2><p>This design preview does not connect a wallet or request a signature.</p><button class="button" type="button" popovertarget="wallet-preview" popovertargetaction="hide" autofocus>Close</button></section>
   <section class="preview-dialog" id="prototype-preview" popover role="dialog" aria-labelledby="prototype-preview-title"><h2 id="prototype-preview-title">Play BOMBSTOCK</h2><p>The playable prototype opens from this control when the developer connects its existing game route.</p><button class="button" type="button" popovertarget="prototype-preview" popovertargetaction="hide" autofocus>Close</button></section>
-  <section class="preview-dialog" id="squads-preview" popover role="dialog" aria-labelledby="squads-preview-title"><h2 id="squads-preview-title">Squads</h2><p>Choose a mine, then send your heroes down. Up to 10 heroes per mine; resting heroes recharge their energy.</p><button class="button" type="button" popovertarget="squads-preview" popovertargetaction="hide" autofocus>Close</button></section>
-  <section class="preview-dialog" id="shop-preview" popover role="dialog" aria-labelledby="shop-preview-title"><h2 id="shop-preview-title">Shop</h2><p>The shop is a preview here. Items, prices, and purchases belong to the game integration.</p><button class="button" type="button" popovertarget="shop-preview" popovertargetaction="hide" autofocus>Close</button></section>
+  <section class="preview-dialog" id="squads-preview" popover role="dialog" aria-labelledby="squads-preview-title"><h2 id="squads-preview-title">Squads</h2><p>Choose a mine, then send your heroes down. Up to 10 heroes per mine; resting heroes recharge their energy.</p><a class="button"   popovertargetaction="hide" autofocushref="./play/#squad">Close</a></section>
+  <section class="preview-dialog" id="shop-preview" popover role="dialog" aria-labelledby="shop-preview-title"><h2 id="shop-preview-title">Shop</h2><p>The shop is a preview here. Items, prices, and purchases belong to the game integration.</p><a class="button"   popovertargetaction="hide" autofocushref="./play/#shop">Close</a></section>
   <section class="preview-dialog" id="video-preview" popover role="dialog" aria-labelledby="video-preview-title"><h2 id="video-preview-title">Gameplay preview</h2><p>Gameplay clips will appear here when the real videos are supplied.</p><button class="button" type="button" popovertarget="video-preview" popovertargetaction="hide" autofocus>Close</button></section>
 
   <script>
