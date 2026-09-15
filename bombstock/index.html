@@ -995,14 +995,13 @@ function desenhar(){
   for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){
     const c=grade[y][x];
     if(!c.bloco) continue;
-    const sombra = !parede(x,y+1)&&!bloco(x,y+1);
+    // Sem sombra desenhada aqui: rocha, bau e jaula ja trazem a propria na
+    // arte. A barra preta que eu punha embaixo virava sombra dobrada.
     if(c.bloco==='prisao'){
       const f=c.hp/c.hpMax, q = f>0.66?0 : (f>0.33?1:2);
-      if(sombra){ cx.fillStyle='rgba(0,0,0,.32)'; cx.fillRect(x*T+4,y*T+T-2,T-4,4); }
       peca(JAULA, q*R48, 0, R48,R48, x*T-RECUO, y*T-RECUO, R48,R48);
       continue;
     }
-    if(sombra){ cx.fillStyle='rgba(0,0,0,.30)'; cx.fillRect(x*T+4,y*T+T-2,T-4,4); }
     if(EH_BAU(c.bloco)){
       // O bau E o bloco. Treme quando ja levou pancada, e a tinta separa
       // madeira (facil), pedra (dificil) e cofre (muito dificil).
