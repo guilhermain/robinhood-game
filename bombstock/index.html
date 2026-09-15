@@ -454,9 +454,9 @@
         <ul class="nav-list">
           <li><a class="nav-link" href="#mines">MINES</a></li>
           <li><a class="nav-link" href="#heroes">HEROES</a></li>
-          <li><a class="nav-link" href="./play/" data-action="open-squads">SQUADS</a></li>
+          <li><button class="nav-link"  data-action="open-squads" type="button" popovertarget="squads-preview">SQUADS</button></li>
           <li><a class="nav-link" href="#rewards">REWARDS</a></li>
-          <li><a class="nav-link"  href="./play/#shop">SHOP</a></li>
+          <li><button class="nav-link" type="button" popovertarget="shop-preview">SHOP</button></li>
           <li><a class="nav-link" href="#about">ABOUT</a></li>
         </ul>
       </nav>
@@ -626,7 +626,7 @@
   <footer class="site-footer" id="about">
     <div class="footer-inner container">
       <div class="footer-copy"><p><strong>BOMBSTOCK / $BSTOCK</strong></p><p>A pixel art mine adventure with tokenized-stock rewards.</p><p>Design preview · Prices, rewards, and attributes are illustrative.</p></div>
-      <nav class="footer-links" aria-label="Footer navigation"><a href="#mines">Mines</a><a href="#heroes">Heroes</a><a class="text-button"  href="./play/#squad">Squads</a><a class="text-button"  href="./play/#shop">Shop</a></nav>
+      <nav class="footer-links" aria-label="Footer navigation"><a href="#mines">Mines</a><a href="#heroes">Heroes</a><button class="text-button" data-action="open-squads" type="button" popovertarget="squads-preview">Squads</button><button class="text-button" type="button" popovertarget="shop-preview">Shop</button></nav>
     </div>
   </footer>
 
@@ -634,8 +634,8 @@
        no additional JavaScript. Replace these hooks with real integrations. -->
   <section class="preview-dialog" id="wallet-preview" popover role="dialog" aria-labelledby="wallet-preview-title"><h2 id="wallet-preview-title">Wallet connection</h2><p>This design preview does not connect a wallet or request a signature.</p><button class="button" type="button" popovertarget="wallet-preview" popovertargetaction="hide" autofocus>Close</button></section>
   <section class="preview-dialog" id="prototype-preview" popover role="dialog" aria-labelledby="prototype-preview-title"><h2 id="prototype-preview-title">Play BOMBSTOCK</h2><p>The playable prototype opens from this control when the developer connects its existing game route.</p><button class="button" type="button" popovertarget="prototype-preview" popovertargetaction="hide" autofocus>Close</button></section>
-  <section class="preview-dialog" id="squads-preview" popover role="dialog" aria-labelledby="squads-preview-title"><h2 id="squads-preview-title">Squads</h2><p>Choose a mine, then send your heroes down. Up to 10 heroes per mine; resting heroes recharge their energy.</p><a class="button"   popovertargetaction="hide" autofocushref="./play/#squad">Close</a></section>
-  <section class="preview-dialog" id="shop-preview" popover role="dialog" aria-labelledby="shop-preview-title"><h2 id="shop-preview-title">Shop</h2><p>The shop is a preview here. Items, prices, and purchases belong to the game integration.</p><a class="button"   popovertargetaction="hide" autofocushref="./play/#shop">Close</a></section>
+  <section class="preview-dialog" id="squads-preview" popover role="dialog" aria-labelledby="squads-preview-title"><h2 id="squads-preview-title">Squads</h2><p>Choose a mine, then send your heroes down. Up to 10 heroes per mine; resting heroes recharge their energy.</p><button class="button"   popovertargetaction="hide" autofocus data-action="open-squads" type="button" popovertarget="squads-preview">Close</button></section>
+  <section class="preview-dialog" id="shop-preview" popover role="dialog" aria-labelledby="shop-preview-title"><h2 id="shop-preview-title">Shop</h2><p>The shop is a preview here. Items, prices, and purchases belong to the game integration.</p><button class="button"   popovertargetaction="hide" autofocus type="button" popovertarget="shop-preview">Close</button></section>
   <section class="preview-dialog" id="video-preview" popover role="dialog" aria-labelledby="video-preview-title"><h2 id="video-preview-title">Gameplay preview</h2><p>Gameplay clips will appear here when the real videos are supplied.</p><button class="button" type="button" popovertarget="video-preview" popovertargetaction="hide" autofocus>Close</button></section>
 
   <script>
