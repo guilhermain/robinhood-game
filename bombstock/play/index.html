@@ -271,8 +271,12 @@
   .voltar:active{color:var(--amber)}
 
   /* seletor de mina: uma faixa que rola, em vez de duas fileiras de botao */
-  .faixaMinas{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;
-    scrollbar-width:none;-ms-overflow-style:none}
+  /* a faixa rola; a sombra na direita avisa que tem mais mina fora da vista */
+  .faixaMinasEnvelope{position:relative}
+  .faixaMinasEnvelope::after{content:'';position:absolute;top:0;right:0;bottom:0;width:26px;
+    pointer-events:none;background:linear-gradient(90deg, rgba(18,16,12,0), var(--ink))}
+  .faixaMinas{display:flex;gap:6px;overflow-x:auto;padding:0 20px 2px 0;
+    scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth}
   .faixaMinas::-webkit-scrollbar{display:none}
   .faixaMinas button{flex:none;display:inline-flex;align-items:center;min-height:34px;
     padding:0 11px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;
@@ -394,7 +398,7 @@
       <span class="cotacao" id="cotacaoMina"></span>
       <span class="relogioMina" id="bTempo">0m</span>
     </div>
-    <div class="faixaMinas" id="seletorMinas"></div>
+    <div class="faixaMinasEnvelope"><div class="faixaMinas" id="seletorMinas"></div></div>
     <div class="board">
       <div id="bAtivos"><span>awake</span><b>0/0</b></div>
       <div><span>coins</span><b id="bPontos">0</b></div>
@@ -1345,12 +1349,15 @@ function montarSeletorMinas(){
     const b=document.createElement('button');
     const podeComprar = m<0 && VENDA_DE_MINA && saldo>=def.preco;
     const tk=acaoDaMina(def.id).tick;
+    // so mostra o ticker quando ele nao e o proprio nome da mina
+    const selo = tk===def.curto ? '' : `<span class="precoMina">${tk}</span>`;
     b.innerHTML = m<0
       ? CADEADO_MINI+def.curto+`<span class="precoMina">${def.preco}</span>`
-      : def.curto+`<span class="precoMina">${tk}</span>`;
+      : def.curto+selo;
     b.disabled = m<0 && !podeComprar;
     b.classList.toggle('aComprar', podeComprar);
     b.setAttribute('aria-pressed', m===minaAtual);
+    if(m===minaAtual) setTimeout(()=>b.scrollIntoView({block:'nearest',inline:'nearest'}),0);
     b.onclick = m>=0 ? ()=>entrarMina(def.id) : ()=>{
       const antes=minas.length;
       comprarMina(def.id);
