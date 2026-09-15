@@ -224,16 +224,19 @@
     border-radius:2px;padding:7px 11px}
 
   /* vitrine: recorte ao vivo da mina que esta trabalhando */
+  /* A largura da vitrine sai da altura maxima e da proporcao do mapa. Se ela
+     esticasse ate a largura toda, o mapa quadrado ficaria com faixa preta dos
+     dois lados. */
   .vitrine{padding:0;border:1px solid var(--rule);border-radius:4px;
-    background:#0F0C08;overflow:hidden;cursor:pointer;display:block;width:100%;margin:0 auto}
+    background:#0F0C08;overflow:hidden;cursor:pointer;display:block;margin:0 auto;
+    width:min(100%, calc(51vh * var(--ar, 1)))}
   .vitrine:active{border-color:var(--amber)}
-  .vitQuadro{position:relative;width:100%;aspect-ratio:var(--ar, 1);max-height:51vh;
-    background:#0F0C08}
+  .vitQuadro{position:relative;width:100%;aspect-ratio:var(--ar, 1);background:#0F0C08}
   /* contain garante que nada distorce nem e cortado, mesmo se a caixa e o mapa
      nao tiverem exatamente a mesma proporcao por causa de borda e arredondamento */
   .vitrine canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
     image-rendering:pixelated;object-fit:contain}
-  .palco{aspect-ratio:var(--ar, 1);width:100%}
+  .palco{aspect-ratio:var(--ar, 1);width:min(100%, calc(74vh * var(--ar, 1)));margin:0 auto}
   .palco canvas#tela{width:100%;height:100%;display:block;object-fit:contain}
   .vitLinha{display:flex;align-items:baseline;gap:9px;padding:10px 12px;
     border-top:1px solid var(--rule);background:#171310;text-align:left}
