@@ -712,18 +712,26 @@ const totalAcordados=()=>{ guardar();
 
 /* ------------------------------------------------------------------ mapa */
 
+// Peso de cada bloco no sorteio. Quais baus nascem depende da mina: a maquina
+// ja existe no jogo, so nao entra na Green Field.
+const PESO_BLOCO={rocha:20, rocha2:16, rocha3:10, madeira:28, pedra:16, cofre:9.7, prisao:0.3};
+const BAUS_POR_MINA={verde:['madeira','pedra']};      // sem chave = os tres
+const BAUS_TODOS=['madeira','pedra','cofre'];
+let minaEmGeracao='verde';
+
 function novoBloco(){
-  const r=Math.random();
-  // Tres baus espalhados pelo mapa: quanto mais duro, mais raro.
-  const k = r<0.20 ? 'rocha'
-          : (r<0.36 ? 'rocha2'
-          : (r<0.46 ? 'rocha3'
-          : (r<0.74 ? 'madeira'
-          : (r<0.90 ? 'pedra'
-          : (r<0.997 ? 'cofre' : 'prisao')))));
+  const permitidos=BAUS_POR_MINA[minaEmGeracao]||BAUS_TODOS;
+  let total=0; const tabela=[];
+  for(const k in PESO_BLOCO){
+    if(EH_BAU(k) && permitidos.indexOf(k)<0) continue;   // bau que nao nasce aqui
+    total+=PESO_BLOCO[k]; tabela.push([k,total]);
+  }
+  const r=Math.random()*total;
+  const k=(tabela.find(t=>r<t[1])||tabela[tabela.length-1])[0];
   return {t:LIVRE, bloco:k, hp:TIPOS[k].hp, hpMax:TIPOS[k].hp};
 }
-function novaGrade(){
+function novaGrade(idMina){
+  minaEmGeracao = idMina || (minaViva && minaViva.def.id) || 'verde';
   const g=[];
   for(let y=0;y<ROWS;y++){ g[y]=[];
     for(let x=0;x<COLS;x++){
@@ -1221,7 +1229,7 @@ function comprarMina(id){
   if(!def || saldo<def.preco || minas.some(m=>m.def.id===id)) return;
   saldo-=def.preco;
   guardar();
-  const m=novaMina(def); m.grade=novaGrade();
+  const m=novaMina(def); m.grade=novaGrade(def.id);
   minas.push(m); assinaturaMinas='';
   entrarMina(id);
 }
