@@ -248,6 +248,17 @@
   .bauTrilho i{display:block;height:100%;background:var(--amber);transition:width .3s}
   .bauTrilho.cheio i{background:var(--gain)}
   #hub.tela.on{min-height:calc(100vh - 32px)}
+
+  /* rodape do menu: espaco reservado para o @ do X e o contrato do $BSTOCK */
+  .rodape{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:22px}
+  .pastilha{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 13px;
+    background:var(--panel);border:1px solid var(--rule);border-radius:3px;color:var(--mute);
+    font-family:inherit;font-size:12px;text-decoration:none;cursor:pointer;max-width:100%}
+  .pastilha:active{border-color:var(--amber);color:var(--chalk)}
+  .pastilha svg{width:14px;height:14px;flex:none}
+  .pastilha .tick{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--amber);flex:none}
+  .pastilha span:last-child{overflow-wrap:anywhere}
+  .pastilha.vazio{border-style:dashed;opacity:.72}
 </style>
 </head>
 <body>
@@ -266,12 +277,21 @@
       <rect x="12" y="25" width="4" height="4" fill="#EDE6D6" opacity=".65"/>
     </svg>
       <div class="palavra">BOMB<span>STOCK</span></div>
-      <div class="fio">Treasure Hunt</div>
     </div>
-    <p class="sub">Your heroes mine on their own. Every chest they crack becomes a
-      share of the stocks the vault buys.</p>
-    <button class="primario" style="max-width:280px" onclick="entrar()">Enter</button>
-    <p class="rede">prototype · play money · <b>Robinhood Chain 4663</b></p>
+
+    <button class="primario" style="max-width:280px;margin-top:34px" onclick="entrar()">Enter</button>
+
+    <div class="rodape">
+      <a class="pastilha" id="linkX" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor"
+          d="M17.7 3h3.3l-7.2 8.2L22 21h-6.6l-5.2-6.6L4.3 21H1l7.7-8.8L1.6 3h6.8l4.7 6.1L17.7 3zm-1.2 16h1.8L7.6 4.9H5.7L16.5 19z"/></svg>
+        <span id="textoX">@bombstock</span>
+      </a>
+      <button class="pastilha" id="linkCA" onclick="copiarCA()">
+        <span class="tick">$BSTOCK</span>
+        <span id="textoCA">contract soon</span>
+      </button>
+    </div>
   </section>
 
   <!-- ---------------------------------------------------------------- hub -->
@@ -1537,6 +1557,27 @@ refazerMapa(true);
 // aparece (S. Legendary sai 0,04% das vezes). Sai quando a economia for pra valer.
 ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))));
 document.getElementById('hubVitrine').onclick=()=>entrarMina(minas[minaAtual].def.id);
+// Espaco reservado do menu. Preencha os dois e o rodape passa a apontar para
+// o perfil e a copiar o contrato; vazios, ficam como marcacao tracejada.
+const X_HANDLE='';            // ex.: 'bombstock'
+const BSTOCK_CA='';           // endereco completo do contrato, sem abreviar
+function montarRodape(){
+  const lx=document.getElementById('linkX'), tx=document.getElementById('textoX');
+  if(X_HANDLE){ lx.href='https://x.com/'+X_HANDLE; tx.textContent='@'+X_HANDLE; lx.classList.remove('vazio'); }
+  else { lx.removeAttribute('href'); tx.textContent='@ soon'; lx.classList.add('vazio'); }
+  const lc=document.getElementById('linkCA'), tc=document.getElementById('textoCA');
+  if(BSTOCK_CA){ tc.textContent=BSTOCK_CA; lc.classList.remove('vazio'); }
+  else { tc.textContent='contract soon'; lc.classList.add('vazio'); }
+}
+function copiarCA(){
+  if(!BSTOCK_CA) return;
+  const t=document.getElementById('textoCA');
+  navigator.clipboard.writeText(BSTOCK_CA).then(()=>{
+    const antes=t.textContent; t.textContent='copied';
+    setTimeout(()=>{ t.textContent=antes; },1400);
+  }).catch(()=>{});
+}
+montarRodape();
 montarLoja(); pintar();
 requestAnimationFrame(loop);
 </script>
