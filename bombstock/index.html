@@ -482,20 +482,29 @@ const FOGO_MS=240, QUEBRA_MS=420, ABRE_MS=620;
 const CHAO_ESCURO=0.34;     // so a camada de chao; os objetos vem por cima
 // Uma folha de bau so; as versoes dificil e muito dificil saem tintas aqui,
 // uma vez, em canvas fora da tela. Pintar por cima a cada quadro seria caro.
+// Uma folha de bau so. As versoes dificil e muito dificil, e os tres estagios
+// de dano, saem daqui: copias tintas em canvas fora da tela, feitas uma vez.
+// O dano escurece o proprio bau. Antes eu desenhava a rocha rachada por cima
+// dele a 55%, o que parecia uma pedra invisivel em cima do bau.
 const BAU_TINTO={};
-function bauTinto(tipo){
-  if(BAU_TINTO[tipo]!==undefined) return BAU_TINTO[tipo];
+const SOMBRA_DANO=['', 'rgba(0,0,0,.22)', 'rgba(0,0,0,.42)'];
+function bauTinto(tipo, dano){
+  dano=dano||0;
+  const chave=tipo+':'+dano;
+  if(BAU_TINTO[chave]!==undefined) return BAU_TINTO[chave];
   const im=FOLHA.bau;
   if(!im || !im.complete || !im.naturalWidth) return null;
   const t=TIPOS[tipo] && TIPOS[tipo].tinta;
-  if(!t){ BAU_TINTO[tipo]=im; return im; }
+  const sombra=SOMBRA_DANO[dano];
+  if(!t && !sombra){ BAU_TINTO[chave]=im; return im; }
   const c=document.createElement('canvas');
   c.width=im.naturalWidth; c.height=im.naturalHeight;
   const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
   g.drawImage(im,0,0);
   g.globalCompositeOperation='source-atop';
-  g.fillStyle=t; g.fillRect(0,0,c.width,c.height);
-  BAU_TINTO[tipo]=c;
+  if(t){ g.fillStyle=t; g.fillRect(0,0,c.width,c.height); }
+  if(sombra){ g.fillStyle=sombra; g.fillRect(0,0,c.width,c.height); }
+  BAU_TINTO[chave]=c;
   return c;
 }
 
@@ -936,12 +945,13 @@ function desenhar(){
       // O bau E o bloco. Treme quando ja levou pancada, e a tinta separa
       // madeira (facil), pedra (dificil) e cofre (muito dificil).
       const f=c.hp/c.hpMax;
-      const tremer = f<1 && (Math.floor(Date.now()/300)+x+y)%5===0 ? 1 : 0;
-      const arte=bauTinto(c.bloco);
+      const dano = f<0.34 ? 2 : (f<0.7 ? 1 : 0);
+      // quanto mais machucado, mais vezes usa o quadro tremendo
+      const ritmo = dano===2 ? 2 : (dano===1 ? 3 : 5);
+      const tremer = f<1 && (Math.floor(Date.now()/300)+x+y)%ritmo===0 ? 1 : 0;
+      const arte=bauTinto(c.bloco, dano);
       if(arte) cx.drawImage(arte, tremer*BAU_W,0,BAU_W,BAU_H,
                             x*T+T/2-BAU_PX, y*T+T-2-BAU_PY, BAU_W,BAU_H);
-      if(f<0.5){ cx.globalAlpha=0.55; const [qx,qy]=rocha48(ROCHA.rachada);
-                 peca('rocha',qx,qy,R48,R48,x*T-RECUO,y*T-RECUO,R48,R48); cx.globalAlpha=1; }
       continue;
     }
     const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : (TIPOS[c.bloco].arte||0);
@@ -956,7 +966,7 @@ function desenhar(){
     if(e.bau){
       // quadros 2..5 da folha: abrindo, abrindo, aberto com luz, aberto vazio
       const q=2+Math.min(3,Math.floor(p*4));
-      const arte=bauTinto(e.tipo)||FOLHA.bau;
+      const arte=bauTinto(e.tipo,0)||FOLHA.bau;
       if(arte && (arte.complete||arte.width))
         cx.drawImage(arte, q*BAU_W,0,BAU_W,BAU_H,
                      e.x*T+T/2-BAU_PX, e.y*T+T-2-BAU_PY, BAU_W,BAU_H);
