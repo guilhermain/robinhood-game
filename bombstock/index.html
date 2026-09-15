@@ -1688,6 +1688,9 @@ refazerMapa(true);
 // Demo: um de cada personagem ja no inventario, senao a arte do topo nunca
 // aparece (S. Legendary sai 0,04% das vezes). Sai quando a economia for pra valer.
 ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))));
+// Demo: dez Elon extras para encher a mina com o topo da escala e medir o teto.
+const ELON=ELENCO[ELENCO.length-1][0];
+for(let i=0;i<10;i++) inventario.push(novoHeroi(ELENCO.length-1, ELON));
 document.getElementById('hubVitrine').onclick=()=>entrarMina(minas[minaAtual].def.id);
 // Espaco reservado do menu. Preencha os dois e o rodape passa a apontar para
 // o perfil e a copiar o contrato; vazios, ficam como marcacao tracejada.
