@@ -263,6 +263,25 @@
   .pastilha .tick{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--amber);flex:none}
   .pastilha span:last-child{overflow-wrap:anywhere}
   .pastilha.vazio{border-style:dashed;opacity:.72}
+
+  /* ficha do heroi: retrato andando + atributos com icone */
+  .heroi{grid-template-columns:4px 44px 1fr auto}
+  .andando{grid-row:1/5;width:44px;height:50px;align-self:center;image-rendering:pixelated}
+  .heroi .nome{grid-column:3}
+  .heroi .dir{grid-column:4;grid-row:1/3}
+  .atrib{grid-column:3/5;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px}
+  .atrib span{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--mute)}
+  .atrib b{color:var(--chalk);font-weight:600}
+  .ico{width:15px;height:15px;flex:none;image-rendering:pixelated;
+    background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAAgCAMAAACioYPHAAAA/1BMVEWXZBxkaGqXnZ1wTBrdnBlpIhTfYA/s7c7/2h/fd1v56GHZpFHSoZXxHhIsKhqwHhXw2pt/hIaTd1O5jSqtjVp5fYC9w8IAAAADAgHZIxgmJyoWFxf8/e3tJxuLEgvsqBoyNTdER0r5dAD9jAD4tBszBwX/6TG1NQP/2yEpFwvRGhD/3Bc1JAv4tyOxGxJICQZQNQ8+QUSECwnIRQRTVlnJjBj+xCP511X/9q6TVyxmORqPZxOqaDW6hxc6PUFIJxYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABfAD3nAAAAQHRSTlP//////////////////////////////wD/////////////////////////////////////////////////////0khfawAABO1JREFUeNrNmGl3qjoUhsPoVNue4d6GebQKBcWqWKf6///V2Qm4hJDUa++Xs13LCUge3j1kB/TylxtqfMe1fXMo3DbxaZbokBvObHsWumJAy3y0LOv7gFltRWGJAPFvhH4qmf4NQJhAkqVg7XfvviWLSCOMFVU9bTab08lTCxFgpsCVmhqpdwOaQRDI8j+StLa6U+MJMQrV+tGeejQcbsu4LMv8JAL0f5v0M+IqqBNAnQcIswGdLBFb+1Z7cvi1eErn6XxSKTeZG/BaMIRY2X7Y9vPI83LvIIhBLP8ry+IYfw/7tt0P37uAMJ4vEcC1JAXB0mo5kPINBgPdcQkUXrgOMYawUNRhz7btkaqWuSIChEkkMaC72jw8bFZdBSv9CB3Rz/cfm4AEaT7o2b3BePw0Ifo5jmEYjpM2CUG/4fbZtnsj1csBUJBFkIKWOMPfp9RYBSv5enIQrNcQh77p+6bVFFB7Gj8QbdLx2NU0l/IRQqLhFRDib/j8PMzjUkUKb3oLbt0E8y2TT7jSI2r6qgP4E26dKLgEOGpWY+rJ0zgdAOAgTY2mAeGkrWDueZ6axweuRFZQG4HknTCNojAGC6NoygCaMgUk6gHh52crS/DEcFJ9MBroAEiC70poXABxov3aDoe56oF6BbcMWcHyc7lcBkvT5BNOo9Drv4L1vbBBSAEDGUJMXvv+Vb+Gi0nQpSkjX1tBnOxGVMFY3Z0pHBtpwEflq/m6hCvge319A3t9BcJVE9CSfsgQg5+VelnSHhwUHFNAltAZXxXE59F2m6vEDocDOhxOKGtVKvAOZPDaN02W0AV7d9/1iPB99HofhDDS4S9ypAKE7IA1hLgXLjwnmAGcOwbXGgri/Wg784jFcQ5WlhsuoNkFDMNQD1fg4D7wQajbQNgHJ6/g7zCsXGz568CskhdnaM8A4olmdBAdI3W1yeU8/DgazvK4Isw94ENFy8WQIZ+S/MPnAM5ms7f+ZhrFNR8ljKPppv8Gh+osNiVYgP2ABN/5eMwYQLwwOBqm2vVGCOAJnVRKSN4RMwaJwKX/2OCzLpWMMj1QwF4F2KOAD/R7XahNaQmAS4g/TTsOSJy3CiwLSH+lbqPI4OwxSTIUExHVOEYJMwLgXfOj4rsPMPDBz76ZZMpuB4RZe/iJazhNxJSmsNYEpIbynMiXqwW7TgPfJ8N3Abzt4np80zcxThBSlKOOzkyzoF0BAc2dw7vGVjqMDwQwhlKTsIeCLt8F8HaS1ICwAIHtFUVDREOr3W1dNSTauSlxMEuRHIiL1Y2isUsJ5vBdAG+XmYaPyCz7ilCoIVHQdRechpXGYHwqON0AFvL9h0LdBsRJoSGkD5QECzU0qr6LhUgQCFieEs5SjDt8na5YvNSxLVGyR+h43O0TRkP3qqHLa5lqQMTbjuAOX/csYbPAJURHEumtrnWizelql5L85XixOGy80kMKd9OFb/KJ2y0eoQZxeGbrNfTSqSPwL2m4yBpySgTdKL7JJ2xYeYRnZYc0tl5X3b6x4LbEsKfLZx6zwnUIv+QTt/w8DZW9UnQAiYauYFcOCpan7Ksdu4VrOtE54k0Tl7DopGO14xQMjw/lr+ILPuhErKpWAKP5cue2k/OQoEgwB1D8VAMrGyFf7Viz9WHd/eijg3Lfk49E7F+La/8H8OUbgDeuuAF3L+BfY38AvQABbi4ra2YAAAAASUVORK5CYII=);
+    background-size:75px 15px;background-repeat:no-repeat}
+  .ico.power{background-position:0 0}
+  .ico.stam {background-position:-15px 0}
+  .ico.speed{background-position:-30px 0}
+  .ico.bomb {background-position:-45px 0}
+  .ico.range{background-position:-60px 0}
+  .heroi .chips{grid-column:3/5}
+  .heroi .energia{grid-column:3/5}
 </style>
 </head>
 <body>
@@ -1279,11 +1298,17 @@ function fichaHeroi(h, botao){
   const chips=h.skills.length? h.skills.map(s=>`<span class="chip">${SKILLS[s]}</span>`).join('')
                              : '<span class="chip off">no skill</span>';
   return `<span class="faixa" style="background:${h.r.cor}"></span>`+
+    `<canvas class="andando" width="32" height="36" data-id="${h.id}"></canvas>`+
     `<div class="nome">${h.p.n} <em style="font-style:normal;font-weight:400;`+
       `font-size:11px;color:${h.r.cor}">${h.r.nome}</em></div>`+
     `<div class="dir">${botao}</div>`+
-    `<div class="stats">power ${h.st.power} · stamina ${h.st.stamina} · speed ${h.st.speed} · `+
-      `${h.st.bombas} bomb${h.st.bombas>1?'s':''} · range ${h.st.alcance}</div>`+
+    `<div class="atrib">`+
+      `<span><i class="ico power"></i><b>${h.st.power}</b> power</span>`+
+      `<span><i class="ico stam"></i><b>${h.st.stamina}</b> stamina</span>`+
+      `<span><i class="ico speed"></i><b>${h.st.speed}</b> speed</span>`+
+      `<span><i class="ico bomb"></i><b>${h.st.bombas}</b> bomb${h.st.bombas>1?'s':''}</span>`+
+      `<span><i class="ico range"></i><b>${h.st.alcance}</b> range</span>`+
+    `</div>`+
     `<div class="chips">${chips}</div>`+
     `<div class="energia ${dormindo&&h.naMina?'rest':''}"><span class="trilho">`+
       `<i style="width:${f}%"></i></span><em>${est}</em></div>`;
@@ -1505,6 +1530,24 @@ addEventListener('resize',()=>{ clearTimeout(redimTimer); redimTimer=setTimeout(
 
 let bausTotais=0;
 
+// Os retratos das listas andam: um unico laco percorre os canvas visiveis e
+// desenha o quadro da vez da folha de caminhada do personagem.
+function animarFichas(){
+  const cvs=document.querySelectorAll('.andando');
+  if(!cvs.length) return;
+  const q=Math.floor(Date.now()/150)%4;
+  for(const c of cvs){
+    const h=inventario.find(x=>x.id===+c.dataset.id);
+    if(!h) continue;
+    const folha=skinDe(h);
+    if(!folha || !folha.complete || !folha.naturalWidth) continue;
+    const g=c.getContext('2d');
+    g.imageSmoothingEnabled=false;
+    g.clearRect(0,0,SW,SH);
+    g.drawImage(folha, q*SW, DIR.right*SH, SW, SH, 0, 0, SW, SH);
+  }
+}
+
 // A vitrine do menu e um recorte do proprio canvas da mina, desenhado no
 // mesmo quadro. Nao e imagem parada nem simulacao a parte: e o jogo rodando.
 const fita=document.getElementById('fita');
@@ -1549,6 +1592,7 @@ function loop(agora){
   }
   accHud+=bruto; if(accHud>=400){ accHud=0; pintar(); }
 
+  if(telaAtual==='equipe'||telaAtual==='inventario') animarFichas();
   if(telaAtual==='mina'){ desenhar(); }
   else if(telaAtual==='hub'){ desenhar(); pintarFita(); }
   requestAnimationFrame(loop);
