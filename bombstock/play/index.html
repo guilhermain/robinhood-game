@@ -310,6 +310,15 @@
   .listaAcao .tk{font-family:"Press Start 2P",monospace;font-size:10px;color:var(--amber)}
   .listaAcao .mo{color:var(--chalk)}
   .listaAcao .pr{color:var(--mute)}
+
+  .chip[data-skill]{cursor:help}
+  .chip[data-skill]:hover,.chip[data-skill]:focus-visible{border-color:var(--amber);outline:none}
+  .dica{position:fixed;z-index:60;max-width:250px;padding:9px 11px;pointer-events:none;
+    background:#241D14;border:1px solid var(--amber);border-radius:3px;color:var(--chalk);
+    font-size:12px;line-height:1.5;opacity:0;transition:opacity .14s;
+    box-shadow:0 6px 18px rgba(0,0,0,.55)}
+  .dica.on{opacity:1}
+  .dica b{display:block;color:var(--amber);font-size:11px;margin-bottom:3px}
 </style>
 </head>
 <body>
@@ -410,10 +419,7 @@
       <div id="aviso"></div>
     </div>
     
-    <details>
-      <summary>What each skill does</summary>
-      <div class="corpo"><p><b>Jail Breaker</b> +5 damage on jail blocks · <b>Pierce Block</b> the blast goes through blocks · <b>Save Battery</b> 20% chance to spend no energy · <b>Fast Charge</b> recharges faster · <b>Bomb Pass</b> walks over bombs · <b>Block Pass</b> walks through breakable blocks · <b>Treasure Hunter</b> +2 damage</p></div>
-    </details>
+    
   </section>
 
   <!-- --------------------------------------------------------------- claim -->
@@ -660,6 +666,15 @@ const DIR={up:0,left:1,down:2,right:3};
 
 const SKILLS={jail:'Jail Breaker',pierce:'Pierce Block',battery:'Save Battery',
   charge:'Fast Charge',bombpass:'Bomb Pass',blockpass:'Block Pass',hunter:'Treasure Hunter'};
+const SKILL_DESC={
+  jail:'+5 damage against jail blocks, the ones that free a hero.',
+  pierce:'The blast keeps going through blocks instead of stopping at the first.',
+  battery:'20% chance a bomb costs no energy at all.',
+  charge:'Recharges faster while resting.',
+  bombpass:'Walks over bombs instead of going around them.',
+  blockpass:'Walks through breakable blocks, cutting straight to the chest.',
+  hunter:'+2 damage on every block.',
+};
 const CHAVES=Object.keys(SKILLS);
 
 // Seis raridades da v1, com as chances reais divulgadas na época.
@@ -1508,7 +1523,8 @@ function fichaHeroi(h, botao){
   const est = !h.naMina ? (h.energia>=h.st.energiaMax?'rested':'recharging')
             : (h.estado==='dormir'?'sleeping':((h.estado==='bombardear'||h.estado==='plantando')?'planting bomb'
             :(h.estado==='fugir'?'clear of blast':'mining')));
-  const chips=h.skills.length? h.skills.map(s=>`<span class="chip">${SKILLS[s]}</span>`).join('')
+  const chips=h.skills.length? h.skills.map(s=>`<span class="chip" data-skill="${s}" tabindex="0"`+
+      ` title="${SKILL_DESC[s]}">${SKILLS[s]}</span>`).join('')
                              : '<span class="chip off">no skill</span>';
   return `<span class="faixa" style="background:${h.r.cor}"></span>`+
     `<canvas class="andando" width="32" height="36" data-id="${h.id}"></canvas>`+
@@ -1680,6 +1696,41 @@ function pintar(){
   if(telaAtual==='claim') pintarClaim();
   assinaturaLista=sig;
 }
+
+// Descritivo da skill: passa o mouse no desktop, toca no celular. Um balao so.
+const dica=document.createElement('div');
+dica.className='dica'; dica.setAttribute('role','tooltip');
+document.body.appendChild(dica);
+function mostrarDica(alvo){
+  const k=alvo.dataset.skill; if(!k) return;
+  dica.innerHTML=`<b>${SKILLS[k]}</b>${SKILL_DESC[k]}`;
+  dica.classList.add('on');
+  const r=alvo.getBoundingClientRect(), d=dica.getBoundingClientRect();
+  let x=Math.max(8, Math.min(r.left+r.width/2-d.width/2, innerWidth-d.width-8));
+  let y=r.top-d.height-8;
+  if(y<8) y=r.bottom+8;
+  dica.style.left=Math.round(x)+'px';
+  dica.style.top=Math.round(y)+'px';
+}
+// Aberta por toque, a dica fica travada por alguns segundos: no celular o
+// proprio toque dispara um mouseover fora do chip, que fechava na hora.
+const esconderDica=(forcar)=>{ if(dica._fixa && !forcar) return; dica.classList.remove('on'); };
+document.addEventListener('mouseover', e=>{
+  const c=e.target.closest && e.target.closest('.chip[data-skill]');
+  if(c){ dica._fixa=false; mostrarDica(c); } else esconderDica();
+});
+document.addEventListener('focusin', e=>{
+  const c=e.target.closest && e.target.closest('.chip[data-skill]');
+  if(c) mostrarDica(c);
+});
+document.addEventListener('focusout', ()=>esconderDica());
+addEventListener('scroll', ()=>{ dica._fixa=false; esconderDica(true); }, true);
+document.addEventListener('click', e=>{
+  const c=e.target.closest && e.target.closest('.chip[data-skill]');
+  if(c){ mostrarDica(c); dica._fixa=true; clearTimeout(dica._t);
+         dica._t=setTimeout(()=>{ dica._fixa=false; esconderDica(true); },3500); }
+  else { dica._fixa=false; esconderDica(true); }
+});
 
 let avisoTimer=null;
 function avisar(t){
