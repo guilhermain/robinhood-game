@@ -668,6 +668,10 @@ const RARIDADES=[
 // Como no Bombcrypto: o que o heroi quebra E o bau. Rocha e obstaculo, nao
 // premio. Quebrou o bau, paga na hora — nao existe item caido no chao.
 const TIPOS={
+  // DIVERGENCIA CONSCIENTE do Bombcrypto: la a tabela de recompensa lista so
+  // baus e prisao, e nao ha registro de bloco sem premio. A rocha e nossa, e
+  // existe para dar obstaculo ao mapa — sem ela o alcance da bomba nao importa,
+  // porque nao ha nada para contornar. Decidido em 15/09; nao "corrigir".
   rocha:  {hp:60,  bau:false, arte:0},   // fraca
   rocha2: {hp:140, bau:false, arte:1},   // media
   rocha3: {hp:300, bau:false, arte:2},   // forte
