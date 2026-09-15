@@ -279,13 +279,13 @@
     scrollbar-width:none;-ms-overflow-style:none;scroll-behavior:smooth}
   .faixaMinas::-webkit-scrollbar{display:none}
   .faixaMinas button{flex:none;display:inline-flex;align-items:center;min-height:34px;
-    padding:0 11px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+    padding:0 9px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;
     color:var(--mute);font-family:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
   .faixaMinas button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#2A2117}
   /* mina a venda: preco visivel no proprio chip */
   .faixaMinas button.aComprar{color:var(--chalk);border-style:dashed}
-  .precoMina{margin-left:7px;padding:1px 6px;border-radius:2px;background:#2E2513;
-    color:var(--amber);font-family:"Press Start 2P",monospace;font-size:9px}
+  .precoMina{margin-left:6px;padding:1px 5px;border-radius:2px;background:#2E2513;
+    color:var(--amber);font-family:"Press Start 2P",monospace;font-size:8px}
   .faixaMinas button:disabled .precoMina{background:#241E17;color:var(--mute)}
   .faixaMinas button:disabled{opacity:.5}
   /* o painel da mina encosta no mapa: uma peca so */
@@ -1351,9 +1351,8 @@ function montarSeletorMinas(){
     const tk=acaoDaMina(def.id).tick;
     // so mostra o ticker quando ele nao e o proprio nome da mina
     const selo = tk===def.curto ? '' : `<span class="precoMina">${tk}</span>`;
-    b.innerHTML = m<0
-      ? CADEADO_MINI+def.curto+`<span class="precoMina">${def.preco}</span>`
-      : def.curto+selo;
+    // travada mostra o preco; o cadeado sai porque a borda tracejada ja diz
+    b.innerHTML = m<0 ? def.curto+`<span class="precoMina">${def.preco}</span>` : def.curto+selo;
     b.disabled = m<0 && !podeComprar;
     b.classList.toggle('aComprar', podeComprar);
     b.setAttribute('aria-pressed', m===minaAtual);
