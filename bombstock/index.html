@@ -446,7 +446,24 @@ const BAU_W=48, BAU_H=64, BAU_PX=24, BAU_PY=62;
 // fogo: 3 linhas de 32 px, 4 instantes. linha 0 centro, 1 braco, 2 ponta
 const FOGO_MS=240, QUEBRA_MS=420;
 const CHAO_ESCURO=0.34;     // so a camada de chao; os objetos vem por cima
-const BLOCO_ART={madeira:ROCHA.fraca, pedra:ROCHA.media, cofre:ROCHA.forte, prisao:null};
+// Uma folha de bau so; as versoes dificil e muito dificil saem tintas aqui,
+// uma vez, em canvas fora da tela. Pintar por cima a cada quadro seria caro.
+const BAU_TINTO={};
+function bauTinto(tipo){
+  if(BAU_TINTO[tipo]!==undefined) return BAU_TINTO[tipo];
+  const im=FOLHA.bau;
+  if(!im || !im.complete || !im.naturalWidth) return null;
+  const t=TIPOS[tipo] && TIPOS[tipo].tinta;
+  if(!t){ BAU_TINTO[tipo]=im; return im; }
+  const c=document.createElement('canvas');
+  c.width=im.naturalWidth; c.height=im.naturalHeight;
+  const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
+  g.drawImage(im,0,0);
+  g.globalCompositeOperation='source-atop';
+  g.fillStyle=t; g.fillRect(0,0,c.width,c.height);
+  BAU_TINTO[tipo]=c;
+  return c;
+}
 
 /* ------------------------------------------------------------- as minas
    Comprar mina e comprar vaga: cada uma segura ate 10 herois e roda sozinha,
@@ -529,12 +546,16 @@ const RARIDADES=[
 ];
 
 // Baú de madeira = 80, documentado. Os outros são escala nossa.
+// Como no Bombcrypto: o que o heroi quebra E o bau. Rocha e obstaculo, nao
+// premio. Quebrou o bau, paga na hora — nao existe item caido no chao.
 const TIPOS={
-  madeira:{hp:80, cor:'#5C4A34', tampo:'#4A3B2A'},
-  pedra:  {hp:200,cor:'#4A4A55', tampo:'#3A3A47'},
-  cofre:  {hp:400,cor:'#7A5A20', tampo:'#5E4518'},
-  prisao: {hp:600,cor:'#2E5C8F', tampo:'#22456B'},
+  rocha:  {hp:120, bau:false},
+  madeira:{hp:80,  bau:true, tinta:null},                  // facil
+  pedra:  {hp:240, bau:true, tinta:'rgba(120,140,170,.55)'},// dificil
+  cofre:  {hp:520, bau:true, tinta:'rgba(230,180,70,.50)'}, // muito dificil
+  prisao: {hp:600, bau:false},
 };
+const EH_BAU=k=>!!(TIPOS[k]&&TIPOS[k].bau);
 const REGEN_MS=120000;   // 0,5 energia por minuto
 // Divisor global de passo. Medido: mexer nele nao muda quantos baus saem (o
 // heroi e limitado por energia, nao por tempo), so o ritmo na tela.
@@ -573,7 +594,10 @@ const totalAcordados=()=>{ guardar();
 
 function novoBloco(){
   const r=Math.random();
-  const k = r<0.60?'madeira':(r<0.925?'pedra':(r<0.997?'cofre':'prisao'));
+  const k = r<0.46 ? 'rocha'
+          : (r<0.79 ? 'madeira'
+          : (r<0.95 ? 'pedra'
+          : (r<0.997 ? 'cofre' : 'prisao')));
   return {t:LIVRE, bloco:k, hp:TIPOS[k].hp, hpMax:TIPOS[k].hp};
 }
 function novaGrade(){
@@ -614,6 +638,7 @@ function caminho(h,serve){
   return null;
 }
 const vizinhoDeBloco=(x,y)=>VIZ.some(([dx,dy])=>bloco(x+dx,y+dy));
+const vizinhoDeBau=(x,y)=>VIZ.some(([dx,dy])=>{const c=grade[y+dy]&&grade[y+dy][x+dx]; return c&&c.bloco&&EH_BAU(c.bloco);});
 function seguro(x,y){
   for(const b of bombas){
     if(b.x===x&&b.y===y) return false;
@@ -666,7 +691,9 @@ function pensar(h,dt){
       if(h.energia>=h.st.energiaMax*0.35) h.estado='procurar';
       break;
     case 'procurar': {
-      let p = baus.length ? caminho(h,(x,y)=>baus.some(b=>b.x===x&&b.y===y)) : null;
+      // Caca bau primeiro; rocha so quando nao ha bau alcancavel.
+      if(vizinhoDeBau(h.gx,h.gy) && seguro(h.gx,h.gy)){ h.estado='bombardear'; break; }
+      let p=caminho(h,vizinhoDeBau);
       if(p){ h.path=p; h.estado='andar'; h.destino='bau'; break; }
       if(vizinhoDeBloco(h.gx,h.gy) && seguro(h.gx,h.gy)){ h.estado='bombardear'; break; }
       p=caminho(h,vizinhoDeBloco);
@@ -718,9 +745,6 @@ function andar(h,dt){
   h.py += Math.sign(ty-h.py)*Math.min(passo,Math.abs(ty-h.py));
   if(h.px===tx && h.py===ty){
     h.gx=alvo.x; h.gy=alvo.y; h.path.shift();
-    const i=baus.findIndex(b=>b.x===h.gx&&b.y===h.gy);
-    if(i>=0){ baus.splice(i,1); bausTotais++; bausCofre++; h.achados++;    // baú paga igual para todos
-              if(minaViva) minaViva.achados++; }
     if(!h.path.length) h.estado=h.destino==='fuga'?'esperar':'procurar';
   }
 }
@@ -749,23 +773,31 @@ function danificar(x,y,h){
   cel.hp -= danoDe(h,tipo);
   if(cel.hp>0) return;
   grade[y][x]={t:LIVRE};
-  efeitos.push({x,y,vida:QUEBRA_MS,jaula:tipo==='prisao'});   // cacos, poeira ou jaula aberta
-  if(tipo==='prisao') contratar(true); else baus.push({x,y});
+  efeitos.push({x,y,vida:QUEBRA_MS,jaula:tipo==='prisao',bau:EH_BAU(tipo)});
+  if(tipo==='prisao'){ contratar(true); return; }
+  if(EH_BAU(tipo)){
+    bausTotais++; bausCofre++; h.achados++;
+    if(minaViva) minaViva.achados++;
+  }
 }
+// O original limpa o mapa e traz outro. Bloco brotando do nada ao lado do
+// heroi ficava estranho, e sem reposicao nenhuma o mapa vira o gargalo.
+const LIMPO_BPS=0.10;      // abaixo de 10% de blocos, o mapa se refaz
 function repovoar(){
-  const vazias=[]; let ocup=0, uteis=0;
+  let blocos=0, uteis=0;
   for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++){
     const c=grade[y][x];
     if(c.t===PAREDE) continue;
-    uteis++;
-    if(c.bloco){ ocup++; continue; }
-    if(!ativos.some(h=>h.gx===x&&h.gy===y)&&!baus.some(b=>b.x===x&&b.y===y)&&!bomba(x,y)) vazias.push([x,y]);
+    uteis++; if(c.bloco) blocos++;
   }
-  let faltam=Math.min(Math.floor(uteis*0.52)-ocup, 6);
-  while(faltam-- > 0 && vazias.length){
-    const [x,y]=vazias.splice(Math.floor(Math.random()*vazias.length),1)[0];
-    grade[y][x]=novoBloco();
-  }
+  if(uteis===0 || blocos/uteis > LIMPO_BPS) return;
+  const nova=novaGrade();
+  // ninguem nasce dentro de bloco: limpa a celula de quem esta em campo
+  for(const hh of ativos) if(nova[hh.gy] && nova[hh.gy][hh.gx].bloco) nova[hh.gy][hh.gx]={t:LIVRE};
+  for(const b of bombas) if(nova[b.y] && nova[b.y][b.x].bloco) nova[b.y][b.x]={t:LIVRE};
+  grade=nova;
+  if(minaViva) minaViva.grade=nova;
+  avisar('Mine cleared \u2014 new ground');
 }
 
 /* --------------------------------------------------------------- desenho */
@@ -810,9 +842,21 @@ function desenhar(){
       peca(JAULA, q*R48, 0, R48,R48, x*T-RECUO, y*T-RECUO, R48,R48);
       continue;
     }
-    const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : BLOCO_ART[c.bloco];
-    const [sx,sy]=rocha48(i);
     if(sombra){ cx.fillStyle='rgba(0,0,0,.30)'; cx.fillRect(x*T+4,y*T+T-2,T-4,4); }
+    if(EH_BAU(c.bloco)){
+      // O bau E o bloco. Treme quando ja levou pancada, e a tinta separa
+      // madeira (facil), pedra (dificil) e cofre (muito dificil).
+      const f=c.hp/c.hpMax;
+      const tremer = f<1 && (Math.floor(Date.now()/300)+x+y)%5===0 ? 1 : 0;
+      const arte=bauTinto(c.bloco);
+      if(arte) cx.drawImage(arte, tremer*BAU_W,0,BAU_W,BAU_H,
+                            x*T+T/2-BAU_PX, y*T+T-2-BAU_PY, BAU_W,BAU_H);
+      if(f<0.5){ cx.globalAlpha=0.55; const [qx,qy]=rocha48(ROCHA.rachada);
+                 peca('rocha',qx,qy,R48,R48,x*T-RECUO,y*T-RECUO,R48,R48); cx.globalAlpha=1; }
+      continue;
+    }
+    const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : ROCHA.media;
+    const [sx,sy]=rocha48(i);
     peca('rocha',sx,sy,R48,R48,x*T-RECUO,y*T-RECUO,R48,R48);
   }
 
@@ -820,15 +864,11 @@ function desenhar(){
   for(const e of efeitos){
     const p=1-e.vida/QUEBRA_MS;
     if(e.jaula){ peca(JAULA, 3*R48,0,R48,R48, e.x*T-RECUO, e.y*T-RECUO, R48,R48); continue; }
-    const i=[ROCHA.quebra1,ROCHA.quebra2,ROCHA.quebra3,ROCHA.poeira][Math.min(3,Math.floor(p*4))];
+    const i=[ROCHA.quebra1,ROCHA.quebra2,ROCHA.quebra3,ROCHA.poeira][Math.min(3,Math.floor(p*(e.bau?5:4)))];
     const [sx,sy]=rocha48(i);
     peca('rocha',sx,sy,R48,R48,e.x*T-RECUO,e.y*T-RECUO,R48,R48);
   }
 
-  for(const b of baus){
-    const tremer = (Math.floor(Date.now()/420)+b.x+b.y)%7===0 ? 1 : 0;
-    peca('bau',tremer*BAU_W,0,BAU_W,BAU_H,b.x*T+T/2-BAU_PX, b.y*T+T-2-BAU_PY, BAU_W,BAU_H);
-  }
 
   for(const b of bombas){
     const p=1-b.fuse/1800;
