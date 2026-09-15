@@ -158,7 +158,7 @@
 
   /* --------------------------------------------------------------- mina */
   .board{background:linear-gradient(#221D16,#191510);border:1px solid var(--rule);
-    display:grid;grid-template-columns:repeat(3,1fr)}
+    display:grid;grid-template-columns:repeat(4,1fr)}
   .board div{padding:10px 4px;border-right:1px solid var(--rule);
     display:flex;flex-direction:column;gap:6px;align-items:center}
   .board div:last-child{border-right:0}
@@ -243,6 +243,7 @@
   .vitNome{font-size:13px;font-weight:600;color:var(--chalk)}
   .vitVivo{font-size:11px;color:var(--mute);flex:1}
   .vitTaxa{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--gain)}
+  .vitLimpas{font-size:11px;color:var(--mute);white-space:nowrap}
 
   .bauTopo{display:flex;align-items:baseline;gap:9px}
   .bau .n{font-family:"Press Start 2P",monospace;font-size:19px;color:var(--amber);line-height:1}
@@ -331,6 +332,7 @@
         <span class="vitNome" id="vitNome">Green Field</span>
         <span class="vitVivo" id="vitVivo">0 of 0 working</span>
         <span class="vitTaxa" id="vitTaxa">—</span>
+        <span class="vitLimpas" id="vitLimpas">0 cleared</span>
       </div>
     </button>
 
@@ -419,6 +421,7 @@
       <div id="bAtivos"><span>awake</span><b>0/0</b></div>
       <div><span>coins</span><b id="bPontos">0</b></div>
       <div><span>coins per hour</span><b id="bTaxa">—</b></div>
+      <div><span>cleared</span><b id="bLimpas">0</b></div>
     </div>
     <div class="palco">
       <canvas id="tela"></canvas>
@@ -952,7 +955,23 @@ function danificar(x,y,h){
 // O original limpa o mapa e traz outro. Bloco brotando do nada ao lado do
 // heroi ficava estranho, e sem reposicao nenhuma o mapa vira o gargalo.
 const LIMPO_BPS=0.10;      // abaixo de 10% de blocos, o mapa se refaz
+// Mapa limpo: em vez de trocar o chao no meio da tela, abre uma cortina, faz
+// a troca escondida na metade dela e volta. Assim o jogador ve que terminou
+// uma rodada em vez de os blocos aparecerem do nada.
+const TRANSICAO_MS=1900;
+let minasLimpas=0;
+
+function trocarChao(){
+  const nova=novaGrade();
+  for(const hh of ativos) if(nova[hh.gy] && nova[hh.gy][hh.gx].bloco) nova[hh.gy][hh.gx]={t:LIVRE};
+  for(const b of bombas) if(nova[b.y] && nova[b.y][b.x].bloco) nova[b.y][b.x]={t:LIVRE};
+  grade=nova;
+  if(minaViva) minaViva.grade=nova;
+  efeitos.length=0; chamas.length=0;
+}
+
 function repovoar(){
+  if(!minaViva || minaViva.limpando) return;
   let blocos=0, uteis=0;
   for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++){
     const c=grade[y][x];
@@ -960,13 +979,21 @@ function repovoar(){
     uteis++; if(c.bloco) blocos++;
   }
   if(uteis===0 || blocos/uteis > LIMPO_BPS) return;
-  const nova=novaGrade();
-  // ninguem nasce dentro de bloco: limpa a celula de quem esta em campo
-  for(const hh of ativos) if(nova[hh.gy] && nova[hh.gy][hh.gx].bloco) nova[hh.gy][hh.gx]={t:LIVRE};
-  for(const b of bombas) if(nova[b.y] && nova[b.y][b.x].bloco) nova[b.y][b.x]={t:LIVRE};
-  grade=nova;
-  if(minaViva) minaViva.grade=nova;
-  avisar('Mine cleared \u2014 new ground');
+  minaViva.limpando=TRANSICAO_MS;
+  minaViva.trocou=false;
+}
+
+function passarTransicao(dt){
+  const m=minaViva;
+  if(!m || !m.limpando) return;
+  m.limpando-=dt;
+  if(!m.trocou && m.limpando<=TRANSICAO_MS/2){
+    m.trocou=true;
+    m.limpas=(m.limpas||0)+1;
+    minasLimpas++;
+    trocarChao();
+  }
+  if(m.limpando<=0){ m.limpando=0; m.trocou=false; }
 }
 
 /* --------------------------------------------------------------- desenho */
@@ -1069,6 +1096,32 @@ function desenhar(){
     }
   }
 
+  desenharHerois();
+  desenharCortina();
+}
+
+function desenharCortina(){
+  const m=minaViva;
+  if(!m || !m.limpando) return;
+  const p=1-m.limpando/TRANSICAO_MS;                 // 0 no inicio, 1 no fim
+  const a=p<0.5 ? p*2 : (1-p)*2;                     // fecha e abre
+  cx.fillStyle=`rgba(8,6,4,${(a*0.94).toFixed(3)})`;
+  cx.fillRect(0,0,cv.width,cv.height);
+  if(a>0.45){
+    const t=Math.min(1,(a-0.45)/0.3);
+    cx.save();
+    cx.textAlign='center';
+    cx.fillStyle=`rgba(232,163,61,${t.toFixed(2)})`;
+    cx.font='16px "Press Start 2P", monospace';
+    cx.fillText('MINE CLEARED', cv.width/2, cv.height/2-6);
+    cx.fillStyle=`rgba(237,230,214,${(t*0.8).toFixed(2)})`;
+    cx.font='10px "IBM Plex Sans", sans-serif';
+    cx.fillText('run '+((m.limpas||0)+ (m.trocou?0:1)), cv.width/2, cv.height/2+18);
+    cx.restore();
+  }
+}
+
+function desenharHerois(){
   for(const h of ativos){
     const dormindo = h.estado==='dormir';
     const plantando = h.estado==='plantando';
@@ -1477,10 +1530,13 @@ function pintar(){
   document.getElementById('vitVivo').textContent =
     emMina ? `${acordados} of ${emMina} working` : 'nobody working';
   document.getElementById('vitTaxa').textContent = horas>0.02 ? (bausTotais/horas).toFixed(1)+'/h' : '—';
+  document.getElementById('vitLimpas').textContent =
+    minasLimpas===1 ? '1 cleared' : minasLimpas+' cleared';
 
   document.getElementById('minaTitulo').textContent=vista.def.nome;
   document.getElementById('bPontos').textContent=Math.floor(vista.achados);
   document.getElementById('bTaxa').textContent = horas>0.02 ? (vista.achados/horas).toFixed(1) : '—';
+  document.getElementById('bLimpas').textContent = vista.limpas||0;
   document.getElementById('bTempo').textContent = horas<1 ? Math.round(horas*60)+'m' : horas.toFixed(1)+'h';
   document.getElementById('bAtivos').querySelector('b').textContent=vistaAcordados+'/'+vista.ativos.length;
   document.getElementById('minaEquipe').textContent=vista.ativos.length+' in the mine';
@@ -1608,6 +1664,7 @@ function loop(agora){
     for(let i=chamas.length-1;i>=0;i--){ chamas[i].vida-=dt; if(chamas[i].vida<=0) chamas.splice(i,1); }
     for(let i=efeitos.length-1;i>=0;i--){ efeitos[i].vida-=dt; if(efeitos[i].vida<=0) efeitos.splice(i,1); }
     if(repor) repovoar();
+    passarTransicao(dt);
   }
   guardar();
   // quem está fora de qualquer mina também recarrega
