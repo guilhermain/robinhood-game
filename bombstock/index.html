@@ -29,7 +29,7 @@
     font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:14px;
     -webkit-user-select:none;user-select:none;touch-action:manipulation;
   }
-  .app{max-width:600px;margin:0 auto;padding:12px 12px calc(20px + env(safe-area-inset-bottom));
+  .app{max-width:800px;margin:0 auto;padding:12px 12px calc(20px + env(safe-area-inset-bottom));
     display:flex;flex-direction:column;gap:12px;min-height:100vh}
   .tela{display:none;flex-direction:column;gap:12px}
   .tela.on{display:flex}
@@ -250,7 +250,8 @@
   .bauTrilho{height:6px;background:#241E17;border:1px solid var(--rule);margin:9px 0 7px;overflow:hidden}
   .bauTrilho i{display:block;height:100%;background:var(--amber);transition:width .3s}
   .bauTrilho.cheio i{background:var(--gain)}
-  #hub.tela.on{min-height:calc(100vh - 32px)}
+  /* sobrando espaco, o conjunto fica centrado em vez de empurrado pro topo */
+  #hub.tela.on{min-height:calc(100vh - 32px);justify-content:center}
 
   /* rodape do menu: espaco reservado para o @ do X e o contrato do $BSTOCK */
   .rodape{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:22px}
@@ -456,7 +457,8 @@ let COLS=19, ROWS=13;
 // Mapa de tamanho fixo. Antes a grade nascia do tamanho da tela, e qualquer
 // zoom mudava a grade e refazia o cenario. Agora o mapa e sempre o mesmo e a
 // tela so muda a escala de exibicao. Impar para a fileira de pilares fechar.
-const MAPA_COLS=15, MAPA_ROWS=15;
+const MAPA_COLS=19, MAPA_ROWS=13;
+let DENSIDADE=0.40;   // fracao das celulas livres que nasce com bloco
 function medirMapa(){ return [MAPA_COLS, MAPA_ROWS]; }
 const cv=document.getElementById('tela'), cx=cv.getContext('2d');
 cx.imageSmoothingEnabled=false;
@@ -698,7 +700,7 @@ function novaGrade(){
     }
   }
   for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++)
-    if(g[y][x].t===LIVRE && Math.random()<0.52) g[y][x]=novoBloco();
+    if(g[y][x].t===LIVRE && Math.random()<DENSIDADE) g[y][x]=novoBloco();
 
   // Todo bau precisa de pelo menos um lado livre. Sem isto quase metade deles
   // nascia emparedada por rochas: parecia bau dentro da pedra e o heroi
