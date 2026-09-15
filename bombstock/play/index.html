@@ -1355,6 +1355,7 @@ function montarSeletorMinas(){
     b.innerHTML = m<0 ? def.curto+`<span class="precoMina">${def.preco}</span>` : def.curto+selo;
     b.disabled = m<0 && !podeComprar;
     b.classList.toggle('aComprar', podeComprar);
+    b.dataset.mina=def.id;                 // alvo estavel para teste
     b.setAttribute('aria-pressed', m===minaAtual);
     if(m===minaAtual) setTimeout(()=>b.scrollIntoView({block:'nearest',inline:'nearest'}),0);
     b.onclick = m>=0 ? ()=>entrarMina(def.id) : ()=>{
