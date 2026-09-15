@@ -444,7 +444,7 @@ const rocha48=i=>[(i%4)*R48,Math.floor(i/4)*R48];
 // bau: celula 48x64, pivo (24,62) no ponto de contato
 const BAU_W=48, BAU_H=64, BAU_PX=24, BAU_PY=62;
 // fogo: 3 linhas de 32 px, 4 instantes. linha 0 centro, 1 braco, 2 ponta
-const FOGO_MS=240, QUEBRA_MS=420;
+const FOGO_MS=240, QUEBRA_MS=420, ABRE_MS=620;
 const CHAO_ESCURO=0.34;     // so a camada de chao; os objetos vem por cima
 // Uma folha de bau so; as versoes dificil e muito dificil saem tintas aqui,
 // uma vez, em canvas fora da tela. Pintar por cima a cada quadro seria caro.
@@ -549,7 +549,9 @@ const RARIDADES=[
 // Como no Bombcrypto: o que o heroi quebra E o bau. Rocha e obstaculo, nao
 // premio. Quebrou o bau, paga na hora — nao existe item caido no chao.
 const TIPOS={
-  rocha:  {hp:120, bau:false},
+  rocha:  {hp:60,  bau:false, arte:0},   // fraca
+  rocha2: {hp:140, bau:false, arte:1},   // media
+  rocha3: {hp:300, bau:false, arte:2},   // forte
   madeira:{hp:80,  bau:true, tinta:null},                  // facil
   pedra:  {hp:240, bau:true, tinta:'rgba(120,140,170,.55)'},// dificil
   cofre:  {hp:520, bau:true, tinta:'rgba(230,180,70,.50)'}, // muito dificil
@@ -594,10 +596,12 @@ const totalAcordados=()=>{ guardar();
 
 function novoBloco(){
   const r=Math.random();
-  const k = r<0.46 ? 'rocha'
+  const k = r<0.20 ? 'rocha'
+          : (r<0.36 ? 'rocha2'
+          : (r<0.46 ? 'rocha3'
           : (r<0.79 ? 'madeira'
           : (r<0.95 ? 'pedra'
-          : (r<0.997 ? 'cofre' : 'prisao')));
+          : (r<0.997 ? 'cofre' : 'prisao')))));
   return {t:LIVRE, bloco:k, hp:TIPOS[k].hp, hpMax:TIPOS[k].hp};
 }
 function novaGrade(){
@@ -773,7 +777,8 @@ function danificar(x,y,h){
   cel.hp -= danoDe(h,tipo);
   if(cel.hp>0) return;
   grade[y][x]={t:LIVRE};
-  efeitos.push({x,y,vida:QUEBRA_MS,jaula:tipo==='prisao',bau:EH_BAU(tipo)});
+  efeitos.push({x,y,vida:EH_BAU(tipo)?ABRE_MS:QUEBRA_MS,
+                jaula:tipo==='prisao', bau:EH_BAU(tipo), tipo});
   if(tipo==='prisao'){ contratar(true); return; }
   if(EH_BAU(tipo)){
     bausTotais++; bausCofre++; h.achados++;
@@ -855,15 +860,24 @@ function desenhar(){
                  peca('rocha',qx,qy,R48,R48,x*T-RECUO,y*T-RECUO,R48,R48); cx.globalAlpha=1; }
       continue;
     }
-    const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : ROCHA.media;
+    const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : (TIPOS[c.bloco].arte||0);
     const [sx,sy]=rocha48(i);
     peca('rocha',sx,sy,R48,R48,x*T-RECUO,y*T-RECUO,R48,R48);
   }
 
   // o que acabou de cair: cacos e poeira, ou a jaula aberta
   for(const e of efeitos){
-    const p=1-e.vida/QUEBRA_MS;
+    const p=1-e.vida/(e.bau?ABRE_MS:QUEBRA_MS);
     if(e.jaula){ peca(JAULA, 3*R48,0,R48,R48, e.x*T-RECUO, e.y*T-RECUO, R48,R48); continue; }
+    if(e.bau){
+      // quadros 2..5 da folha: abrindo, abrindo, aberto com luz, aberto vazio
+      const q=2+Math.min(3,Math.floor(p*4));
+      const arte=bauTinto(e.tipo)||FOLHA.bau;
+      if(arte && (arte.complete||arte.width))
+        cx.drawImage(arte, q*BAU_W,0,BAU_W,BAU_H,
+                     e.x*T+T/2-BAU_PX, e.y*T+T-2-BAU_PY, BAU_W,BAU_H);
+      continue;
+    }
     const i=[ROCHA.quebra1,ROCHA.quebra2,ROCHA.quebra3,ROCHA.poeira][Math.min(3,Math.floor(p*(e.bau?5:4)))];
     const [sx,sy]=rocha48(i);
     peca('rocha',sx,sy,R48,R48,e.x*T-RECUO,e.y*T-RECUO,R48,R48);
