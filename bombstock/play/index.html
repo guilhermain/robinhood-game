@@ -1208,23 +1208,28 @@ function desenharHerois(){
    porque o estado ainda vive no navegador e seria drenavel pelo console.
    Pagamento de verdade depende do servidor autoritativo. */
 
+// TESTNET enquanto o jogo nao tiver servidor. As acoes aqui sao ERC-20 de
+// mentira que nos mesmos deployamos, com torneira aberta. Trocar para a mainnet
+// 4663 so depois do servidor autoritativo existir.
 const CHAIN={
-  id:'0x1237',                                   // 4663
-  nome:'Robinhood Chain',
-  rpc:'https://rpc.mainnet.chain.robinhood.com',
-  explorer:'https://robinhoodchain.blockscout.com',
+  id:'0xb626',                                   // 46630
+  nome:'Robinhood Chain Testnet',
+  rpc:'https://rpc.testnet.chain.robinhood.com',
+  explorer:'https://explorer.testnet.chain.robinhood.com',
   moeda:{name:'Ether', symbol:'ETH', decimals:18},
 };
+const BSTOCK_ADDR='0x96E24ea635d9aD490C37081Ff4B3bF4dFBBF3463';
+const VAULT_ADDR ='0x62eea8D4bBbC92b08333695Fce6580df21B9dD04';
 
 // Cada mina paga na acao dela. A gratuita paga em dolar tokenizado.
 const ACAO={
-  verde:{tick:'USDG', addr:'0x5fc5360d0400a0fd4f2af552add042d716f1d168'},
-  NVDA: {tick:'NVDA', addr:'0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec'},
-  GME:  {tick:'GME',  addr:'0x1b0e319c6a659f002271b69db8a7df2f911c153e'},
-  AMZN: {tick:'AMZN', addr:'0x12f190a9f9d7d37a250758b26824b97ce941bf54'},
-  MSTR: {tick:'MSTR', addr:'0xec262a75e413fafd0df80480274532c79d42da09'},
-  META: {tick:'META', addr:'0xc0d6457c16cc70d6790dd43521c899c87ce02f35'},
-  SPCX: {tick:'SPCX', addr:'0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea'},
+  verde:{tick:'USDG', addr:'0x19cE998F1d1b0Bb0A85657a08003503E7374213b'},
+  NVDA: {tick:'NVDA', addr:'0xDC45135193Cb5D39cEB11Fa1A7ACA94EEF354c29'},
+  GME:  {tick:'GME',  addr:'0x845600899De5fA4CEf16d8CEAbeb30A5fc780EDB'},
+  AMZN: {tick:'AMZN', addr:'0x7BdBb4C9a3481bb6171D90FAB1f836C721A65151'},
+  MSTR: {tick:'MSTR', addr:'0x09939e5aE89c0e22381258F7A63165aeE738Da8d'},
+  META: {tick:'META', addr:'0x0517b9166aDdF1A0c5E9499CCF092b27e3F490DB'},
+  SPCX: {tick:'SPCX', addr:'0xeF77540f7cCC487c28C67811F3A45E1D1c2fc020'},
 };
 const acaoDaMina=id=>ACAO[id]||ACAO.verde;
 
@@ -1282,25 +1287,33 @@ async function garantirRede(){
   pintar();
 }
 
+// Os precos continuam vindo da MAINNET: o token de testnet nao tem mercado, e
+// o que interessa e a cotacao real da acao. Lista separada, de proposito.
+const ACAO_MAINNET={USDG:'0x5fc5360d0400a0fd4f2af552add042d716f1d168',
+  NVDA:'0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec', GME:'0x1b0e319c6a659f002271b69db8a7df2f911c153e',
+  AMZN:'0x12f190a9f9d7d37a250758b26824b97ce941bf54', MSTR:'0xec262a75e413fafd0df80480274532c79d42da09',
+  META:'0xc0d6457c16cc70d6790dd43521c899c87ce02f35', SPCX:'0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea'};
 async function buscarPrecos(){
-  const addrs=[...new Set(Object.values(ACAO).map(a=>a.addr))].join(',');
+  const addrs=Object.values(ACAO_MAINNET).join(',');
   const r=await fetch(`https://api.geckoterminal.com/api/v2/simple/networks/robinhood/token_price/${addrs}`);
   const j=await r.json();
   const mapa=j.data.attributes.token_prices;
-  for(const k in ACAO){ const p=mapa[ACAO[k].addr.toLowerCase()]; if(p) precos[ACAO[k].tick]=parseFloat(p); }
+  for(const t in ACAO_MAINNET){ const p=mapa[ACAO_MAINNET[t].toLowerCase()]; if(p) precos[t]=parseFloat(p); }
   ultimoPreco=Date.now();
 }
 
 async function buscarSaldos(){
   if(!carteira) return;
   const alvo=carteira.slice(2).padStart(64,'0');
-  for(const k in ACAO){
-    try{
-      const res=await rpc('eth_call',[{to:ACAO[k].addr, data:'0x70a08231'+alvo},'latest']);
-      saldosAcao[ACAO[k].tick]=Number(BigInt(res))/1e18;   // stock token usa 18 casas
-    }catch(e){}
-  }
+  const ler=async(addr)=>{
+    const res=await rpc('eth_call',[{to:addr, data:'0x70a08231'+alvo},'latest']);
+    return Number(BigInt(res))/1e18;
+  };
+  for(const k in ACAO){ try{ saldosAcao[ACAO[k].tick]=await ler(ACAO[k].addr); }catch(e){} }
+  try{ saldosAcao.BSTOCK=await ler(BSTOCK_ADDR); }catch(e){}
+  try{ saldoVault=await ler(ACAO.NVDA.addr).then(()=>0); }catch(e){}
 }
+let saldoVault=0;
 
 async function atualizarCripto(){
   try{ await buscarPrecos(); }catch(e){}

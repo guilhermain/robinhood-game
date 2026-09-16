@@ -27,7 +27,10 @@ def compilar():
 def enviar(w, conta, tx):
     tx['nonce']=w.eth.get_transaction_count(conta.address)
     tx['chainId']=w.eth.chain_id
-    tx.setdefault('gasPrice', w.eth.gas_price)
+    # build_transaction ja escolhe o modelo de taxa; misturar gasPrice com
+    # maxFeePerGas faz a assinatura quebrar
+    if 'maxFeePerGas' not in tx and 'gasPrice' not in tx:
+        tx['gasPrice']=w.eth.gas_price
     tx.setdefault('gas', 3_000_000)
     assinada=conta.sign_transaction(tx)
     h=w.eth.send_raw_transaction(assinada.raw_transaction)
