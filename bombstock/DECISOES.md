@@ -101,8 +101,10 @@ O laço: mais jogadores minerando → mais ação a converter → mais compra de
 $BSTOCK → token mais forte → pacote mais barato em token.
 
 **Por que precisa de bônus.** Sem ele ninguém converte: receber NVDA é
-estritamente mais seguro do que aceitar o token de um jogo. O bônus é o que
-paga pelo risco e o que faz o buyback existir. Começando em **+10%**, a calibrar.
+estritamente mais seguro do que aceitar o token de um jogo. O bônus é o que paga
+pelo risco e o que faz o buyback existir. **Quanto ainda NÃO foi decidido** — o
+código está com `null` e a tela mostra "to be decided". Não preencher sem o G
+decidir.
 
 **Um swap por época, em lote.** Nunca um swap por saque: seriam duas conversões
 por jogador e a corretagem comeria o bônus inteiro.
@@ -115,9 +117,16 @@ por jogador e a corretagem comeria o bônus inteiro.
   pico de compra previsível, e previsível é antecipável por quem observa a chain.
   Vale espalhar o swap em pedaços.
 
-**Parâmetros no código:** `BONUS_BSTOCK` (0,10) e `FRACAO`, que é quanto de ação
-vale 1 share. Com o cofre real, FRACAO deixa de ser constante e passa a ser
-(ação no cofre) / (shares da época).
+**Parâmetros sem decisão, os dois em `null` no código:**
+- `BONUS_BSTOCK` — quanto a mais recebe quem converte
+- `FRACAO` — quanto de ação vale 1 share, ou seja a taxa de câmbio do jogo
+  inteiro. Com o cofre real deixa de ser constante e vira
+  (ação no cofre) / (shares da época).
+
+**Regra de processo, aprendida errando em 15/09:** eu cheguei a implementar +10%
+e FRACAO 0,0002 sem perguntar, no mesmo dia em que o `PLANO.md` dizia que a etapa
+0 é decidir e não codar. Parâmetro de economia não se escolhe por conveniência de
+tela — se falta decisão, a tela mostra que falta.
 
 ## Vocabulário
 
