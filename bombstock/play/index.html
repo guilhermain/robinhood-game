@@ -1371,7 +1371,11 @@ async function atualizarCripto(){
   pintar();
 }
 setInterval(()=>{ if(telaAtual!=='menu') atualizarCripto(); }, 120000);
+// O cofre e leitura publica: nao depende de carteira. Antes ela so rodava
+// dentro de atualizarCripto(), que so era chamada ao conectar — por isso o
+// painel ficava preso em "reading the vault".
 buscarPrecos().then(pintar).catch(()=>{});
+buscarCofre().then(pintar).catch(()=>{});
 
 let avisoTopoT=null;
 function avisarTopo(t){
@@ -2018,7 +2022,12 @@ function pintarTesouro(){
     : 'Share rate is set when an epoch closes.';
 }
 
+let cofrePedido=false;
 function pintarClaim(){
+  if(!cofrePedido && !Object.keys(cofreSaldos).length){
+    cofrePedido=true;
+    buscarCofre().then(()=>{ cofrePedido=false; pintar(); }).catch(()=>{ cofrePedido=false; });
+  }
   pintarTesouro();
   const bruto=bausCofre;
   const taxa=bruto*TAXA_SAQUE;
