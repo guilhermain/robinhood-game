@@ -343,6 +343,14 @@
 
 
   .logoGrande{width:min(320px,74vw);height:auto;image-rendering:pixelated;display:block;margin:0 auto}
+
+  /* moeda voando do bau ate o cofre */
+  /* herda o desenho da tira de icones; aqui so a posicao e o brilho */
+  .moedaVoa{position:fixed;z-index:50;pointer-events:none;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.65)) brightness(1.15)}
+  .cofre.bateu{animation:bateu .34s ease-out}
+  @keyframes bateu{
+    0%{transform:scale(1)} 35%{transform:scale(1.13)} 100%{transform:scale(1)} }
 </style>
 </head>
 <body>
@@ -993,6 +1001,7 @@ function danificar(x,y,h){
   if(tipo==='prisao'){ contratar(true); return; }
   if(EH_BAU(tipo)){
     const paga=TIPOS[tipo].paga||1;
+    moedaVoando(x,y);
     bausTotais+=paga; bausCofre+=paga; h.achados+=paga;
     if(minaViva){
       minaViva.achados+=paga;
@@ -2090,6 +2099,48 @@ document.addEventListener('click', e=>{
          dica._t=setTimeout(()=>{ dica._fixa=false; esconderDica(true); },3500); }
   else { dica._fixa=false; esconderDica(true); }
 });
+
+/* Moeda saindo do bau e indo para o chip do cofre. Ela vive fora do canvas,
+   como elemento da pagina, porque precisa atravessar a borda do mapa ate o
+   cabecalho. Limitada a POUCAS ao mesmo tempo: com 40 baus estourando junto
+   viraria chuva e custaria quadro. */
+const MOEDA_MS=760, MOEDAS_MAX=8;
+let moedasVivas=0;
+function moedaVoando(gx,gy){
+  if(telaAtual!=='mina' || moedasVivas>=MOEDAS_MAX) return;
+  const chip=document.getElementById('chipCofre');
+  if(!chip) return;
+  const r=cv.getBoundingClientRect(), d=chip.getBoundingClientRect();
+  const ex=r.width/cv.width, ey=r.height/cv.height;
+  const x0=r.left+(gx*T+T/2)*ex, y0=r.top+(gy*T+T/2)*ey;
+  const x1=d.left+d.width*0.18, y1=d.top+d.height/2;
+
+  const m=document.createElement('i');
+  m.className='ico coin moedaVoa';
+  m.style.left=x0+'px'; m.style.top=y0+'px';
+  document.body.appendChild(m);
+  moedasVivas++;
+
+  // arco: sobe um pouco antes de ir, senao o caminho fica reto demais
+  const meioX=(x0+x1)/2 + (Math.random()*40-20);
+  const meioY=Math.min(y0,y1) - 60 - Math.random()*40;
+  const t0=performance.now();
+  (function passo(t){
+    const p=Math.min(1,(t-t0)/MOEDA_MS);
+    const q=1-p;
+    const px=q*q*x0 + 2*q*p*meioX + p*p*x1;       // bezier quadratica
+    const py=q*q*y0 + 2*q*p*meioY + p*p*y1;
+    m.style.transform=`translate(${px-x0}px, ${py-y0}px) scale(${1-0.45*p})`;
+    m.style.opacity = p>0.85 ? String((1-p)/0.15) : '1';
+    if(p<1) requestAnimationFrame(passo);
+    else { m.remove(); moedasVivas--; pulsarCofre(); }
+  })(t0);
+}
+function pulsarCofre(){
+  const c=document.getElementById('chipCofre');
+  if(!c) return;
+  c.classList.remove('bateu'); void c.offsetWidth; c.classList.add('bateu');
+}
 
 let avisoTimer=null;
 function avisar(t){
