@@ -1698,7 +1698,7 @@ function pintarClaim(){
     `<button data-modo="acao" aria-pressed="${modoSaque==='acao'}">`+
       `<b>Take the stocks</b><em>${linhas.length||'no'} ticker${linhas.length===1?'':'s'}${cifra}</em></button>`+
     `<button data-modo="bstock" aria-pressed="${modoSaque==='bstock'}">`+
-      `<b>Convert to $BSTOCK</b><em>same value, one token${cifra}</em></button>`;
+      `<b>Convert to $BSTOCK</b>${cifra?`<em>${cifra.replace(' · ','')}</em>`:''}</button>`;
   for(const b of op.querySelectorAll('button'))
     b.onclick=()=>{ modoSaque=b.dataset.modo; pintar(); };
 
