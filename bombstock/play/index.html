@@ -433,6 +433,7 @@
     <div class="tabela" id="claimResumo"></div>
     <button class="primario" id="claimBtn" onclick="sacar()">Claim</button>
     <p class="aviso-linha" id="claimNota"></p>
+    <p class="aviso-linha"><button class="voltar" onclick="if(confirm('Wipe this save and start over?')) apagarSave()">Reset progress</button></p>
   </section>
 
 
@@ -1314,9 +1315,11 @@ function descer(h){
                    minhasBombas:0,dir:DIR.down,anim:0,naMina:true,
                    minaId: minaViva?minaViva.def.id:null});
   ativos.push(h);
+  salvarLogo();
   return true;
 }
 function subir(h){
+  salvarLogo();
   h.naMina=false; h.minaId=null; h.estado='descanso'; h.path=null;
   bombas=bombas.filter(b=>b.dono!==h);
   ativos=ativos.filter(a=>a!==h);
@@ -1472,6 +1475,7 @@ function montarLoja(){
 function comprar(q){
   if(saldo<PRECOS[q]) return;
   saldo-=PRECOS[q];
+  salvarLogo();
   fila=Array.from({length:q},()=>novoHeroi());
   for(const h of fila) inventario.push(h);
   filaPos=0;
@@ -1639,6 +1643,7 @@ function pintarClaim(){
 }
 function sacar(){
   if(bausCofre<MIN_SAQUE) return;
+  salvarLogo();
   sacado += bausCofre*(1-TAXA_SAQUE);
   bausCofre=0;
   for(const k in cofreAcao) delete cofreAcao[k]; pintar();
@@ -1790,6 +1795,98 @@ let redimTimer=null;
 // aspect-ratio da caixa mais object-fit:contain cuidam de caber.
 addEventListener('resize',()=>{ clearTimeout(redimTimer); redimTimer=setTimeout(pintar,120); });
 
+
+/* ===================================================== salvar o progresso
+   Guarda no proprio navegador. NAO E SEGURO: o jogador consegue abrir o
+   armazenamento e editar o save. Serve para testar o laco idle — fechar e
+   voltar depois — e morre quando o servidor autoritativo existir. Nada disso
+   pode virar dinheiro enquanto o estado viver aqui.
+   O mapa nao e salvo: ele e sorteado de novo ao abrir. O que persiste sao os
+   herois, as minas, as moedas e o tempo. */
+const SAVE_CHAVE='bombstock:v1';
+const SAVE_VERSAO=1;
+let salvarPendente=false;
+
+function estadoParaSalvar(){
+  guardar();
+  return {
+    v:SAVE_VERSAO, quando:Date.now(),
+    saldo, bausCofre, bausTotais, sacado, minasLimpas, tempoMs, proxId,
+    cofreAcao:{...cofreAcao},
+    minaAtual,
+    minas: minas.map(m=>({id:m.def.id, achados:m.achados, limpas:m.limpas||0,
+                          equipe:m.ativos.map(h=>h.id)})),
+    herois: inventario.map(h=>({id:h.id, idx:h.idx, p:h.p, st:h.st,
+      energia:Math.round(h.energia), achados:h.achados, skills:h.skills})),
+  };
+}
+
+let salvamentoDesligado=false;
+function salvar(){
+  if(salvamentoDesligado) return;
+  try{ localStorage.setItem(SAVE_CHAVE, JSON.stringify(estadoParaSalvar())); }
+  catch(e){}                       // sem armazenamento, o jogo roda sem salvar
+}
+function salvarLogo(){ salvarPendente=true; }
+
+function apagarSave(){
+  // desliga antes de recarregar: senao o beforeunload regrava o que acabou de
+  // ser apagado e o botao nao faz nada
+  salvamentoDesligado=true;
+  try{ localStorage.removeItem(SAVE_CHAVE); }catch(e){}
+  location.reload();
+}
+
+function carregar(){
+  let d;
+  try{ d=JSON.parse(localStorage.getItem(SAVE_CHAVE)||'null'); }catch(e){ return false; }
+  if(!d || d.v!==SAVE_VERSAO) return false;
+  try{
+    saldo=d.saldo; bausCofre=d.bausCofre; bausTotais=d.bausTotais;
+    sacado=d.sacado; minasLimpas=d.minasLimpas||0; tempoMs=d.tempoMs||0;
+    proxId=d.proxId||1;
+    for(const k in cofreAcao) delete cofreAcao[k];
+    Object.assign(cofreAcao, d.cofreAcao||{});
+
+    inventario.length=0;
+    const porId={};
+    for(const s of d.herois){
+      const r=RARIDADES[s.idx];
+      const h={id:s.id, idx:s.idx, r, p:s.p, st:s.st, energia:s.energia, regen:0,
+               achados:s.achados||0, skills:s.skills||[], tem:{}, naMina:false};
+      for(const k of h.skills) h.tem[k]=true;
+      inventario.push(h); porId[h.id]=h;
+    }
+
+    // tempo parado: so a energia se recupera. Nao existe ganho offline.
+    const fora=Math.max(0, Date.now()-(d.quando||Date.now()));
+    const ganho=Math.floor(fora/REGEN_MS);
+    if(ganho>0) for(const h of inventario)
+      h.energia=Math.min(h.st.energiaMax, h.energia+ganho*(h.tem.charge?1.7:1));
+
+    minas.length=0;
+    for(const sm of d.minas){
+      const def=MINAS_DEF.find(x=>x.id===sm.id); if(!def) continue;
+      const m=novaMina(def); m.achados=sm.achados||0; m.limpas=sm.limpas||0;
+      minas.push(m);
+    }
+    if(!minas.length) minas.push(novaMina(MINAS_DEF[0]));
+    minaAtual=Math.min(d.minaAtual||0, minas.length-1);
+    usar(minas[minaAtual]);
+    refazerMapa(true);            // mapa novo; o resto foi restaurado
+    usar(minas[minaAtual]);       // refazerMapa passa por todas: volta para a certa
+
+    const equipe=(d.minas[minaAtual] && d.minas[minaAtual].equipe) || [];
+    for(const id of equipe){ const h=porId[id]; if(h) descer(h); }
+    guardar();
+    return true;
+  }catch(e){ return false; }
+}
+
+addEventListener('beforeunload', salvar);
+addEventListener('visibilitychange', ()=>{ if(document.hidden) salvar(); });
+setInterval(()=>{ if(telaAtual!=='menu') salvar(); }, 10000);
+
 /* ------------------------------------------------------------------ loop */
 
 let bausTotais=0;
@@ -1846,6 +1943,7 @@ function loop(agora){
     if(h.regen>=REGEN_MS){ h.regen=0; h.energia=Math.min(h.st.energiaMax,h.energia+1); }
   }
   accHud+=bruto; if(accHud>=400){ accHud=0; pintar(); }
+  if(salvarPendente){ salvarPendente=false; salvar(); }
 
   if(telaAtual==='equipe'||telaAtual==='inventario') animarFichas();
   if(telaAtual==='mina'){ desenhar(); }
@@ -1856,12 +1954,16 @@ function loop(agora){
 tempoMs=0; proxId=1;
 minas=[novaMina(MINAS_DEF[0])]; minaAtual=0; usar(minas[0]);
 refazerMapa(true);
-// Demo: um de cada personagem ja no inventario, senao a arte do topo nunca
-// aparece (S. Legendary sai 0,04% das vezes). Sai quando a economia for pra valer.
-ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))));
-// Demo: dez Elon extras para encher a mina com o topo da escala e medir o teto.
-const ELON=ELENCO[ELENCO.length-1][0];
-for(let i=0;i<10;i++) inventario.push(novoHeroi(ELENCO.length-1, ELON));
+const tinhaSave=carregar();
+// Voltando, cai direto na mina em vez de passar pelo menu de novo.
+if(tinhaSave) setTimeout(()=>{ if(telaAtual==='menu') ir('mina'); }, 0);
+// Demo: so em jogo novo. Um de cada personagem, senao a arte do topo nunca
+// aparece (S. Legendary sai 0,04%), mais dez Elon para medir o teto.
+if(!tinhaSave){
+  ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))));
+  const ELON=ELENCO[ELENCO.length-1][0];
+  for(let i=0;i<10;i++) inventario.push(novoHeroi(ELENCO.length-1, ELON));
+}
 // Espaco reservado do menu. Preencha os dois e o rodape passa a apontar para
 // o perfil e a copiar o contrato; vazios, ficam como marcacao tracejada.
 const X_HANDLE='';            // ex.: 'bombstock'
