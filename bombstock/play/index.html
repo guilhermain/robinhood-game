@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BOMBSTOCK Treasure Hunt</title>
-<meta name="description" content="BOMBSTOCK — heroes mine on their own and every chest becomes a share of the stocks the vault buys. Robinhood Chain.">
+<meta name="description" content="BOMBSTOCK: heroes mine on their own and every chest becomes a share of the stocks the vault buys. Robinhood Chain.">
 <meta name="theme-color" content="#12100C">
 <meta property="og:type" content="website">
 <meta property="og:title" content="BOMBSTOCK Treasure Hunt">
@@ -379,6 +379,24 @@
     .tesouroItem{grid-template-columns:48px 1fr auto;gap:8px}
     .tesouroItem .barra,.tesouroItem .pc{display:none}
   }
+
+  /* fita de cotacao rolando abaixo do cabecalho */
+  .fitaCotacao{position:sticky;top:64px;z-index:18;overflow:hidden;
+    background:#15120E;border-bottom:1px solid var(--rule2);
+    mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+  .fitaTrilho{display:flex;width:max-content;animation:fitaAnda 34s linear infinite}
+  .fitaCotacao:hover .fitaTrilho{animation-play-state:paused}
+  @keyframes fitaAnda{ from{transform:translateX(-50%)} to{transform:translateX(0)} }
+  .fitaItem{display:inline-flex;align-items:baseline;gap:6px;padding:7px 16px;
+    white-space:nowrap;border-right:1px solid var(--rule2)}
+  .fitaItem b{font-family:"Press Start 2P",monospace;font-size:9px;color:var(--mute);font-weight:400}
+  .fitaItem u{text-decoration:none;font-size:12px;color:var(--chalk);
+    font-variant-numeric:tabular-nums;transition:color .6s}
+  .fitaItem u.sobe{color:var(--gain)} .fitaItem u.desce{color:var(--loss)}
+  .fitaItem s{text-decoration:none;font-size:9px}
+  .fitaItem s.sobe{color:var(--gain)} .fitaItem s.desce{color:var(--loss)}
+  @media (prefers-reduced-motion:reduce){ .fitaTrilho{animation:none} }
 </style>
 </head>
 <body>
@@ -398,6 +416,7 @@
       <button class="carteiraBtn" id="btnCarteira" onclick="conectar()">Connect</button>
     </div>
   </header>
+  <div class="fitaCotacao" id="fitaCotacao" aria-hidden="true"><div class="fitaTrilho" id="fitaTrilho"></div></div>
 
 
   <!-- ------------------------------------------------------- menu inicial -->
@@ -1368,14 +1387,39 @@ async function atualizarCripto(){
   try{ await buscarPrecos(); }catch(e){}
   try{ await buscarSaldos(); }catch(e){}
   try{ await buscarCofre(); }catch(e){}
+  montarFita();
   pintar();
 }
 setInterval(()=>{ if(telaAtual!=='menu') atualizarCripto(); }, 120000);
 // O cofre e leitura publica: nao depende de carteira. Antes ela so rodava
 // dentro de atualizarCripto(), que so era chamada ao conectar — por isso o
 // painel ficava preso em "reading the vault".
-buscarPrecos().then(pintar).catch(()=>{});
+buscarPrecos().then(()=>{ montarFita(); pintar(); }).catch(()=>{});
 buscarCofre().then(pintar).catch(()=>{});
+
+/* Fita de cotacao: as sete acoes passando com o preco real. O trilho leva o
+   conteudo DUPLICADO e anda metade da propria largura, entao o fim encosta no
+   comeco e o laco nao tem emenda visivel. */
+const fitaAnterior={};
+let fitaAssinatura='';
+function montarFita(){
+  const trilho=document.getElementById('fitaTrilho');
+  if(!trilho) return;
+  const ticks=Object.keys(ACAO).map(k=>ACAO[k].tick);
+  const sig=ticks.map(t=>t+(precos[t]||0).toFixed(2)).join('|');
+  if(sig===fitaAssinatura) return;            // so remonta quando o preco muda
+  fitaAssinatura=sig;
+  const item=t=>{
+    const p=precos[t], ant=fitaAnterior[t];
+    const sobe = ant!==undefined && p>ant, desce = ant!==undefined && p<ant;
+    if(p!==undefined) fitaAnterior[t]=p;
+    return `<span class="fitaItem"><b>${t}</b>`+
+      `<u class="${sobe?'sobe':desce?'desce':''}">${p?'$'+p.toFixed(2):'\u2014'}</u>`+
+      `${sobe?'<s class="sobe">\u25B2</s>':desce?'<s class="desce">\u25BC</s>':''}</span>`;
+  };
+  const uma=ticks.map(item).join('');
+  trilho.innerHTML=uma+uma;                   // duplicado: laco sem emenda
+}
 
 let avisoTopoT=null;
 function avisarTopo(t){
@@ -1434,7 +1478,7 @@ async function enviarTx(to, data, rotulo){
   try{
     const h=await ethereum.request({method:'eth_sendTransaction',
       params:[{from:carteira, to, data}]});
-    avisarTopo(rotulo+' sent — waiting for the chain');
+    avisarTopo(rotulo+' sent, waiting for the chain');
     for(let i=0;i<60;i++){
       await new Promise(r=>setTimeout(r,2000));
       const r=await rpc('eth_getTransactionReceipt',[h]).catch(()=>null);
@@ -1443,7 +1487,7 @@ async function enviarTx(to, data, rotulo){
         avisarTopo(rotulo+' failed on chain'); return null;
       }
     }
-    avisarTopo(rotulo+' is taking long — check your wallet');
+    avisarTopo(rotulo+' is taking long, check your wallet');
     return null;
   }catch(e){ avisarTopo(e.message&&e.message.slice(0,90)||'Rejected'); return null; }
 }
@@ -1566,7 +1610,7 @@ async function sincronizarHerois(){
       `and won't come along. Your local save stays if you disconnect.\n\n`+
       `Continue?`)){
     carteira=null; redeOk=false; pintar();
-    avisarTopo('Stayed offline — your local heroes are untouched');
+    avisarTopo('Stayed offline, your local heroes are untouched');
     return false;
   }
   const naMina=new Set(ativos.map(x=>x.id));
@@ -1672,7 +1716,7 @@ function subir(h){
 function contratar(resgatado){
   const h=novoHeroi();
   inventario.push(h);
-  if(resgatado){ descer(h); avisar(`Jail cracked — ${h.r.nome} rescued`); }
+  if(resgatado){ descer(h); avisar(`Jail cracked, ${h.r.nome} rescued`); }
   pintar();
 }
 
@@ -1692,6 +1736,7 @@ function ajustarCasca(){
   const dentro = telaAtual!=='menu';
   document.getElementById('chapa').style.display = dentro?'':'none';
   document.getElementById('abas').style.display  = dentro?'':'none';
+  document.getElementById('fitaCotacao').style.display = dentro?'':'none';
   document.querySelector('.app').style.paddingBottom =
     dentro ? '' : 'calc(20px + env(safe-area-inset-bottom))';
   for(const b of document.querySelectorAll('.abas button'))
@@ -1726,7 +1771,7 @@ function montarSeletorMinas(){
       comprarMina(def.id);
       if(minas.length>antes){
         entrarMina(def.id);
-        avisar(`${def.nome} unlocked \u2014 ${def.preco} tokens`);
+        avisar(`${def.nome} unlocked for ${def.preco} tokens`);
       }
       pintar();
     };
@@ -2019,7 +2064,7 @@ function pintarTesouro(){
   document.getElementById('tesouroUsd').textContent = total?emDolar(total):'$—';
   const porShare=FRACAO!==null && precos.NVDA ? FRACAO*precos.NVDA : null;
   document.getElementById('tesouroRodape').textContent = porShare!==null
-    ? `1 share ≈ ${emDolar(porShare)} at today's prices · illustrative rate until the epoch closes`
+    ? `1 share is about ${emDolar(porShare)} at today's prices. Illustrative rate until the epoch closes.`
     : 'Share rate is set when an epoch closes.';
 }
 
@@ -2081,7 +2126,7 @@ function pintarClaim(){
       'Mining works without a wallet, but claiming does not: the tokens have nowhere to go. Connect to claim.';
   } else
   document.getElementById('claimNota').textContent = modoSaque==='bstock'
-    ? 'At epoch close the vault sells your stock and buys $BSTOCK on the market with it — one batched swap, not one per player.'
+    ? 'At epoch close the vault sells your stock and buys $BSTOCK on the market with it, in one batched swap instead of one per player.'
     : 'Your cut of the stocks the vault bought this epoch, paid in the tickers you mined.';
 }
 async function sacar(){
@@ -2177,7 +2222,7 @@ function textoDaMina(id){
   const tenho=minas.some(m=>m.def.id===id);
   if(id==='verde')
     return [def.nome, 'Free to mine. Every chest pays in one of the seven stocks, '+
-      'drawn at random — so you collect a bit of everything and take longer to reach '+
+      'drawn at random, so you collect a bit of everything and take longer to reach '+
       'the claim minimum in any single one.'];
   const tk=acaoDaMina(id).tick, pr=precos[tk];
   const cot = pr ? ` Trading at ${emDolar(pr)} right now.` : '';
