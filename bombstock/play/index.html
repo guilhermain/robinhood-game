@@ -411,6 +411,14 @@
   .rsFalta{font-size:12px;color:var(--mute)}
   .listaAcao .mo{font-variant-numeric:tabular-nums;color:var(--chalk)}
   .listaAcao .pr{color:var(--gain);font-variant-numeric:tabular-nums}
+
+  .tesouroFalha{padding:14px 16px;font-size:12px;color:var(--mute)}
+  .tesouroFalha p{margin:0 0 8px;line-height:1.55;max-width:60ch}
+  .tesouroFalha b{color:var(--loss)}
+  .tesouroFalha .det{font-family:"Press Start 2P",monospace;font-size:9px;color:#6E6354}
+  .tesouroFalha button{background:var(--panel);border:1px solid var(--rule);color:var(--chalk);
+    border-radius:3px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer}
+  .tesouroFalha button:disabled{opacity:.5}
 </style>
 </head>
 <body>
@@ -1313,25 +1321,62 @@ function acaoDoBau(idMina){
   return ACOES_TODAS[Math.floor(Math.random()*ACOES_TODAS.length)];
 }
 
+// Ajudantes de calldata. Ficam ANTES de tudo que le a chain: a leitura do
+// cofre roda no arranque e quebrava com 'Cannot access padEnd before
+// initialization' porque elas estavam declaradas mais abaixo.
+const pad=v=>BigInt(v).toString(16).padStart(64,'0');
+const padEnd=a=>a.toLowerCase().replace('0x','').padStart(64,'0');
+
 let carteira=null, redeOk=false, precos={}, saldosAcao={}, ultimoPreco=0;
 let cofreSaldos={};        // quanto o treasury tem de cada acao, lido da chain
 
+// Estado da leitura do cofre. Antes eu engolia o erro e a tela ficava em
+// "reading" para sempre: falha invisivel, indistinguivel de lentidao.
+let cofreEstado='inicio';   // inicio | lendo | ok | erro
+let cofreErro='';
 async function buscarCofre(){
-  for(const k in ACAO){
+  cofreEstado='lendo'; cofreErro='';
+  let algum=false, ultimo='';
+  // Em paralelo: sequencial, sete chamadas com 12s de limite dariam 84s ate a
+  // tela conseguir dizer que falhou.
+  await Promise.all(Object.keys(ACAO).map(async k=>{
     try{
       const r=await rpc('eth_call',[{to:ACAO[k].addr,
         data:'0x70a08231'+padEnd(COFRE_ADDR)},'latest']);
       cofreSaldos[ACAO[k].tick]=Number(BigInt(r))/1e18;
-    }catch(e){}
-  }
+      algum=true;
+    }catch(e){ ultimo=(e&&e.message)||'network error'; }
+  }));
+  cofreEstado = algum ? 'ok' : 'erro';
+  cofreErro = algum ? '' : ultimo;
+  if(telaAtual==='claim') pintarTesouro();
+  return algum;
+}
+function tentarCofre(){
+  const b=document.getElementById('btnCofreRetry');
+  if(b){ b.disabled=true; b.textContent='Trying…'; }
+  cofrePedido=true;
+  buscarCofre().then(()=>pintar()).catch(()=>pintar());
 }
 
+// Toda chamada a chain tem tempo limite. Sem isso um pedido pendurado nunca
+// vira erro, e a tela fica em "carregando" para sempre em vez de avisar.
+const RPC_MS=12000;
 async function rpc(metodo, params){
-  const r=await fetch(CHAIN.rpc,{method:'POST',headers:{'content-type':'application/json'},
-    body:JSON.stringify({jsonrpc:'2.0',id:1,method:metodo,params})});
-  const j=await r.json();
-  if(j.error) throw new Error(j.error.message);
-  return j.result;
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(), RPC_MS);
+  try{
+    const r=await fetch(CHAIN.rpc,{method:'POST',signal:ctrl.signal,
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',id:1,method:metodo,params})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(j.error) throw new Error(j.error.message);
+    return j.result;
+  } catch(e){
+    throw new Error(e.name==='AbortError' ? 'timed out after '+(RPC_MS/1000)+'s'
+                                          : (e.message||'network error'));
+  } finally { clearTimeout(t); }
 }
 
 async function conectar(){
@@ -1378,8 +1423,13 @@ const ACAO_MAINNET={USDG:'0x5fc5360d0400a0fd4f2af552add042d716f1d168',
   META:'0xc0d6457c16cc70d6790dd43521c899c87ce02f35', SPCX:'0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea'};
 async function buscarPrecos(){
   const addrs=Object.values(ACAO_MAINNET).join(',');
-  const r=await fetch(`https://api.geckoterminal.com/api/v2/simple/networks/robinhood/token_price/${addrs}`);
-  const j=await r.json();
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(), RPC_MS);
+  let j;
+  try{
+    const r=await fetch(`https://api.geckoterminal.com/api/v2/simple/networks/robinhood/token_price/${addrs}`,{signal:ctrl.signal});
+    j=await r.json();
+  } finally { clearTimeout(t); }
   const mapa=j.data.attributes.token_prices;
   for(const t in ACAO_MAINNET){ const p=mapa[ACAO_MAINNET[t].toLowerCase()]; if(p) precos[t]=parseFloat(p); }
   ultimoPreco=Date.now();
@@ -1392,7 +1442,9 @@ async function buscarSaldos(){
     const res=await rpc('eth_call',[{to:addr, data:'0x70a08231'+alvo},'latest']);
     return Number(BigInt(res))/1e18;
   };
-  for(const k in ACAO){ try{ saldosAcao[ACAO[k].tick]=await ler(ACAO[k].addr); }catch(e){} }
+  await Promise.all(Object.keys(ACAO).map(async k=>{
+    try{ saldosAcao[ACAO[k].tick]=await ler(ACAO[k].addr); }catch(e){}
+  }));
   try{ saldosAcao.BSTOCK=await ler(BSTOCK_ADDR); }catch(e){}
   try{ saldoVault=await ler(ACAO.NVDA.addr).then(()=>0); }catch(e){}
 }
@@ -1410,7 +1462,6 @@ setInterval(()=>{ if(telaAtual!=='menu') atualizarCripto(); }, 120000);
 // dentro de atualizarCripto(), que so era chamada ao conectar — por isso o
 // painel ficava preso em "reading the vault".
 buscarPrecos().then(()=>{ montarFita(); pintar(); }).catch(()=>{});
-buscarCofre().then(pintar).catch(()=>{});
 
 /* Fita de cotacao: as sete acoes passando com o preco real. O trilho leva o
    conteudo DUPLICADO e anda metade da propria largura, entao o fim encosta no
@@ -1484,8 +1535,6 @@ async function cotacaoEmBstock(){
   return total;
 }
 let cotaBstock=null;
-const pad=v=>BigInt(v).toString(16).padStart(64,'0');
-const padEnd=a=>a.toLowerCase().replace('0x','').padStart(64,'0');
 
 async function enviarTx(to, data, rotulo){
   if(!carteira){ avisarTopo('Connect your wallet first'); return null; }
@@ -2058,7 +2107,15 @@ function pintarTesouro(){
   const alvo=document.getElementById('tesouroLista');
   const tickers=Object.keys(cofreSaldos).filter(t=>cofreSaldos[t]>0);
   if(!tickers.length){
-    alvo.innerHTML='<p class="tesouroVazio">Reading the vault from chain…</p>';
+    alvo.innerHTML = cofreEstado==='erro'
+      ? `<div class="tesouroFalha">
+           <p><b>Could not reach the chain.</b> The vault balance is read straight from
+           Robinhood Chain testnet, and that request failed here. Prices come from a
+           different server, which is why they still show.</p>
+           <p class="det">${cofreErro? String(cofreErro).slice(0,90) : 'network error'}</p>
+           <button id="btnCofreRetry" onclick="tentarCofre()">Try again</button>
+         </div>`
+      : '<p class="tesouroVazio">Reading the vault from chain…</p>';
     document.getElementById('tesouroRodape').textContent='';
     return;
   }
@@ -2085,9 +2142,12 @@ function pintarTesouro(){
 
 let cofrePedido=false;
 function pintarClaim(){
-  if(!cofrePedido && !Object.keys(cofreSaldos).length){
+  // UMA tentativa automatica. Antes eu religava a cada repintura: falhou,
+  // repinta, tenta de novo. Deu 1.624 chamadas a RPC em 4 segundos e o estado
+  // nunca parava em "erro" para a tela poder avisar.
+  if(!cofrePedido && cofreEstado!=='erro' && !Object.keys(cofreSaldos).length){
     cofrePedido=true;
-    buscarCofre().then(()=>{ cofrePedido=false; pintar(); }).catch(()=>{ cofrePedido=false; });
+    buscarCofre().then(()=>pintar()).catch(()=>pintar());
   }
   pintarTesouro();
   const bruto=bausCofre;
@@ -2637,6 +2697,10 @@ function abrirPorEndereco(){
 }
 addEventListener('hashchange', abrirPorEndereco);
 abrirPorEndereco();
+// A leitura do cofre fica no FIM: ela usa COFRE_ADDR e padEnd, declarados mais
+// abaixo no arquivo. Chamada no meio, quebrava com 'cannot access before
+// initialization' — e o catch vazio transformava isso em silencio.
+buscarCofre().then(pintar).catch(()=>pintar());
 montarLoja(); pintar();
 requestAnimationFrame(loop);
 </script>
