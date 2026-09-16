@@ -1333,10 +1333,8 @@ const cofreAcao={};   // shares acumuladas por acao, definido pela mina
    mais seguro que aceitar o token de um jogo.
    Um swap por epoca, em lote, e nao um por saque — senao a corretagem come
    tudo. */
-// NAO DECIDIDO. Os dois valores abaixo sao parametros de economia e nao tem
-// numero escolhido ainda. Enquanto forem null, a tela mostra "to be decided"
-// em vez de inventar cifra. Nao preencher sem o G decidir.
-const BONUS_BSTOCK=null;   // quanto a mais quem converte em $BSTOCK recebe
+// Converter em $BSTOCK paga o MESMO que receber a acao. Sem bonus — decidido
+// pelo G em 15/09. Nao reintroduzir.
 const FRACAO=null;         // quanto de acao vale 1 share; com o cofre real vira
                            // (acao no cofre) / (shares da epoca)
 let modoSaque='acao';   // 'acao' ou 'bstock'
@@ -1693,30 +1691,24 @@ function pintarClaim(){
     const p=precos[t]; if(!p){ temPreco=false; continue; } usd+=cofreAcao[t]*p*FRACAO; }
   const liq=Math.max(0,1-TAXA_SAQUE);
   const usdAcao=usd*liq;
-  const usdBstock=BONUS_BSTOCK!==null ? usd*liq*(1+BONUS_BSTOCK) : null;
 
   const op=document.getElementById('claimModo');
-  const cifraAcao   = temConversao&&temPreco&&usd ? ` · ≈ $${usdAcao.toFixed(2)}` : '';
-  const selo = BONUS_BSTOCK!==null ? `+${(BONUS_BSTOCK*100).toFixed(0)}% bonus` : 'bonus to be decided';
-  const cifraBs = usdBstock!==null&&temPreco&&usd ? ` · ≈ $${usdBstock.toFixed(2)}` : '';
+  const cifra = temConversao&&temPreco&&usd ? ` · ≈ $${usdAcao.toFixed(2)}` : '';
   op.innerHTML=
     `<button data-modo="acao" aria-pressed="${modoSaque==='acao'}">`+
-      `<b>Take the stocks</b><em>${linhas.length||'no'} ticker${linhas.length===1?'':'s'}${cifraAcao}</em></button>`+
+      `<b>Take the stocks</b><em>${linhas.length||'no'} ticker${linhas.length===1?'':'s'}${cifra}</em></button>`+
     `<button data-modo="bstock" aria-pressed="${modoSaque==='bstock'}">`+
-      `<b>Convert to $BSTOCK</b><em>${selo}${cifraBs}</em></button>`;
+      `<b>Convert to $BSTOCK</b><em>same value, one token${cifra}</em></button>`;
   for(const b of op.querySelectorAll('button'))
     b.onclick=()=>{ modoSaque=b.dataset.modo; pintar(); };
 
   document.getElementById('claimResumo').innerHTML=
     `<div><span>minimum to claim</span><span>${MIN_SAQUE} shares</span></div>`+
     `<div><span>claim fee</span><span>3% · ${taxa.toFixed(1)}</span></div>`+
-    (modoSaque==='bstock'
-      ? `<div><span>conversion bonus</span><span>${BONUS_BSTOCK!==null
-           ? '+'+(BONUS_BSTOCK*100).toFixed(0)+'%' : 'to be decided'}</span></div>`
-      : '')+
-    `<div><span>you get</span><span>${modoSaque==='bstock'
-        ? (cifraBs? '≈ $'+usdBstock.toFixed(2)+' in $BSTOCK' : 'your shares as $BSTOCK')
-        : (cifraAcao? '≈ $'+usdAcao.toFixed(2)+' in stock' : Math.max(0,bruto-taxa).toFixed(1)+' shares')}</span></div>`+
+
+    `<div><span>you get</span><span>${cifra
+        ? '≈ $'+usdAcao.toFixed(2)+(modoSaque==='bstock'?' in $BSTOCK':' in stock')
+        : Math.max(0,bruto-taxa).toFixed(1)+' shares'}</span></div>`+
     `<div><span>already claimed</span><span>${sacado.toFixed(1)}</span></div>`;
   const b=document.getElementById('claimBtn');
   b.disabled = bruto<MIN_SAQUE;
