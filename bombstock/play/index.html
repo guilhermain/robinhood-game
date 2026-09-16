@@ -1264,6 +1264,7 @@ async function conectar(){
     ethereum.on && ethereum.on('accountsChanged', c=>{ carteira=c[0]||null; saldosAcao={}; pintar(); });
     ethereum.on && ethereum.on('chainChanged', ()=>{ garantirRede(); });
     atualizarCripto();
+    sincronizarHerois();
   }catch(e){ avisarTopo(e.message||'Connection refused'); }
   pintar();
 }
@@ -1342,6 +1343,7 @@ const COFRE_ADDR='0x97A54706195aDa31247e650c1dD7d94efcb594C1';
 // assinaturas das funcoes, calculadas uma vez
 const SEL={
   approve:      '0x095ea7b3',
+  balanceOf:    '0x70a08231',
   allowance:    '0xdd62ed3e',
   comprarPacote:'0x7d5b0af5',
   comprarMina:  '0xe0743153',
@@ -1371,20 +1373,40 @@ async function enviarTx(to, data, rotulo){
 }
 
 // O cofre gasta $BSTOCK do jogador, entao precisa de permissao antes.
-async function garantirPermissao(quanto){
-  const data=SEL.allowance+padEnd(carteira)+padEnd(COFRE_ADDR);
+async function garantirPermissao(quanto, gastador){
+  gastador=gastador||COFRE_ADDR;
+  const data=SEL.allowance+padEnd(carteira)+padEnd(gastador);
   let atual=0n;
   try{ atual=BigInt(await rpc('eth_call',[{to:BSTOCK_ADDR, data},'latest'])); }catch(e){}
   if(atual >= quanto) return true;
   const max='0x'+'f'.repeat(64);
-  const ok=await enviarTx(BSTOCK_ADDR, SEL.approve+padEnd(COFRE_ADDR)+'f'.repeat(64), 'Approval');
+  const ok=await enviarTx(BSTOCK_ADDR, SEL.approve+padEnd(gastador)+'f'.repeat(64), 'Approval');
   return !!ok;
+}
+
+// Carteira nova chega com zero $BSTOCK. Na testnet o token tem torneira
+// aberta, entao o jogo serve o jogador em vez de mandar ele abrir o explorer.
+// Na mainnet isto sai: la o $BSTOCK se compra no mercado.
+const SEL_TORNEIRA='0xdf996de5';
+async function saldoBstock(){
+  try{
+    const r=await rpc('eth_call',[{to:BSTOCK_ADDR, data:SEL.balanceOf+padEnd(carteira)},'latest']);
+    return BigInt(r);
+  }catch(e){ return 0n; }
+}
+async function pegarBstockDeTeste(){
+  const s=await saldoBstock();
+  if(s >= 10n*(10n**18n)) return true;
+  avisarTopo('Getting test $BSTOCK for you…');
+  return !!await enviarTx(BSTOCK_ADDR, SEL_TORNEIRA, 'Test $BSTOCK');
 }
 
 async function comprarPacoteOnchain(qtd){
   const custo=BigInt(qtd)*10n*(10n**18n);
-  if(!await garantirPermissao(custo)) return false;
-  return !!await enviarTx(COFRE_ADDR, SEL.comprarPacote+pad(qtd), 'Pack purchase');
+  const s=await saldoBstock();
+  if(s < custo && !await pegarBstockDeTeste()) return false;
+  if(!await garantirPermissao(custo, HEROI_ADDR)) return false;
+  return !!await enviarTx(HEROI_ADDR, SEL_ABRIR+pad(qtd), 'Pack mint');
 }
 
 async function sacarOnchain(){
@@ -1395,6 +1417,63 @@ async function sacarOnchain(){
   const addr=Object.values(ACAO).find(a=>a.tick===alvo).addr;
   const valor=BigInt(Math.floor(maior*1e15));      // 1 share = 0,001 token na testnet
   return !!await enviarTx(COFRE_ADDR, SEL.sacarCofre+padEnd(addr)+pad(valor), 'Claim');
+}
+
+
+/* ================================ herois vindos da chain (testnet)
+   O sorteio de raridade e stats deixa de acontecer no navegador e passa a
+   acontecer dentro do contrato, gravado na chain. Era o furo mais grave:
+   antes o jogador editava a raridade pelo console.
+   Com carteira conectada o inventario e lido do contrato; sem carteira o jogo
+   segue local, para permitir teste sem chain. */
+const HEROI_ADDR='0x9BefA801E9A09aCDE1dFf3B78dF0c99dAaF6F65c';
+const SEL_ABRIR    ='0x2b9ea791';
+const SEL_HEROIS_DE='0x1f08a921';
+const SEL_HEROI    ='0xbd776cb2';
+
+const n32=(hex,i)=>BigInt('0x'+hex.slice(2+i*64, 2+(i+1)*64));
+
+async function heroisDaChain(){
+  if(!carteira) return null;
+  try{
+    const r=await rpc('eth_call',[{to:HEROI_ADDR, data:SEL_HEROIS_DE+padEnd(carteira)},'latest']);
+    const n=Number(n32(r,1));
+    const saida=[];
+    for(let i=0;i<n;i++){
+      const id=n32(r,2+i);
+      const d=await rpc('eth_call',[{to:HEROI_ADDR, data:SEL_HEROI+pad(id)},'latest']);
+      saida.push({id:Number(id), rar:Number(n32(d,0)), pers:Number(n32(d,1)),
+        power:Number(n32(d,2)), stamina:Number(n32(d,3)), speed:Number(n32(d,4)),
+        bombas:Number(n32(d,5)), alcance:Number(n32(d,6)), skills:Number(n32(d,7))});
+    }
+    return saida;
+  }catch(e){ return null; }
+}
+
+const ORDEM_SKILL=['jail','pierce','battery','charge','bombpass','blockpass','hunter'];
+function heroiDeOnchain(d){
+  const idx=Math.min(d.rar, RARIDADES.length-1);
+  const elenco=ELENCO[idx];
+  const p=elenco[d.pers % elenco.length];
+  const skills=ORDEM_SKILL.filter((_,i)=>d.skills & (1<<i));
+  const st={power:d.power, stamina:d.stamina, speed:d.speed,
+            bombas:d.bombas, alcance:d.alcance, energiaMax:d.stamina*50};
+  const h={id:d.id, idx, r:RARIDADES[idx], p, st, energia:st.energiaMax, regen:0,
+           achados:0, skills, tem:{}, naMina:false, onchain:true};
+  for(const k of skills) h.tem[k]=true;
+  return h;
+}
+
+async function sincronizarHerois(){
+  const lista=await heroisDaChain();
+  if(!lista) return false;
+  const naMina=new Set(ativos.map(x=>x.id));
+  inventario.length=0;
+  for(const d of lista) inventario.push(heroiDeOnchain(d));
+  ativos.length=0;
+  for(const x of inventario) if(naMina.has(x.id)) descer(x);
+  pintar();
+  return true;
 }
 
 /* ================================================================= estado */
@@ -1637,8 +1716,14 @@ async function comprar(q){
     saldo-=PRECOS[q];
   }
   salvarLogo();
-  fila=Array.from({length:q},()=>novoHeroi());
-  for(const h of fila) inventario.push(h);
+  if(carteira && redeOk){
+    const antes=new Set(inventario.map(x=>x.id));
+    await sincronizarHerois();                    // a chain diz o que saiu
+    fila=inventario.filter(x=>!antes.has(x.id));
+  } else {
+    fila=Array.from({length:q},()=>novoHeroi());
+    for(const h of fila) inventario.push(h);
+  }
   filaPos=0;
   document.getElementById('pacoteOverlay').classList.add('on');
   mostrarCarta();
@@ -1859,7 +1944,9 @@ function pintar(){
   const emMina=totalEmMina(), acordados=totalAcordados();
   const vistaAcordados=vista.ativos.filter(h=>h.estado!=='dormir').length;
 
-  document.getElementById('chipSaldo').textContent=saldo;
+  // com carteira, o saldo mostrado e o $BSTOCK de verdade; sem carteira, o local
+  document.getElementById('chipSaldo').textContent =
+    (carteira && saldosAcao.BSTOCK!==undefined) ? Math.floor(saldosAcao.BSTOCK) : saldo;
   // O que o jogador quer saber e quanto farmou em dolar. A contagem de shares e
   // unidade contabil interna e nao aparece aqui.
   const usdTopo=valorEmDolar();
