@@ -29,6 +29,8 @@
       --rarity-legendary: #FFC93C;
       /* Mythic rarity: magenta flame, card frame, ring, and ambient light. */
       --rarity-mythic: #E94FD8;
+      --rarity-super-rare: #3FBF6F;
+      --rarity-super-legendary: #E5484D;
       /* Purple page gradient, using only the two locked base colors. */
       --background-page: linear-gradient(145deg, var(--color-background) 0%, var(--color-panel) 45%, var(--color-background) 100%);
       /* Ambient rarity light painted behind the character; never a sprite filter. */
@@ -315,7 +317,8 @@
     [data-rarity="rare"] { --rarity-accent: var(--rarity-rare); }
     [data-rarity="epic"] { --rarity-accent: var(--rarity-epic); }
     [data-rarity="legendary"] { --rarity-accent: var(--rarity-legendary); }
-    [data-rarity="mythic"] { --rarity-accent: var(--rarity-mythic); }
+    [data-rarity="super-rare"] { --rarity-accent: var(--rarity-super-rare); }
+    [data-rarity="super-legendary"] { --rarity-accent: var(--rarity-super-legendary); }
     .rarity-symbol { display: inline-block; flex: none; inline-size: var(--icon-size); block-size: var(--icon-size); background: var(--rarity-accent); }
     .rarity-symbol--common { clip-path: polygon(25% 0,75% 0,75% 12.5%,87.5% 12.5%,87.5% 25%,100% 25%,100% 75%,87.5% 75%,87.5% 87.5%,75% 87.5%,75% 100%,25% 100%,25% 87.5%,12.5% 87.5%,12.5% 75%,0 75%,0 25%,12.5% 25%,12.5% 12.5%,25% 12.5%); }
     .rarity-symbol--rare { clip-path: polygon(50% 0,100% 50%,50% 100%,0 50%); }
@@ -452,6 +455,11 @@
     .site-header .header-actions{grid-column:3;grid-row:1}
   }
   @media (width < 48rem){ .site-header .brand-slot img{height:56px} }
+
+  /* as duas raridades que faltavam: o jogo tem seis, o site tinha cinco */
+  .rarity-symbol--super-rare{clip-path:polygon(50% 0,72% 30%,50% 50%,72% 70%,50% 100%,28% 70%,50% 50%,28% 30%)}
+  .rarity-symbol--super-legendary{clip-path:polygon(50% 0,62% 22%,78% 10%,74% 34%,100% 30%,84% 50%,100% 70%,74% 66%,78% 90%,62% 78%,50% 100%,38% 78%,22% 90%,26% 66%,0 70%,16% 50%,0 30%,26% 34%,22% 10%,38% 22%)}
+  .hero-sprite{image-rendering:auto}
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->
@@ -607,22 +615,18 @@
 
     <section class="section container" id="heroes" aria-labelledby="heroes-heading">
       <div class="section-heading"><h2 class="section-title display" id="heroes-heading">MEET YOUR HERO</h2></div>
-      <div class="rarity-tabs" role="tablist" aria-label="Hero rarity"><button class="rarity-tab" id="tab-common" type="button" role="tab" data-rarity="common" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--common" aria-hidden="true"></span><span>Common</span></button>
-<button class="rarity-tab" id="tab-rare" type="button" role="tab" data-rarity="rare" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--rare" aria-hidden="true"></span><span>Rare</span></button>
-<button class="rarity-tab" id="tab-epic" type="button" role="tab" data-rarity="epic" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--epic" aria-hidden="true"></span><span>Epic</span></button>
-<button class="rarity-tab" id="tab-legendary" type="button" role="tab" data-rarity="legendary" aria-selected="true" aria-controls="hero-panel" tabindex="0"><span class="rarity-symbol rarity-symbol--legendary" aria-hidden="true"></span><span>Legendary</span></button>
-<button class="rarity-tab" id="tab-mythic" type="button" role="tab" data-rarity="mythic" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--mythic" aria-hidden="true"></span><span>Mythic</span></button></div>
+      <div class="rarity-tabs" role="tablist" aria-label="Hero rarity"><button class="rarity-tab" id="tab-common" type="button" role="tab" data-rarity="common" aria-selected="true" aria-controls="hero-panel" tabindex="0"><span class="rarity-symbol rarity-symbol--common" aria-hidden="true"></span><span>Common</span></button><button class="rarity-tab" id="tab-rare" type="button" role="tab" data-rarity="rare" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--rare" aria-hidden="true"></span><span>Rare</span></button><button class="rarity-tab" id="tab-super-rare" type="button" role="tab" data-rarity="super-rare" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--super-rare" aria-hidden="true"></span><span>Super Rare</span></button><button class="rarity-tab" id="tab-epic" type="button" role="tab" data-rarity="epic" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--epic" aria-hidden="true"></span><span>Epic</span></button><button class="rarity-tab" id="tab-legendary" type="button" role="tab" data-rarity="legendary" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--legendary" aria-hidden="true"></span><span>Legendary</span></button><button class="rarity-tab" id="tab-super-legendary" type="button" role="tab" data-rarity="super-legendary" aria-selected="false" aria-controls="hero-panel" tabindex="-1"><span class="rarity-symbol rarity-symbol--super-legendary" aria-hidden="true"></span><span>S. Legendary</span></button></div>
       <!-- One shared panel intentionally preserves one identical sprite and
            unchanged demo stats while the selected rarity presentation switches. -->
-      <div class="hero-panel" id="hero-panel" role="tabpanel" aria-labelledby="tab-legendary" tabindex="0" data-rarity="legendary">
+      <div class="hero-panel" id="hero-panel" role="tabpanel" aria-labelledby="tab-common" tabindex="0" data-rarity="common">
         <figure class="hero-card">
-          <span class="hero-card__symbol rarity-symbol rarity-symbol--legendary" aria-hidden="true"></span>
+          <span class="hero-card__symbol rarity-symbol rarity-symbol--common" aria-hidden="true"></span>
           <span class="rarity-ring" aria-hidden="true"></span>
-          <img class="game-image hero-sprite" src="assets/hero-elon.png" width="280" height="360" alt="Elon hero with brown hair, an Occupy Mars shirt, blue jeans, and black shoes" loading="lazy">
+          <img class="game-image hero-sprite" id="hero-sprite" src="assets/heroes/roaring-kitty.png" width="280" height="336" alt="Roaring Kitty with a red headband, long brown hair, light eyes and a black Game Over shirt" loading="lazy">
           <figcaption class="sr-only" id="selected-rarity">Legendary hero; crown symbol.</figcaption>
         </figure>
         <div class="hero-profile">
-          <h3 class="hero-name display">ELON</h3>
+          <h3 class="hero-name display" id="hero-name">ROARING KITTY</h3>
           <dl class="hero-stats"><div class="stat-row"><dt id="stat-power-label">Power</dt><dd><div class="stat-meter" role="meter" data-stat="power" aria-labelledby="stat-power-label" aria-valuemin="0" aria-valuemax="5" aria-valuenow="4" aria-valuetext="4 out of 5"><span class="stat-segments" aria-hidden="true"><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment"></span></span></div><span class="stat-value" aria-hidden="true">4/5</span></dd></div><div class="stat-row"><dt id="stat-range-label">Range</dt><dd><div class="stat-meter" role="meter" data-stat="range" aria-labelledby="stat-range-label" aria-valuemin="0" aria-valuemax="5" aria-valuenow="3" aria-valuetext="3 out of 5"><span class="stat-segments" aria-hidden="true"><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment"></span><span class="stat-segment"></span></span></div><span class="stat-value" aria-hidden="true">3/5</span></dd></div><div class="stat-row"><dt id="stat-energy-label">Energy</dt><dd><div class="stat-meter" role="meter" data-stat="energy" aria-labelledby="stat-energy-label" aria-valuemin="0" aria-valuemax="5" aria-valuenow="5" aria-valuetext="5 out of 5"><span class="stat-segments" aria-hidden="true"><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span></span></div><span class="stat-value" aria-hidden="true">5/5</span></dd></div></dl>
           <p class="data-note">Illustrative attributes</p>
         </div>
@@ -684,19 +688,34 @@
 
     const tabs = [...document.querySelectorAll('.rarity-tab')];
     const panel = document.querySelector('#hero-panel');
-    const symbols = { common: 'circle', rare: 'diamond', epic: 'four-pointed star', legendary: 'crown', mythic: 'flame' };
+    const symbols = { common: 'circle', rare: 'diamond', 'super-rare': 'double diamond', epic: 'four-pointed star', legendary: 'crown', 'super-legendary': 'flame' };
+    // Cada raridade mostra os herois que realmente pertencem a ela. Antes o
+    // painel era um Elon fixo que nunca mudava.
+    const elenco = {"common": [{"id": "roaring-kitty", "name": "Roaring Kitty", "alt": "Roaring Kitty with a red headband, long brown hair, light eyes and a black Game Over shirt"}], "rare": [{"id": "vitalik-buterin", "name": "Vitalik Buterin", "alt": "Tall, thin Vitalik Buterin with a turquoise Ethereum shirt, patterned coral trousers and light eyes"}], "super-rare": [{"id": "vlad-tenev", "name": "Vlad Tenev", "alt": "Vlad Tenev in a green Robin Hood outfit, feathered hat and brown boots"}], "epic": [{"id": "michael-saylor", "name": "Michael Saylor", "alt": "Michael Saylor with gray hair and beard, light eyes, black suit and orange tie"}, {"id": "mark-zuckerberg", "name": "Mark Zuckerberg", "alt": "Mark Zuckerberg with curly auburn hair, light eyes, black T-shirt, gold necklace and jeans"}], "legendary": [{"id": "jensen-huang", "name": "Jensen Huang", "alt": "Jensen Huang with gray hair, rectangular glasses and a black leather jacket"}, {"id": "jeff-bezos", "name": "Jeff Bezos", "alt": "Bald Jeff Bezos in a dark suit, white shirt and blue tie"}], "super-legendary": [{"id": "elon-musk", "name": "Elon Musk", "alt": "Elon Musk with brown hair, a black Occupy Mars shirt, blue jeans and black shoes"}]};
+    let passo = 0;
     function selectRarity(tab, moveFocus = false) {
       tabs.forEach(item => { const selected = item === tab; item.setAttribute('aria-selected', String(selected)); item.tabIndex = selected ? 0 : -1; });
       const rarity = tab.dataset.rarity;
       panel.dataset.rarity = rarity;
       panel.setAttribute('aria-labelledby', tab.id);
       panel.querySelector('.hero-card__symbol').className = 'hero-card__symbol rarity-symbol rarity-symbol--' + rarity;
+      const lista = elenco[rarity] || [];
+      if (lista.length) {
+        const h = lista[passo % lista.length];
+        const img = document.querySelector('#hero-sprite');
+        img.src = 'assets/heroes/' + h.id + '.png';
+        img.alt = h.alt;
+        document.querySelector('#hero-name').textContent = h.name.toUpperCase();
+      }
       document.querySelector('#selected-rarity').textContent = tab.textContent.trim() + ' hero; ' + symbols[rarity] + ' symbol.';
       document.querySelector('#rarity-status').textContent = tab.textContent.trim() + ' selected. ' + symbols[rarity] + ' symbol. Hero appearance and Energy remain unchanged.';
       if (moveFocus) tab.focus();
     }
     tabs.forEach((tab, index) => {
-      tab.addEventListener('click', () => selectRarity(tab));
+      tab.addEventListener('click', () => {
+        if (tab.getAttribute('aria-selected') === 'true') passo += 1; else passo = 0;
+        selectRarity(tab);
+      });
       tab.addEventListener('keydown', event => {
         let next;
         if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;

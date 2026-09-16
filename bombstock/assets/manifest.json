@@ -8,7 +8,7 @@
     "NVDA",
     "META"
   ],
-  "artwork_note": "Stock logos and cutouts are pixel-art reconstructions of the supplied raster mockup, not official vector brand masters. The hero is one fixed image for all rarity states. No rarity color is baked into the sprite.",
+  "artwork_note": "Stock logos and cutouts are pixel-art versions derived from supplied references. Each approved hero has one fixed portrait assigned to one rarity. No rarity tint is baked into any hero image.",
   "assets": [
     {
       "file": "bomb.png",
@@ -191,16 +191,116 @@
       "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
     },
     {
-      "file": "rarity-mythic.svg",
-      "bytes": 390,
-      "sha256": "69412c635d6f40eaa2752edbde4f54166d8bf437b1130b68b67e47fef0fd8460",
-      "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
-    },
-    {
       "file": "rarity-rare.svg",
       "bytes": 279,
       "sha256": "44114e9363733c0d79111debc34aba94065959968a708905a50bc5b0abaeaff4",
       "source": "SVG export of the HTML design-system UI geometry, with colors declared as CSS variables."
+    },
+    {
+      "file": "heroes/roaring-kitty.png",
+      "bytes": 71495,
+      "sha256": "fc23ff22b934b72987822373f98150219639d3e81a2eff0acef241f38f3910d4",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "common"
+    },
+    {
+      "file": "heroes/vitalik-buterin.png",
+      "bytes": 60681,
+      "sha256": "914165df7e2cf0f4a163940031d451ba6938a8541e35f7607b82eb367c21af66",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "rare"
+    },
+    {
+      "file": "heroes/vlad-tenev.png",
+      "bytes": 64970,
+      "sha256": "4823ec0ac91424fe117e92fbd8002c4a3cc073cbd5ff7cb57c22872a67c89248",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "super-rare"
+    },
+    {
+      "file": "heroes/michael-saylor.png",
+      "bytes": 68261,
+      "sha256": "5cf2c3efd1cc5b387c86186c668f6413420e91205046c1751ba26b2e0c4a0212",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "epic"
+    },
+    {
+      "file": "heroes/mark-zuckerberg.png",
+      "bytes": 65736,
+      "sha256": "8e37c345bb102ff092b1e55967d60f87c4c157c7920a0c9004d86f5157bd8493",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "epic"
+    },
+    {
+      "file": "heroes/jensen-huang.png",
+      "bytes": 67385,
+      "sha256": "370a3f136c3b94db557f8a27cc8420f6ce5adc0b96745f93f33b40adee4255c4",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "legendary"
+    },
+    {
+      "file": "heroes/jeff-bezos.png",
+      "bytes": 63057,
+      "sha256": "41c6b6f8b1b7acb2bc567e0b8fe7bfb01885c05be200ba3f1c8808a9a6dc7f9d",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": false,
+      "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+      "rarity": "legendary"
+    },
+    {
+      "file": "heroes/elon-musk.png",
+      "bytes": 72604,
+      "sha256": "3e20b49947c40c9587cb5da04ba135fea512348efc98cf25fa1774d8c385bbb8",
+      "width": 320,
+      "height": 384,
+      "transparent_background": true,
+      "binary_alpha": true,
+      "source": "Existing approved Elon cutout; no new generation.",
+      "rarity": "super-legendary"
+    },
+    {
+      "file": "rarity-super-rare.svg",
+      "bytes": 296,
+      "sha256": "b9ef4aa43c7d37ec5ba4ec773ef43d80418ee24e0c37d47d627dbaf4f34bb2f7",
+      "source": "SVG export of the HTML UI geometry; colors are CSS variables."
+    },
+    {
+      "file": "rarity-super-legendary.svg",
+      "bytes": 399,
+      "sha256": "58226b950335e97f40fd7b15c73544aaa71127779dc0ee6edfe1b7c03bb8fa30",
+      "source": "SVG export of the HTML UI geometry; colors are CSS variables."
+    },
+    {
+      "file": "icon-pause.svg",
+      "bytes": 259,
+      "sha256": "e6ea15b1d04578dbb99aec3ef2c18629248714de2bca1ccf416ee5e65b203e15",
+      "source": "SVG export of the HTML UI geometry; colors are CSS variables."
     }
   ]
 }

@@ -1,0 +1,130 @@
+[
+  {
+    "id": "roaring-kitty",
+    "name": "Roaring Kitty",
+    "rarity": "common",
+    "alt": "Roaring Kitty with a red headband, long brown hair, light eyes and a black Game Over shirt",
+    "src": "assets/heroes/roaring-kitty.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#9AA3B2",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "vitalik-buterin",
+    "name": "Vitalik Buterin",
+    "rarity": "rare",
+    "alt": "Tall, thin Vitalik Buterin with a turquoise Ethereum shirt, patterned coral trousers and light eyes",
+    "src": "assets/heroes/vitalik-buterin.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 344,
+    "rarity_color": "#35C4E8",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "vlad-tenev",
+    "name": "Vlad Tenev",
+    "rarity": "super-rare",
+    "alt": "Vlad Tenev in a green Robin Hood outfit, feathered hat and brown boots",
+    "src": "assets/heroes/vlad-tenev.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#6F8CFF",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "michael-saylor",
+    "name": "Michael Saylor",
+    "rarity": "epic",
+    "alt": "Michael Saylor with gray hair and beard, light eyes, black suit and orange tie",
+    "src": "assets/heroes/michael-saylor.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#A45CF0",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "mark-zuckerberg",
+    "name": "Mark Zuckerberg",
+    "rarity": "epic",
+    "alt": "Mark Zuckerberg with curly auburn hair, light eyes, black T-shirt, gold necklace and jeans",
+    "src": "assets/heroes/mark-zuckerberg.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#A45CF0",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "jensen-huang",
+    "name": "Jensen Huang",
+    "rarity": "legendary",
+    "alt": "Jensen Huang with gray hair, rectangular glasses and a black leather jacket",
+    "src": "assets/heroes/jensen-huang.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#FFC93C",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "jeff-bezos",
+    "name": "Jeff Bezos",
+    "rarity": "legendary",
+    "alt": "Bald Jeff Bezos in a dark suit, white shirt and blue tie",
+    "src": "assets/heroes/jeff-bezos.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#FFC93C",
+    "source": "Transparent background extraction from the supplied WASD front-facing frame.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  },
+  {
+    "id": "elon-musk",
+    "name": "Elon Musk",
+    "rarity": "super-legendary",
+    "alt": "Elon Musk with brown hair, a black Occupy Mars shirt, blue jeans and black shoes",
+    "src": "assets/heroes/elon-musk.png",
+    "canvas": {
+      "width": 320,
+      "height": 384
+    },
+    "ground_baseline": 368,
+    "visible_height": 320,
+    "rarity_color": "#E94FD8",
+    "source": "Existing approved Elon cutout; no new generation.",
+    "rarity_effects": "CSS only; no light, recoloring, ring or frame baked into the sprite."
+  }
+]
