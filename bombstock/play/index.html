@@ -341,7 +341,6 @@
   .modoSaque button[aria-pressed="true"] b{color:var(--amber)}
   @media (max-width:430px){ .modoSaque{grid-template-columns:1fr} }
 
-  .cofre .valor em.vivo{color:var(--gain);font-size:10px}
 </style>
 </head>
 <body>
@@ -355,7 +354,7 @@
     <div class="leitura">
       <button class="cofre" onclick="ir('claim')" id="chipCofre" title="Fractional shares waiting in the vault">
         <i class="ico coin"></i>
-        <span class="valor"><b id="chipMoedas">0</b><em id="chipUsd">shares</em></span>
+        <span class="valor"><b id="chipUsd">$—</b><em>farmed</em></span>
         <span class="trilhoMini"><i id="chipBarra"></i></span>
       </button>
       <span class="carteira" title="$BSTOCK, the token you spend on packs and mines">
@@ -1763,12 +1762,14 @@ function pintar(){
   const vistaAcordados=vista.ativos.filter(h=>h.estado!=='dormir').length;
 
   document.getElementById('chipSaldo').textContent=saldo;
-  document.getElementById('chipMoedas').textContent=Math.floor(bausCofre);
+  // O que o jogador quer saber e quanto farmou em dolar. A contagem de shares e
+  // unidade contabil interna e nao aparece aqui.
   const usdTopo=valorEmDolar();
   const eu=document.getElementById('chipUsd');
-  // sem taxa, so o rotulo; com taxa, so o dolar. "shares · $—" nao diz nada
-  eu.textContent = usdTopo===null ? 'shares' : emDolar(usdTopo);
-  eu.classList.toggle('vivo', usdTopo!==null);
+  eu.textContent = usdTopo===null ? '$—' : emDolar(usdTopo);
+  eu.parentElement.parentElement.title = usdTopo===null
+    ? 'Stock prices are live. The dollar value needs the vault, which does not exist yet.'
+    : 'Live value of what you farmed, priced stock by stock.';
   eu.title = usdTopo===null
     ? 'Live stock prices are in. The share-to-stock rate comes from the vault, which does not exist yet.'
     : 'Live value of everything in the vault, priced stock by stock.';
