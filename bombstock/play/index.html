@@ -980,7 +980,7 @@ function danificar(x,y,h){
     bausTotais+=paga; bausCofre+=paga; h.achados+=paga;
     if(minaViva){
       minaViva.achados+=paga;
-      const t=acaoDaMina(minaViva.def.id).tick;      // a mina decide a acao
+      const t=acaoDoBau(minaViva.def.id);            // a mina decide a acao
       cofreAcao[t]=(cofreAcao[t]||0)+paga;
     }
   }
@@ -1202,6 +1202,15 @@ const ACAO={
 };
 const acaoDaMina=id=>ACAO[id]||ACAO.verde;
 
+// A Green Field espalha: cada bau cai numa das sete acoes, sorteada. As minas
+// pagas concentram na propria. Isso e o que faz comprar mina valer a pena —
+// concentrar chega ao minimo de saque muito mais rapido que espalhar.
+const ACOES_TODAS=Object.keys(ACAO).map(k=>ACAO[k].tick);
+function acaoDoBau(idMina){
+  if(idMina!=='verde') return acaoDaMina(idMina).tick;
+  return ACOES_TODAS[Math.floor(Math.random()*ACOES_TODAS.length)];
+}
+
 let carteira=null, redeOk=false, precos={}, saldosAcao={}, ultimoPreco=0;
 
 async function rpc(metodo, params){
@@ -1284,7 +1293,9 @@ function avisarTopo(t){
 
 /* ================================================================= estado */
 const PRECOS={1:10, 5:48, 10:90};
-const MIN_SAQUE=40, TAXA_SAQUE=0.03;
+// 10 e nao 40: com a Green espalhando em sete acoes, 40 faria um heroi comum
+// esperar 13 dias pelo primeiro saque. Com 10, sao 3 dias. Numero a calibrar.
+const MIN_SAQUE=10, TAXA_SAQUE=0.03;
 
 let saldo=200, inventario=[], ativos=[], bausCofre=0, sacado=0;
 const cofreAcao={};   // moedas acumuladas por acao, definido pela mina
@@ -1368,7 +1379,8 @@ function montarSeletorMinas(){
     const podeComprar = m<0 && VENDA_DE_MINA && saldo>=def.preco;
     const tk=acaoDaMina(def.id).tick;
     // so mostra o ticker quando ele nao e o proprio nome da mina
-    const selo = tk===def.curto ? '' : `<span class="precoMina">${tk}</span>`;
+    const selo = def.id==='verde' ? '<span class="precoMina">ALL 7</span>'
+               : (tk===def.curto ? '' : `<span class="precoMina">${tk}</span>`);
     // travada mostra o preco; o cadeado sai porque a borda tracejada ja diz
     b.innerHTML = m<0 ? def.curto+`<span class="precoMina">${def.preco}</span>` : def.curto+selo;
     b.disabled = m<0 && !podeComprar;
@@ -1690,7 +1702,9 @@ function pintar(){
   // cotacao da acao que esta mina paga
   const ac=acaoDaMina(vista.def.id), pr=precos[ac.tick];
   const cot=document.getElementById('cotacaoMina');
-  cot.innerHTML = pr ? `pays in ${ac.tick} <b>$${pr.toFixed(2)}</b>` : `pays in ${ac.tick}`;
+  cot.innerHTML = vista.def.id==='verde'
+    ? 'pays in all seven'
+    : (pr ? `pays in ${ac.tick} <b>$${pr.toFixed(2)}</b>` : `pays in ${ac.tick}`);
   ajustarCasca();
   if(telaAtual==='mina') montarSeletorMinas();
   const sig=assinatura();
