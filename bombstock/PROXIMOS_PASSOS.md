@@ -33,9 +33,10 @@ uma melhoria, é pré-requisito de qualquer coisa que pague.
    jogador. Pull, nunca push.
 6. **Keeper.** Recolhe a fee, fecha a época, publica a raiz.
 
-Antes disso, uma coisa barata e que muda a percepção: **salvar o progresso**.
-Hoje recarregar a página zera tudo. Mesmo sem servidor, guardar no navegador já
-elimina a reclamação mais óbvia de quem testa.
+FEITO em 15/09: **salvar o progresso** no navegador. Heróis, minas, moedas por
+ação, equipe e mina atual sobrevivem ao reload; a energia se recarrega no tempo
+parado; não há ganho offline de moeda, de propósito. O save é editável pelo
+jogador e morre quando o servidor chegar.
 
 ## Pendente de decisão do G
 
@@ -64,6 +65,8 @@ skill por hover e toque.
 Sete minas com cenário, rocha, jaula e dois baús próprios. Uma mina por vez: a
 equipe inteira acompanha a troca.
 
+Progresso salvo no navegador, com botão de reset na tela de saque.
+
 Cripto de leitura: carteira conecta e troca para a chain 4663, preço das ações
 lido ao vivo, cada mina paga na sua ação, saque separado por ação com o saldo
 real da carteira.
@@ -76,7 +79,6 @@ sorteios. Dez de dez corretas, zero erro de console.
 
 ## Dívidas técnicas
 
-- Progresso não é salvo.
 - Dois arneses de simulação dão números absolutos incompatíveis (800 moedas/h
   contra 30 na mesma configuração). Só comparação dentro da mesma rodada é
   confiável. Precisa de investigação separada.
