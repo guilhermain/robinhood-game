@@ -340,6 +340,8 @@
   .modoSaque button[aria-pressed="true"]{border-color:var(--amber);background:#2A2117}
   .modoSaque button[aria-pressed="true"] b{color:var(--amber)}
   @media (max-width:430px){ .modoSaque{grid-template-columns:1fr} }
+
+  .cofre .valor em.vivo{color:var(--gain);font-size:10px}
 </style>
 </head>
 <body>
@@ -1764,7 +1766,9 @@ function pintar(){
   document.getElementById('chipMoedas').textContent=Math.floor(bausCofre);
   const usdTopo=valorEmDolar();
   const eu=document.getElementById('chipUsd');
-  eu.textContent = usdTopo===null ? 'shares · $—' : 'shares · '+emDolar(usdTopo);
+  // sem taxa, so o rotulo; com taxa, so o dolar. "shares · $—" nao diz nada
+  eu.textContent = usdTopo===null ? 'shares' : emDolar(usdTopo);
+  eu.classList.toggle('vivo', usdTopo!==null);
   eu.title = usdTopo===null
     ? 'Live stock prices are in. The share-to-stock rate comes from the vault, which does not exist yet.'
     : 'Live value of everything in the vault, priced stock by stock.';
