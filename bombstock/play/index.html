@@ -351,6 +351,33 @@
   .cofre.bateu{animation:bateu .34s ease-out}
   @keyframes bateu{
     0%{transform:scale(1)} 35%{transform:scale(1.13)} 100%{transform:scale(1)} }
+
+  /* Treasury: o que lastreia o saque. Vem da chain, nao e enfeite. */
+  .tesouro{border:1px solid var(--rule);background:linear-gradient(#1D1811,#17130F);
+    border-radius:3px;margin:14px 0;overflow:hidden}
+  .tesouro header{display:flex;align-items:flex-start;justify-content:space-between;
+    gap:14px;padding:14px 16px 12px;border-bottom:1px solid var(--rule2)}
+  .tesouro h3{margin:0;font-size:14px;font-weight:600;color:var(--chalk)}
+  .tesouro header p{margin:3px 0 0;font-size:12px;color:var(--mute);max-width:42ch}
+  .tesouroTotal{text-align:right;white-space:nowrap}
+  .tesouroTotal b{display:block;font-family:"Press Start 2P",monospace;font-size:15px;color:var(--gain)}
+  .tesouroTotal span{font-size:11px;color:var(--mute)}
+  .tesouroLista{padding:4px 0}
+  .tesouroItem{display:grid;grid-template-columns:58px 1fr 2fr auto 34px;align-items:center;
+    gap:10px;padding:8px 16px;font-size:12px}
+  .tesouroItem .tk{font-family:"Press Start 2P",monospace;font-size:10px}
+  .tesouroItem .qt{color:var(--chalk);text-align:right}
+  .tesouroItem .barra{height:6px;background:#241E17;border-radius:2px;overflow:hidden}
+  .tesouroItem .barra i{display:block;height:100%;border-radius:2px}
+  .tesouroItem .vl{color:var(--chalk);text-align:right;font-variant-numeric:tabular-nums}
+  .tesouroItem .pc{color:var(--mute);text-align:right}
+  .tesouro footer{padding:10px 16px;border-top:1px solid var(--rule2);
+    font-size:11px;color:var(--mute)}
+  .tesouroVazio{margin:0;padding:14px 16px;font-size:12px;color:var(--mute)}
+  @media (max-width:470px){
+    .tesouroItem{grid-template-columns:48px 1fr auto;gap:8px}
+    .tesouroItem .barra,.tesouroItem .pc{display:none}
+  }
 </style>
 </head>
 <body>
@@ -452,6 +479,17 @@
       <div class="n" id="claimBaus">0</div>
       <div class="u">shares banked</div>
     </div>
+    <section class="tesouro" id="tesouro">
+      <header>
+        <div>
+          <h3>Reward treasury</h3>
+          <p>Stocks the vault holds, on chain. Every claim is paid from here.</p>
+        </div>
+        <div class="tesouroTotal"><b id="tesouroUsd">$—</b><span>total value</span></div>
+      </header>
+      <div class="tesouroLista" id="tesouroLista"></div>
+      <footer id="tesouroRodape"></footer>
+    </section>
     <div class="listaAcao" id="claimPorAcao"></div>
     <div class="modoSaque" id="claimModo"></div>
     <div class="tabela" id="claimResumo"></div>
@@ -1242,6 +1280,17 @@ function acaoDoBau(idMina){
 }
 
 let carteira=null, redeOk=false, precos={}, saldosAcao={}, ultimoPreco=0;
+let cofreSaldos={};        // quanto o treasury tem de cada acao, lido da chain
+
+async function buscarCofre(){
+  for(const k in ACAO){
+    try{
+      const r=await rpc('eth_call',[{to:ACAO[k].addr,
+        data:'0x70a08231'+padEnd(COFRE_ADDR)},'latest']);
+      cofreSaldos[ACAO[k].tick]=Number(BigInt(r))/1e18;
+    }catch(e){}
+  }
+}
 
 async function rpc(metodo, params){
   const r=await fetch(CHAIN.rpc,{method:'POST',headers:{'content-type':'application/json'},
@@ -1318,6 +1367,7 @@ let saldoVault=0;
 async function atualizarCripto(){
   try{ await buscarPrecos(); }catch(e){}
   try{ await buscarSaldos(); }catch(e){}
+  try{ await buscarCofre(); }catch(e){}
   pintar();
 }
 setInterval(()=>{ if(telaAtual!=='menu') atualizarCripto(); }, 120000);
@@ -1544,8 +1594,12 @@ const cofreAcao={};   // shares acumuladas por acao, definido pela mina
    tudo. */
 // Converter em $BSTOCK paga o MESMO que receber a acao. Sem bonus — decidido
 // pelo G em 15/09. Nao reintroduzir.
-const FRACAO=null;         // quanto de acao vale 1 share; com o cofre real vira
-                           // (acao no cofre) / (shares da epoca)
+// Quanto de acao vale 1 share. Valor ILUSTRATIVO enquanto a economia nao roda:
+// escolhido a partir da meta do G de 60 a 120 dias de payback. Com 44 shares
+// por dia por heroi medio e NVDA a ~US$216, 0,00001 da US$0,10/dia e paga um
+// pacote de US$10 em ~105 dias. Quando o cofre real existir isto deixa de ser
+// constante e vira (acao no cofre) / (shares da epoca).
+const FRACAO=0.00001;
 
 // Valor em dolar do que esta no cofre, somando acao por acao pelo preco lido ao
 // vivo. Devolve null enquanto a taxa de conversao nao existir — melhor mostrar
@@ -1560,7 +1614,18 @@ function valorEmDolar(){
   }
   return usd;
 }
-const emDolar=v=> v>=1000 ? '$'+(v/1000).toFixed(1)+'k' : '$'+v.toFixed(2);
+// Formato de dolar em toda a escala: o cofre chega a dezenas de milhoes e uma
+// share vale fracao de centavo. Um formato so nao serve para os dois.
+function emDolar(v){
+  const a=Math.abs(v);
+  if(a>=1e9) return '$'+(v/1e9).toFixed(2)+'B';
+  if(a>=1e6) return '$'+(v/1e6).toFixed(2)+'M';
+  if(a>=1e3) return '$'+(v/1e3).toFixed(1)+'k';
+  if(a>=1)   return '$'+v.toFixed(2);
+  if(a>=0.01)return '$'+v.toFixed(3);
+  if(a>0)    return '$'+v.toFixed(5);
+  return '$0.00';
+}
 let modoSaque='acao';   // 'acao' ou 'bstock'
 let telaAtual='menu', filtroRar=-1, fila=[], filaPos=0;
 
@@ -1922,7 +1987,39 @@ function pintarEquipe(){
 
 /* --------------------------------------------------------------- claim */
 
+const CORES_ACAO={NVDA:'#76B900',GME:'#E2564D',AMZN:'#FF9900',MSTR:'#4A90D9',
+                  META:'#4267B2',SPCX:'#C0C6CC',USDG:'#41C07A'};
+function pintarTesouro(){
+  const alvo=document.getElementById('tesouroLista');
+  const tickers=Object.keys(cofreSaldos).filter(t=>cofreSaldos[t]>0);
+  if(!tickers.length){
+    alvo.innerHTML='<p class="tesouroVazio">Reading the vault from chain…</p>';
+    document.getElementById('tesouroRodape').textContent='';
+    return;
+  }
+  const valor=t=>(precos[t]||0)*cofreSaldos[t];
+  const total=tickers.reduce((s,t)=>s+valor(t),0);
+  const maior=Math.max(...tickers.map(valor),1);
+  tickers.sort((a,b)=>valor(b)-valor(a));
+  alvo.innerHTML=tickers.map(t=>{
+    const v=valor(t), pc=total?100*v/total:0;
+    return `<div class="tesouroItem">
+      <span class="tk" style="color:${CORES_ACAO[t]||'var(--amber)'}">${t}</span>
+      <span class="qt">${cofreSaldos[t].toLocaleString(undefined,{maximumFractionDigits:2})}</span>
+      <span class="barra"><i style="width:${(100*v/maior).toFixed(1)}%;background:${CORES_ACAO[t]||'var(--amber)'}"></i></span>
+      <span class="vl">${v?emDolar(v):'—'}</span>
+      <span class="pc">${pc.toFixed(0)}%</span>
+    </div>`;
+  }).join('');
+  document.getElementById('tesouroUsd').textContent = total?emDolar(total):'$—';
+  const porShare=FRACAO!==null && precos.NVDA ? FRACAO*precos.NVDA : null;
+  document.getElementById('tesouroRodape').textContent = porShare!==null
+    ? `1 share ≈ ${emDolar(porShare)} at today's prices · illustrative rate until the epoch closes`
+    : 'Share rate is set when an epoch closes.';
+}
+
 function pintarClaim(){
+  pintarTesouro();
   const bruto=bausCofre;
   const taxa=bruto*TAXA_SAQUE;
   document.getElementById('claimBaus').textContent=Math.floor(bruto);
