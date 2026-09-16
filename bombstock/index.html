@@ -416,11 +416,6 @@
     text-decoration:none}
 
   /* a marca no lugar do marcador LOGO do material original */
-  .brand-slot{display:inline-flex;align-items:center;gap:8px;text-decoration:none;
-    color:var(--color-ivory);font-family:var(--font-display);font-size:.8rem;
-    letter-spacing:.04em;padding:0 .5rem}
-  .marcaSvg{width:22px;height:22px;shape-rendering:crispEdges;flex:none}
-  .marcaTexto b{color:var(--color-action);font-weight:inherit}
   /* .button vinha depois e vencia o display:none do menu do celular */
   .site-header .menu-toggle{display:none}
   @media (width < 48rem){ .site-header .menu-toggle{display:inline-flex} }
@@ -438,10 +433,21 @@
   .mine-card__lock{font-size:.8rem;opacity:.8}
   .mine-card a.button{align-self:flex-start}
 
-  /* a marca agora e a logo em pixel art, nao o vetor que eu tinha desenhado */
-  .brand-slot{display:inline-flex;align-items:center;padding:0 .35rem}
-  .brand-slot img{height:30px;width:auto;image-rendering:pixelated;display:block}
-  @media (width < 48rem){ .brand-slot img{height:24px} }
+
+  /* A marca: a caixa original era um marcador de 128px com borda, e a logo
+     ficava perdida dentro dela. Aqui ela e a propria marca, sem moldura. */
+  .site-header .brand-slot{
+    display:inline-flex;align-items:center;justify-content:flex-start;
+    inline-size:auto;min-inline-size:0;min-block-size:0;
+    border:0;background:none;padding:0;text-decoration:none}
+  .site-header .brand-slot:hover{border:0}
+  .site-header .brand-slot img{height:48px;width:auto;image-rendering:pixelated;display:block}
+  /* o menu estava caindo para a segunda linha mesmo em tela larga */
+  @media (width >= 48rem){
+    .site-header .primary-nav{grid-column:2;grid-row:1}
+    .site-header .header-actions{grid-column:3;grid-row:1}
+  }
+  @media (width < 48rem){ .site-header .brand-slot img{height:34px} }
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->
