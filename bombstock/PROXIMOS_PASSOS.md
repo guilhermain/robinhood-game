@@ -21,7 +21,22 @@ qualquer um edita pelo console. **Enquanto for assim, nenhum pagamento em stock
 pode existir** — seria drenado na primeira hora. O servidor autoritativo não é
 uma melhoria, é pré-requisito de qualquer coisa que pague.
 
-## Próximo passo recomendado: metade 2 do cripto
+## O que trava agora: uma carteira
+
+Os contratos estão escritos e testados, mas **nada foi deployado**. O deploy
+precisa de ETH de testnet, os faucets exigem verificação humana, e o G não tem
+carteira. Testado em 15/09: o faucet oficial devolve 429 para todos, o QuickNode
+exige saldo prévio na mainnet, o Chainlink exige conectar carteira.
+
+O custo do deploy inteiro é 0,000046 ETH de testnet. O bloqueio não é dinheiro,
+é assinatura.
+
+**Isto não é só sobre este deploy.** Lançar o $BSTOCK, receber a taxa de criador,
+ser dono do contrato do herói e abastecer o cofre exigem alguém que assine
+transação. Enquanto não existir carteira, o projeto anda até a beira da chain e
+para ali.
+
+## Depois da carteira: metade 2 do cripto
 
 1. **Servidor autoritativo.** A simulação da mina roda no servidor; o cliente só
    desenha. O cliente nunca informa que achou baú.
@@ -56,6 +71,16 @@ jogador e morre quando o servidor chegar.
 8. **Travar as minas de novo.** Estão liberadas para teste. Trocar
    `VENDA_DE_MINA` para `false` quando quiser lançar aos poucos.
 
+## Contratos prontos (não deployados)
+
+Em `bombstock/contratos/`:
+- `Tokens.sol` — ERC-20 mínimo com torneira, para o $BSTOCK e as sete ações de
+  teste. Oito deployados e testados em EVM local, 4.645.866 de gas.
+- `RewardVault.sol` — claim por raiz de Merkle, uma transação nossa por época e
+  cada jogador paga o próprio gas. Testado com cinco saques reais e **sete
+  ataques, todos bloqueados**, incluindo republicar época com outra raiz.
+- `deploy.py` — compila, envia e grava endereços. Um comando quando houver ETH.
+
 ## Pronto e verificado
 
 Fase 1 fechada: mina, IA, 7 skills, 6 raridades, prisão, loja, abertura de carta,
@@ -66,6 +91,11 @@ Sete minas com cenário, rocha, jaula e dois baús próprios. Uma mina por vez: 
 equipe inteira acompanha a troca.
 
 Progresso salvo no navegador, com botão de reset na tela de saque.
+
+Green Field espalha as sete ações; as pagas concentram na própria — é isso que
+faz comprar mina valer a pena. Mínimo de saque de 40 para 10, senão um herói
+comum esperaria 13 dias pelo primeiro saque. A unidade minerada chama-se
+**share**, não "coin".
 
 Cripto de leitura: carteira conecta e troca para a chain 4663, preço das ações
 lido ao vivo, cada mina paga na sua ação, saque separado por ação com o saldo
