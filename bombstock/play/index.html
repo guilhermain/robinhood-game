@@ -1941,18 +1941,27 @@ function pintarClaim(){
         : Math.max(0,bruto-taxa).toFixed(1)+' shares'}</span></div>`+
     `<div><span>already claimed</span><span>${sacado.toFixed(1)}</span></div>`;
   const b=document.getElementById('claimBtn');
-  b.disabled = bruto<MIN_SAQUE;
-  b.textContent = bruto<MIN_SAQUE ? `${Math.ceil(MIN_SAQUE-bruto)} shares to go` : 'Claim';
+  const semCarteira = !carteira || !redeOk;
+  b.disabled = bruto<MIN_SAQUE || semCarteira;
+  b.textContent = bruto<MIN_SAQUE ? `${Math.ceil(MIN_SAQUE-bruto)} shares to go`
+                : semCarteira ? 'Connect wallet to claim'
+                : (modoSaque==='bstock' ? 'Convert to $BSTOCK' : 'Claim stocks');
+  if(semCarteira){
+    document.getElementById('claimNota').textContent =
+      'Mining works without a wallet, but claiming does not: the tokens have nowhere to go. Connect to claim.';
+  } else
   document.getElementById('claimNota').textContent = modoSaque==='bstock'
     ? 'At epoch close the vault sells your stock and buys $BSTOCK on the market with it — one batched swap, not one per player.'
     : 'Your cut of the stocks the vault bought this epoch, paid in the tickers you mined.';
 }
 async function sacar(){
   if(bausCofre<MIN_SAQUE) return;
-  if(carteira && redeOk){
-    const ok=await sacarOnchain();
-    if(!ok) return;                       // sem transacao confirmada, nao zera
-  }
+  // Sem carteira nao ha para onde o token ir. Zerar o cofre local fingiria um
+  // recebimento que nao aconteceu — diferente de comprar pacote, aqui nao
+  // existe versao offline que faca sentido.
+  if(!carteira || !redeOk){ avisarTopo('Connect your wallet to claim'); return; }
+  const ok=await sacarOnchain();
+  if(!ok) return;                         // sem transacao confirmada, nao zera
   salvarLogo();
   sacado += bausCofre*(1-TAXA_SAQUE);
   bausCofre=0;
