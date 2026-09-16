@@ -1330,6 +1330,73 @@ function avisarTopo(t){
   clearTimeout(avisoTopoT); avisoTopoT=setTimeout(()=>el.classList.remove('on'),4000);
 }
 
+
+/* ============================================== transacoes de verdade (testnet)
+   Comprar pacote, comprar mina e sacar deixam de ser variavel de JavaScript e
+   viram transacao assinada pela carteira do jogador.
+   O cofre de testnet paga sem prova nenhuma, de proposito: aqui os tokens nao
+   valem nada e o objetivo e ver o ciclo. Na mainnet quem vale e o RewardVault,
+   com prova de Merkle e raiz publicada por servidor. */
+const COFRE_ADDR='0x97A54706195aDa31247e650c1dD7d94efcb594C1';
+
+// assinaturas das funcoes, calculadas uma vez
+const SEL={
+  approve:      '0x095ea7b3',
+  allowance:    '0xdd62ed3e',
+  comprarPacote:'0x7d5b0af5',
+  comprarMina:  '0xe0743153',
+  sacarCofre:   '0x49ed96da',
+};
+const pad=v=>BigInt(v).toString(16).padStart(64,'0');
+const padEnd=a=>a.toLowerCase().replace('0x','').padStart(64,'0');
+
+async function enviarTx(to, data, rotulo){
+  if(!carteira){ avisarTopo('Connect your wallet first'); return null; }
+  if(!redeOk){ await garantirRede(); if(!redeOk) return null; }
+  try{
+    const h=await ethereum.request({method:'eth_sendTransaction',
+      params:[{from:carteira, to, data}]});
+    avisarTopo(rotulo+' sent — waiting for the chain');
+    for(let i=0;i<60;i++){
+      await new Promise(r=>setTimeout(r,2000));
+      const r=await rpc('eth_getTransactionReceipt',[h]).catch(()=>null);
+      if(r){ 
+        if(r.status==='0x1'){ avisarTopo(rotulo+' confirmed'); atualizarCripto(); return h; }
+        avisarTopo(rotulo+' failed on chain'); return null;
+      }
+    }
+    avisarTopo(rotulo+' is taking long — check your wallet');
+    return null;
+  }catch(e){ avisarTopo(e.message&&e.message.slice(0,90)||'Rejected'); return null; }
+}
+
+// O cofre gasta $BSTOCK do jogador, entao precisa de permissao antes.
+async function garantirPermissao(quanto){
+  const data=SEL.allowance+padEnd(carteira)+padEnd(COFRE_ADDR);
+  let atual=0n;
+  try{ atual=BigInt(await rpc('eth_call',[{to:BSTOCK_ADDR, data},'latest'])); }catch(e){}
+  if(atual >= quanto) return true;
+  const max='0x'+'f'.repeat(64);
+  const ok=await enviarTx(BSTOCK_ADDR, SEL.approve+padEnd(COFRE_ADDR)+'f'.repeat(64), 'Approval');
+  return !!ok;
+}
+
+async function comprarPacoteOnchain(qtd){
+  const custo=BigInt(qtd)*10n*(10n**18n);
+  if(!await garantirPermissao(custo)) return false;
+  return !!await enviarTx(COFRE_ADDR, SEL.comprarPacote+pad(qtd), 'Pack purchase');
+}
+
+async function sacarOnchain(){
+  // saca a acao em que o jogador tem mais shares, so para provar o caminho
+  let alvo=null, maior=0;
+  for(const t in cofreAcao) if(cofreAcao[t]>maior){ maior=cofreAcao[t]; alvo=t; }
+  if(!alvo){ avisarTopo('Nothing to claim yet'); return false; }
+  const addr=Object.values(ACAO).find(a=>a.tick===alvo).addr;
+  const valor=BigInt(Math.floor(maior*1e15));      // 1 share = 0,001 token na testnet
+  return !!await enviarTx(COFRE_ADDR, SEL.sacarCofre+padEnd(addr)+pad(valor), 'Claim');
+}
+
 /* ================================================================= estado */
 const PRECOS={1:10, 5:48, 10:90};
 // 10 e nao 40: com a Green espalhando em sete acoes, 40 faria um heroi comum
@@ -1516,8 +1583,15 @@ function entrarMina(id){
 
 // Comprar mina e comprar vaga: mais 10 herois podem trabalhar ao mesmo tempo.
 const VENDA_DE_MINA=true;    // liberado para teste; voltar a false antes de lancar
-function comprarMina(id){
+async function comprarMina(id){
   if(!VENDA_DE_MINA) return;
+  if(carteira && redeOk){
+    const ok=await enviarTx(COFRE_ADDR,
+      SEL.comprarMina + pad(32) + pad(id.length) +
+      Array.from(new TextEncoder().encode(id)).map(b=>b.toString(16).padStart(2,'0')).join('').padEnd(64,'0'),
+      'Mine purchase');
+    if(!ok) return;
+  }
   const def=MINAS_DEF.find(d=>d.id===id);
   if(!def || saldo<def.preco || minas.some(m=>m.def.id===id)) return;
   saldo-=def.preco;
@@ -1552,9 +1626,16 @@ function montarLoja(){
     `<div><span>${r.nome}</span><span style="color:${r.cor}">${(r.chance/100).toFixed(2)}%</span></div>`).join('');
 }
 
-function comprar(q){
-  if(saldo<PRECOS[q]) return;
-  saldo-=PRECOS[q];
+// Com carteira conectada, a compra vira transacao de $BSTOCK. Sem carteira, o
+// jogo segue funcionando local — util para testar sem depender da chain.
+async function comprar(q){
+  if(carteira && redeOk){
+    const ok=await comprarPacoteOnchain(q);
+    if(!ok) return;                       // recusou, falhou ou sem saldo: nao entrega
+  } else {
+    if(saldo<PRECOS[q]) return;
+    saldo-=PRECOS[q];
+  }
   salvarLogo();
   fila=Array.from({length:q},()=>novoHeroi());
   for(const h of fila) inventario.push(h);
@@ -1744,8 +1825,12 @@ function pintarClaim(){
     ? 'At epoch close the vault sells your stock and buys $BSTOCK on the market with it — one batched swap, not one per player.'
     : 'Your cut of the stocks the vault bought this epoch, paid in the tickers you mined.';
 }
-function sacar(){
+async function sacar(){
   if(bausCofre<MIN_SAQUE) return;
+  if(carteira && redeOk){
+    const ok=await sacarOnchain();
+    if(!ok) return;                       // sem transacao confirmada, nao zera
+  }
   salvarLogo();
   sacado += bausCofre*(1-TAXA_SAQUE);
   bausCofre=0;
