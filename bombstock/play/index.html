@@ -397,6 +397,20 @@
   .fitaItem s{text-decoration:none;font-size:9px}
   .fitaItem s.sobe{color:var(--gain)} .fitaItem s.desce{color:var(--loss)}
   @media (prefers-reduced-motion:reduce){ .fitaTrilho{animation:none} }
+
+  /* resumo do saque: dolar em destaque e barra ate o minimo. O numero solto de
+     shares somava sete acoes de preco diferente como se fossem iguais. */
+  .resumoSaque{border:1px solid var(--rule);background:linear-gradient(#211B14,#191410);
+    border-radius:3px;padding:18px 18px 16px;margin-top:10px}
+  .rsValor{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .rsValor b{font-family:"Press Start 2P",monospace;font-size:26px;color:var(--amber)}
+  .rsValor span{font-size:12px;color:var(--mute)}
+  .rsBarra{height:7px;background:#2A2219;border-radius:4px;overflow:hidden;margin:14px 0 8px}
+  .rsBarra i{display:block;height:100%;width:0;border-radius:4px;background:var(--amber);transition:width .4s}
+  .rsBarra i.cheio{background:var(--gain)}
+  .rsFalta{font-size:12px;color:var(--mute)}
+  .listaAcao .mo{font-variant-numeric:tabular-nums;color:var(--chalk)}
+  .listaAcao .pr{color:var(--gain);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -494,9 +508,10 @@
   <!-- --------------------------------------------------------------- claim -->
   <section class="tela" id="claim">
     <div class="linhaMina"><h2 class="tituloAba">Claim</h2><button class="voltar" onclick="ir('mina')">Back to the mine</button></div>
-    <div class="cartao">
-      <div class="n" id="claimBaus">0</div>
-      <div class="u">shares banked</div>
+    <div class="resumoSaque">
+      <div class="rsValor"><b id="rsUsd">$—</b><span id="rsSub">nothing mined yet</span></div>
+      <div class="rsBarra"><i id="rsProgresso"></i></div>
+      <div class="rsFalta" id="rsFalta"></div>
     </div>
     <section class="tesouro" id="tesouro">
       <header>
@@ -2077,22 +2092,42 @@ function pintarClaim(){
   pintarTesouro();
   const bruto=bausCofre;
   const taxa=bruto*TAXA_SAQUE;
-  document.getElementById('claimBaus').textContent=Math.floor(bruto);
   const porAcao=document.getElementById('claimPorAcao');
-  const linhas=Object.keys(cofreAcao).filter(k=>cofreAcao[k]>0).sort();
+  const linhas=Object.keys(cofreAcao).filter(k=>cofreAcao[k]>0);
+  const liq=Math.max(0,1-TAXA_SAQUE);
+
+  // Cada linha diz QUANTO DA ACAO voce recebe e quanto aquilo vale. Antes ela
+  // mostrava a cotacao da acao inteira, que ninguem vai levar, e a contagem de
+  // shares, que nao e comparavel entre acoes de preco diferente.
+  const fmtAcao=v=> v>=1 ? v.toFixed(3) : v.toFixed(7).replace(/0+$/,'').replace(/\.$/,'');
+  linhas.sort((a,b)=>(cofreAcao[b]*(precos[b]||0))-(cofreAcao[a]*(precos[a]||0)));
   porAcao.innerHTML = linhas.length ? linhas.map(t=>{
-    const pr=precos[t], sal=saldosAcao[t];
+    const pr=precos[t];
+    const qtd=FRACAO!==null ? cofreAcao[t]*FRACAO*liq : null;
+    const val=(qtd!==null&&pr)? qtd*pr : null;
     return `<div><span class="tk">${t}</span>`+
-      `<span class="mo">${cofreAcao[t].toFixed(1)} shares</span>`+
-      `<span class="pr">${pr?'$'+pr.toFixed(2):'price —'}`+
-      `${sal!==undefined?' · wallet '+sal.toFixed(4):''}</span></div>`;
+      `<span class="mo">${qtd!==null? fmtAcao(qtd)+' '+t : cofreAcao[t].toFixed(1)+' shares'}</span>`+
+      `<span class="pr">${val!==null? emDolar(val) : '—'}</span></div>`;
   }).join('') : '<div><span class="pr">Mine a stock to build up fractional shares of it.</span></div>';
+
+  // resumo do topo: o dolar liquido e o quanto falta para o minimo
+  const usdSaque=valorEmDolar();
+  document.getElementById('rsUsd').textContent = usdSaque===null?'$—':emDolar(usdSaque*liq);
+  document.getElementById('rsSub').textContent = linhas.length
+    ? `across ${linhas.length} ticker${linhas.length>1?'s':''}, after the 3% fee`
+    : 'nothing mined yet';
+  const pc=Math.min(100, 100*bruto/MIN_SAQUE);
+  const bar=document.getElementById('rsProgresso');
+  bar.style.width=pc.toFixed(1)+'%';
+  bar.classList.toggle('cheio', bruto>=MIN_SAQUE);
+  document.getElementById('rsFalta').textContent = bruto>=MIN_SAQUE
+    ? 'Ready to claim'
+    : `${Math.ceil(MIN_SAQUE-bruto)} more shares to reach the minimum`;
 
   // valor em dolar do que esta no cofre, pelas cotacoes lidas ao vivo
   // So da para mostrar cifra quando a taxa de conversao existir
   const bruto_usd=valorEmDolar();
   const temPreco = bruto_usd!==null, usd = bruto_usd||0;
-  const liq=Math.max(0,1-TAXA_SAQUE);
   const usdAcao=usd*liq;
 
   const op=document.getElementById('claimModo');
