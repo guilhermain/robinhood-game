@@ -132,6 +132,33 @@ como "a decidir" quando a decisão já era não ter bônus.
 Parâmetro de economia não se escolhe por conveniência de tela, e "a decidir" não
 é lugar para guardar uma proposta minha que o G não pediu.
 
+
+## Regra de processo: pergunta não é pedido
+
+Decidido pelo G em 16/09, depois de três ocorrências no mesmo dia.
+
+**Quando o G pergunta alguma coisa, ele quer a resposta — não a implementação.**
+Responder e já sair construindo é decidir por ele e apresentar fato consumado.
+
+Os três casos:
+1. Propus um bônus de 10% na conversão para $BSTOCK e **implementei** sem
+   perguntar. O G não tinha pedido bônus nenhum. Depois de remover, ainda
+   deixei "a decidir" na tela — como se fosse pergunta aberta, quando a
+   decisão já era não ter bônus.
+2. Inventei `FRACAO = 0,0002`, que é a taxa de câmbio do jogo inteiro, porque
+   precisava de um número para a tela mostrar.
+3. Ele perguntou se dava para ver o gráfico do $BSTOCK. Respondi que não existia
+   screener para testnet e emendei "então eu construo", já indo codar — sem
+   pedido, e para um gráfico de um token de mentira num pool que eu mesmo
+   semeei com liquidez que eu inventei.
+
+O padrão é o mesmo nos três: preencher um vazio de decisão com escolha minha,
+por conveniência de tela ou de conversa.
+
+**A regra:** responder a pergunta, parar, e esperar. Se falta decisão, a tela
+mostra que falta — não um número plausível. Parâmetro de economia nunca se
+escolhe por conveniência.
+
 ## Vocabulário
 
 A unidade minerada chama-se **share** na interface, não "coin". Ela é fração da
