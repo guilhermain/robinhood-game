@@ -1,7 +1,7 @@
 # BOMBSTOCK — próximos passos
 
-Atualizado em 15/09/2026, depois da camada cripto de leitura.
-Fonte de verdade do que falta. Leia o `DECISOES.md` em seguida.
+Atualizado em 16/09/2026, depois do deploy na testnet.
+Fonte de verdade do que falta. Leia `PLANO.md` e `DECISOES.md` em seguida.
 
 ## Onde as coisas estão
 
@@ -11,108 +11,104 @@ Fonte de verdade do que falta. Leia o `DECISOES.md` em seguida.
 | Jogo | https://guilhermain.github.io/robinhood-game/bombstock/play/ |
 | Fonte | repo `guilhermain/robinhood-game`, pasta `bombstock/` |
 
-Jogo: HTML único de ~600 KB, toda a arte em base64. Publicação por commit na
-API do GitHub; o Pages leva de 60 a 90 segundos.
+## Contratos na testnet 46630
 
-## O bloqueio que manda em tudo
+Deployados e testados em 16/09. RPC `https://rpc.testnet.chain.robinhood.com`,
+explorer `https://explorer.testnet.chain.robinhood.com`.
 
-O jogo roda inteiro no navegador. As moedas são variável de JavaScript e
-qualquer um edita pelo console. **Enquanto for assim, nenhum pagamento em stock
-pode existir** — seria drenado na primeira hora. O servidor autoritativo não é
-uma melhoria, é pré-requisito de qualquer coisa que pague.
+| contrato | endereço |
+|---|---|
+| $BSTOCK | `0x96E24ea635d9aD490C37081Ff4B3bF4dFBBF3463` |
+| Herói (NFT) | `0x9BefA801E9A09aCDE1dFf3B78dF0c99dAaF6F65c` |
+| CofreTeste | `0x97A54706195aDa31247e650c1dD7d94efcb594C1` |
+| RewardVault (Merkle) | `0x62eea8D4bBbC92b08333695Fce6580df21B9dD04` |
+| NVDA | `0xDC45135193Cb5D39cEB11Fa1A7ACA94EEF354c29` |
+| GME | `0x845600899De5fA4CEf16d8CEAbeb30A5fc780EDB` |
+| AMZN | `0x7BdBb4C9a3481bb6171D90FAB1f836C721A65151` |
+| MSTR | `0x09939e5aE89c0e22381258F7A63165aeE738Da8d` |
+| META | `0x0517b9166aDdF1A0c5E9499CCF092b27e3F490DB` |
+| SPCX | `0xeF77540f7cCC487c28C67811F3A45E1D1c2fc020` |
+| USDG | `0x19cE998F1d1b0Bb0A85657a08003503E7374213b` |
 
-## O que trava agora: uma carteira
+Carteira de deploy: `0x0003c19b0e0777AFbD723E8c523bb9c3411bB172`, com ~0,09 ETH
+de testnet. **Chave gerada dentro do container — tratar como comprometida**,
+serve só para testnet.
 
-Os contratos estão escritos e testados, mas **nada foi deployado**. O deploy
-precisa de ETH de testnet, os faucets exigem verificação humana, e o G não tem
-carteira. Testado em 15/09: o faucet oficial devolve 429 para todos, o QuickNode
-exige saldo prévio na mainnet, o Chainlink exige conectar carteira.
+## O que já funciona on-chain
 
-O custo do deploy inteiro é 0,000046 ETH de testnet. O bloqueio não é dinheiro,
-é assinatura.
+- Conectar carteira, trocar/adicionar a rede 46630
+- Carteira nova recebe $BSTOCK de teste pela torneira, dentro do jogo
+- **Comprar pacote gasta $BSTOCK de verdade e minta NFT**, com raridade, stats e
+  skills sorteados DENTRO do contrato
+- O jogo lê o inventário do contrato em vez de sortear no navegador
+- Sacar transfere token do cofre para a carteira
+- Preço das sete ações lido ao vivo (da mainnet: o token de testnet não tem mercado)
 
-**Isto não é só sobre este deploy.** Lançar o $BSTOCK, receber a taxa de criador,
-ser dono do contrato do herói e abastecer o cofre exigem alguém que assine
-transação. Enquanto não existir carteira, o projeto anda até a beira da chain e
-para ali.
+## Os três furos, e o estado de cada um
 
-## Depois da carteira: metade 2 do cripto
+1. **Carteira nova sem $BSTOCK** — RESOLVIDO (torneira no jogo)
+2. **Raridade sorteada no navegador** — RESOLVIDO (sorteio no contrato)
+3. **Quantidade minerada nasce no navegador** — SEM CONSERTO sem servidor.
+   O cofre de testnet paga sem checar nada, de propósito. É o bloqueio de
+   sempre e o motivo de nada disso poder ir para a mainnet.
 
-1. **Servidor autoritativo.** A simulação da mina roda no servidor; o cliente só
-   desenha. O cliente nunca informa que achou baú.
-2. **Login por assinatura de carteira** (SIWE), sem senha nem e-mail. A carteira
-   já conecta no cliente; falta o lado que confia nela.
-3. **Banco.** Heróis, energia, moedas por época, estado das minas.
-4. **Fechamento de época.** Soma as moedas por carteira e por ação, e congela.
-5. **RewardVault e distribuidor.** Raiz Merkle publicada, claim puxado pelo
-   jogador. Pull, nunca push.
-6. **Keeper.** Recolhe a fee, fecha a época, publica a raiz.
+## Próximos passos, em ordem
 
-FEITO em 15/09: **salvar o progresso** no navegador. Heróis, minas, moedas por
-ação, equipe e mina atual sobrevivem ao reload; a energia se recarrega no tempo
-parado; não há ganho offline de moeda, de propósito. O save é editável pelo
-jogador e morre quando o servidor chegar.
+### 1. Exigir carteira (pedido do G em 16/09, adiado)
+Hoje o jogo roda sem carteira e entrega herói de graça — ou seja, o caminho
+on-chain é opcional e ninguém vai usar. Quando ligar: sem carteira, sem jogo.
+Custo: quem não tiver carteira para de conseguir testar, inclusive a amiga do G.
+O inventário de demonstração (18 heróis com 10 Elon) sai junto.
+
+### 2. Aleatoriedade decente
+O seed hoje vem de blockhash e timestamp. Com sequenciador único, quem opera o
+sequenciador influencia. Para mainnet: commit-reveal com assinatura de servidor
+entrando no seed. O `HeroNFT_v2.sol` faz isso, mas tem 5 raridades e o jogo tem
+6 — precisa ser adaptado antes de usar.
+
+### 3. Servidor autoritativo
+Desbloqueia tudo o que paga. Simulação no servidor, login por assinatura, banco,
+fechamento de época, raiz de Merkle publicada por quem tem autoridade. Só depois
+disso o `RewardVault` substitui o `CofreTeste` e a mainnet entra na conversa.
+
+### 4. Comprar mina on-chain
+Já existe no contrato (`comprarMina`), mas o jogo ainda não usa o retorno para
+liberar a mina — hoje a liberação é local.
 
 ## Pendente de decisão do G
 
-1. **Raridade: 5 ou 6 níveis.** Jogo tem 6 (escala do Bombcrypto), site tem 5.
-   Decidido em 15/09: fica em 6, não mexer por enquanto.
-2. **Identidade visual.** Site é roxo com laranja e usa Inter; jogo é âmbar sobre
-   marrom e usa Archivo. Duas identidades convivendo.
-3. **Mínimo de saque.** 40 moedas. No original equivalia a ~2.800 baús marrons.
-4. **Quantidade de baú no mapa.** 28,7 por mapa, 51% dos blocos. G achou demais.
-5. **O terceiro baú.** As folhas por mina vieram com dois tipos, então o baú de
-   800 de vida está desligado em todas. Volta quando a arte existir por tema.
-6. **Comprar mina não dá vantagem de jogo.** Todas rendem igual; a diferença é a
-   ação em que você é pago. Se quiser risco e retorno diferentes, os ganchos são
-   densidade, proporção entre baús e chance de prisão.
-7. **Rocha própria da Green Field.** É a única das sete que ainda usa a pedra
-   cinza genérica; as outras seis ganharam rocha temática.
-8. **Travar as minas de novo.** Estão liberadas para teste. Trocar
-   `VENDA_DE_MINA` para `false` quando quiser lançar aos poucos.
+1. **Preço de entrada.** Pacote de 1 está em 10 $BSTOCK no contrato, número
+   herdado do jogo local. Ancorar em dólar evita a espiral que matou o
+   Bombcrypto: token cai, pacote fica barato, produção explode, token cai mais.
+2. **Taxa de conversão share → ação (`FRACAO`).** Está `null` no código e a tela
+   mostra `$—`. Com o cofre real ela se calcula sozinha: ação no cofre dividido
+   pelas shares da época. Enquanto não existir, não há valor em dólar para
+   mostrar.
+3. **Identidade visual.** Site é roxo com Inter; jogo é âmbar com Archivo.
+4. **Mínimo de saque.** Baixado de 40 para 10 shares.
+5. **O terceiro baú** (800 de vida) está desligado: as folhas por mina vieram com
+   dois tipos só.
+6. **Rocha própria da Green Field** — é a única sem rocha temática.
+7. **Travar as minas de novo** quando quiser lançar aos poucos: trocar
+   `VENDA_DE_MINA` para `false`.
+8. **Devolver 0,001 ETH** que está na Robinhood MAINNET (dinheiro real) —
+   falta o G dizer o destino. Os 0,002 da Ethereum já foram devolvidos em
+   `0x7b88eb4a547b3116ae28324ad1b0d404129d8e275f8813dc642a8b26f3366cf2`.
 
-## Contratos prontos (não deployados)
+## Decidido, não reabrir
 
-Em `bombstock/contratos/`:
-- `Tokens.sol` — ERC-20 mínimo com torneira, para o $BSTOCK e as sete ações de
-  teste. Oito deployados e testados em EVM local, 4.645.866 de gas.
-- `RewardVault.sol` — claim por raiz de Merkle, uma transação nossa por época e
-  cada jogador paga o próprio gas. Testado com cinco saques reais e **sete
-  ataques, todos bloqueados**, incluindo republicar época com outra raiz.
-- `deploy.py` — compila, envia e grava endereços. Um comando quando houver ETH.
-
-## Pronto e verificado
-
-Fase 1 fechada: mina, IA, 7 skills, 6 raridades, prisão, loja, abertura de carta,
-inventário, squad, saque, transição ao limpar, navegação em abas, descritivo de
-skill por hover e toque.
-
-Sete minas com cenário, rocha, jaula e dois baús próprios. Uma mina por vez: a
-equipe inteira acompanha a troca.
-
-Progresso salvo no navegador, com botão de reset na tela de saque.
-
-Green Field espalha as sete ações; as pagas concentram na própria — é isso que
-faz comprar mina valer a pena. Mínimo de saque de 40 para 10, senão um herói
-comum esperaria 13 dias pelo primeiro saque. A unidade minerada chama-se
-**share**, não "coin".
-
-Cripto de leitura: carteira conecta e troca para a chain 4663, preço das ações
-lido ao vivo, cada mina paga na sua ação, saque separado por ação com o saldo
-real da carteira.
-
-Auditoria de mecânica (15/09), cada uma medida contra o esperado: energia,
-Save Battery 19,9%, Fast Charge 1,70x, dano por power, Treasure Hunter, Jail
-Breaker, Pierce Block, Block Pass, Bomb Pass, pagamento por tipo de baú, mina
-definindo a ação, prisão liberando herói e a curva de raridade em 100 mil
-sorteios. Dez de dez corretas, zero erro de console.
+- **Sem bônus na conversão** para $BSTOCK: converter paga o mesmo que receber a
+  ação (G, 15/09).
+- **Seis raridades**, a escala do Bombcrypto. O site se ajusta ao jogo (G, 16/09).
+- **A Green Field espalha as sete ações**; as pagas concentram na própria.
+- **Mineração não roda on-chain** — seriam centenas de transações por hora por
+  jogador. Nenhum jogo do gênero faz isso.
 
 ## Dívidas técnicas
 
 - Dois arneses de simulação dão números absolutos incompatíveis (800 moedas/h
   contra 30 na mesma configuração). Só comparação dentro da mesma rodada é
-  confiável. Precisa de investigação separada.
-- Inventário de demonstração (um de cada personagem + 10 Elon) e saldo inicial de
-  200 estão marcados no código e saem quando a economia for pra valer.
-- O contrato `HeroNFT`, escrito e testado em Foundry com 7 testes passando, vive
-  só no histórico da conversa. Precisa ir para o repositório.
+  confiável.
+- Inventário de demonstração e saldo inicial de 200 estão marcados no código.
+- `CofreTeste.sol` tem saque livre e **não pode ir para a mainnet** — está
+  escrito no topo do arquivo.
