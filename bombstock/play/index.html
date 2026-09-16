@@ -229,10 +229,12 @@
   body{font-family:"Archivo",system-ui,sans-serif;font-size:14px;letter-spacing:.005em}
   .app{padding-top:0;padding-bottom:calc(74px + env(safe-area-inset-bottom))}
 
-  .chapa{position:sticky;top:0;z-index:20;display:flex;align-items:center;
-    justify-content:space-between;gap:12px;padding:11px 2px 12px;
-    background:linear-gradient(var(--ink) 72%, rgba(18,16,12,0));
-    border-bottom:1px solid var(--rule2)}
+  /* cabecalho e fita grudam JUNTOS: a fita presa em top fixo subia por cima do
+     titulo quando a altura do cabecalho mudava */
+  .chapa{position:sticky;top:0;z-index:20;display:grid;
+    grid-template-columns:auto 1fr;align-items:center;gap:12px;padding:11px 2px 0;
+    background:var(--ink);border-bottom:1px solid var(--rule2)}
+  .chapa .leitura{justify-self:end}
   .marcaTopo{display:flex;align-items:center;gap:8px;background:none;border:0;padding:4px 2px;
     color:var(--chalk);font-family:"Press Start 2P",monospace;font-size:12px;cursor:pointer}
   /* letreiro no cabecalho, no dobro da altura exibida e sem pixelated: a arte
@@ -381,7 +383,7 @@
   }
 
   /* fita de cotacao rolando abaixo do cabecalho */
-  .fitaCotacao{position:sticky;top:64px;z-index:18;overflow:hidden;
+  .fitaCotacao{grid-column:1/-1;margin:10px -2px 0;overflow:hidden;
     background:#15120E;border-bottom:1px solid var(--rule2);
     mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
@@ -437,8 +439,8 @@
       </span>
       <button class="carteiraBtn" id="btnCarteira" onclick="conectar()">Connect</button>
     </div>
+    <div class="fitaCotacao" id="fitaCotacao" aria-hidden="true"><div class="fitaTrilho" id="fitaTrilho"></div></div>
   </header>
-  <div class="fitaCotacao" id="fitaCotacao" aria-hidden="true"><div class="fitaTrilho" id="fitaTrilho"></div></div>
 
 
   <!-- ------------------------------------------------------- menu inicial -->
