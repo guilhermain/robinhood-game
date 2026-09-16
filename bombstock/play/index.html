@@ -329,6 +329,17 @@
   .cofre.pronto .valor em{color:var(--gain)}
   .carteira{display:inline-flex;align-items:center;gap:7px}
   .carteira .valor b{color:var(--amber)}
+
+  /* escolha do modo de saque */
+  .modoSaque{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .modoSaque button{display:flex;flex-direction:column;gap:3px;align-items:flex-start;
+    padding:11px 12px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;
+    color:var(--mute);font-family:inherit;text-align:left;cursor:pointer}
+  .modoSaque button b{font-size:13px;color:var(--chalk);font-weight:600}
+  .modoSaque button em{font-style:normal;font-size:11px}
+  .modoSaque button[aria-pressed="true"]{border-color:var(--amber);background:#2A2117}
+  .modoSaque button[aria-pressed="true"] b{color:var(--amber)}
+  @media (max-width:430px){ .modoSaque{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -443,6 +454,7 @@
       <div class="u">shares banked</div>
     </div>
     <div class="listaAcao" id="claimPorAcao"></div>
+    <div class="modoSaque" id="claimModo"></div>
     <div class="tabela" id="claimResumo"></div>
     <button class="primario" id="claimBtn" onclick="sacar()">Claim</button>
     <p class="aviso-linha" id="claimNota"></p>
@@ -1311,7 +1323,21 @@ const PRECOS={1:10, 5:48, 10:90};
 const MIN_SAQUE=10, TAXA_SAQUE=0.03;
 
 let saldo=200, inventario=[], ativos=[], bausCofre=0, sacado=0;
-const cofreAcao={};   // moedas acumuladas por acao, definido pela mina
+const cofreAcao={};   // shares acumuladas por acao, definido pela mina
+
+/* Modo de saque. Sacar em acao entrega o ativo; converter entrega $BSTOCK com
+   bonus. A conversao nao e cosmetica: no fechamento da epoca o keeper vende a
+   acao de quem escolheu converter e COMPRA $BSTOCK no mercado com o resultado.
+   Isso e buyback de verdade, com volume proporcional ao que o jogo produziu.
+   O bonus existe porque sem ele ninguem converte: pegar a acao e estritamente
+   mais seguro que aceitar o token de um jogo.
+   Um swap por epoca, em lote, e nao um por saque — senao a corretagem come
+   tudo. */
+const BONUS_BSTOCK=0.10;
+// Quanto de acao vale 1 share. Com o cofre real isto vira
+// (acao no cofre) / (shares da epoca). Ate la, um valor para a tela mostrar algo.
+const FRACAO=0.0002;
+let modoSaque='acao';   // 'acao' ou 'bstock'
 let telaAtual='menu', filtroRar=-1, fila=[], filaPos=0;
 
 const nomeRar=i=>RARIDADES[i].nome;
@@ -1657,16 +1683,39 @@ function pintarClaim(){
       `${sal!==undefined?' · wallet '+sal.toFixed(4):''}</span></div>`;
   }).join('') : '<div><span class="pr">Mine a stock to build up fractional shares of it.</span></div>';
 
+  // valor em dolar do que esta no cofre, pelas cotacoes lidas ao vivo
+  let usd=0, temPreco=true;
+  for(const t of linhas){ const p=precos[t]; if(!p){ temPreco=false; continue; } usd+=cofreAcao[t]*p*FRACAO; }
+  const liq=Math.max(0,1-TAXA_SAQUE);
+  const usdAcao=usd*liq, usdBstock=usd*liq*(1+BONUS_BSTOCK);
+
+  const op=document.getElementById('claimModo');
+  op.innerHTML=
+    `<button data-modo="acao" aria-pressed="${modoSaque==='acao'}">`+
+      `<b>Take the stocks</b><em>${linhas.length||'no'} ticker${linhas.length===1?'':'s'}`+
+      `${temPreco&&usd?` · ≈ $${usdAcao.toFixed(2)}`:''}</em></button>`+
+    `<button data-modo="bstock" aria-pressed="${modoSaque==='bstock'}">`+
+      `<b>Convert to $BSTOCK</b><em>+${(BONUS_BSTOCK*100).toFixed(0)}% bonus`+
+      `${temPreco&&usd?` · ≈ $${usdBstock.toFixed(2)}`:''}</em></button>`;
+  for(const b of op.querySelectorAll('button'))
+    b.onclick=()=>{ modoSaque=b.dataset.modo; pintar(); };
+
   document.getElementById('claimResumo').innerHTML=
     `<div><span>minimum to claim</span><span>${MIN_SAQUE} shares</span></div>`+
     `<div><span>claim fee</span><span>3% · ${taxa.toFixed(1)}</span></div>`+
-    `<div><span>you get</span><span>${Math.max(0,bruto-taxa).toFixed(1)}</span></div>`+
+    (modoSaque==='bstock'
+      ? `<div><span>conversion bonus</span><span>+${(BONUS_BSTOCK*100).toFixed(0)}%</span></div>`
+      : '')+
+    `<div><span>you get</span><span>${modoSaque==='bstock'
+        ? (temPreco&&usd? '≈ $'+usdBstock.toFixed(2)+' in $BSTOCK' : 'shares as $BSTOCK')
+        : (temPreco&&usd? '≈ $'+usdAcao.toFixed(2)+' in stock' : Math.max(0,bruto-taxa).toFixed(1)+' shares')}</span></div>`+
     `<div><span>already claimed</span><span>${sacado.toFixed(1)}</span></div>`;
   const b=document.getElementById('claimBtn');
   b.disabled = bruto<MIN_SAQUE;
   b.textContent = bruto<MIN_SAQUE ? `${Math.ceil(MIN_SAQUE-bruto)} shares to go` : 'Claim';
-  document.getElementById('claimNota').textContent =
-    'In the real game this becomes your share of the stocks the vault bought this epoch.';
+  document.getElementById('claimNota').textContent = modoSaque==='bstock'
+    ? 'At epoch close the vault sells your stock and buys $BSTOCK on the market with it — one batched swap, not one per player.'
+    : 'Your cut of the stocks the vault bought this epoch, paid in the tickers you mined.';
 }
 function sacar(){
   if(bausCofre<MIN_SAQUE) return;

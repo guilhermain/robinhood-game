@@ -86,6 +86,39 @@ Vazão medida por raridade (build de 15/09, moedas por hora por herói, 8h
 simuladas): Common 0,89 · Rare 4,28 · Super Rare 7,39 · Epic 15,17 ·
 Legendary 20,85 · S. Legendary 24,85. Herói médio de pacote: 1,84/h = 44,1/dia.
 
+
+## Converter shares em $BSTOCK (buyback) — desenho de 15/09
+
+No saque o jogador escolhe entre **receber as ações** ou **converter tudo em
+$BSTOCK com bônus**.
+
+**O que a conversão faz de verdade:** no fechamento da época o keeper vende a
+ação de quem escolheu converter e **compra $BSTOCK no mercado** com o resultado.
+É buyback real, com volume proporcional ao que o jogo produziu — não é
+distribuir token que já está parado no tesouro.
+
+O laço: mais jogadores minerando → mais ação a converter → mais compra de
+$BSTOCK → token mais forte → pacote mais barato em token.
+
+**Por que precisa de bônus.** Sem ele ninguém converte: receber NVDA é
+estritamente mais seguro do que aceitar o token de um jogo. O bônus é o que
+paga pelo risco e o que faz o buyback existir. Começando em **+10%**, a calibrar.
+
+**Um swap por época, em lote.** Nunca um swap por saque: seriam duas conversões
+por jogador e a corretagem comeria o bônus inteiro.
+
+**Riscos a vigiar:**
+- Bônus alto demais faz todo mundo converter, e aí o jogo deixa de entregar ação
+  — que é a proposta original.
+- Bônus baixo demais e ninguém converte, e o buyback não acontece.
+- A compra de $BSTOCK acontece toda no fechamento: em época grande isso é um
+  pico de compra previsível, e previsível é antecipável por quem observa a chain.
+  Vale espalhar o swap em pedaços.
+
+**Parâmetros no código:** `BONUS_BSTOCK` (0,10) e `FRACAO`, que é quanto de ação
+vale 1 share. Com o cofre real, FRACAO deixa de ser constante e passa a ser
+(ação no cofre) / (shares da época).
+
 ## Vocabulário
 
 A unidade minerada chama-se **share** na interface, não "coin". Ela é fração da
