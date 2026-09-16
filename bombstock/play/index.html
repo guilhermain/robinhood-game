@@ -353,7 +353,7 @@
     <div class="leitura">
       <button class="cofre" onclick="ir('claim')" id="chipCofre" title="Fractional shares waiting in the vault">
         <i class="ico coin"></i>
-        <span class="valor"><b id="chipMoedas">0</b><em>shares</em></span>
+        <span class="valor"><b id="chipMoedas">0</b><em id="chipUsd">shares</em></span>
         <span class="trilhoMini"><i id="chipBarra"></i></span>
       </button>
       <span class="carteira" title="$BSTOCK, the token you spend on packs and mines">
@@ -1337,6 +1337,21 @@ const cofreAcao={};   // shares acumuladas por acao, definido pela mina
 // pelo G em 15/09. Nao reintroduzir.
 const FRACAO=null;         // quanto de acao vale 1 share; com o cofre real vira
                            // (acao no cofre) / (shares da epoca)
+
+// Valor em dolar do que esta no cofre, somando acao por acao pelo preco lido ao
+// vivo. Devolve null enquanto a taxa de conversao nao existir — melhor mostrar
+// tracinho do que inventar cifra.
+function valorEmDolar(){
+  if(FRACAO===null) return null;
+  let usd=0;
+  for(const t in cofreAcao){
+    const p=precos[t];
+    if(!p) return null;                 // faltou preco de alguma: nao arredonda
+    usd += cofreAcao[t]*FRACAO*p;
+  }
+  return usd;
+}
+const emDolar=v=> v>=1000 ? '$'+(v/1000).toFixed(1)+'k' : '$'+v.toFixed(2);
 let modoSaque='acao';   // 'acao' ou 'bstock'
 let telaAtual='menu', filtroRar=-1, fila=[], filaPos=0;
 
@@ -1685,15 +1700,13 @@ function pintarClaim(){
 
   // valor em dolar do que esta no cofre, pelas cotacoes lidas ao vivo
   // So da para mostrar cifra quando a taxa de conversao existir
-  const temConversao = FRACAO!==null;
-  let usd=0, temPreco=true;
-  if(temConversao) for(const t of linhas){
-    const p=precos[t]; if(!p){ temPreco=false; continue; } usd+=cofreAcao[t]*p*FRACAO; }
+  const bruto_usd=valorEmDolar();
+  const temPreco = bruto_usd!==null, usd = bruto_usd||0;
   const liq=Math.max(0,1-TAXA_SAQUE);
   const usdAcao=usd*liq;
 
   const op=document.getElementById('claimModo');
-  const cifra = temConversao&&temPreco&&usd ? ` · ≈ $${usdAcao.toFixed(2)}` : '';
+  const cifra = temPreco&&usd ? ` · ≈ ${emDolar(usdAcao)}` : '';
   op.innerHTML=
     `<button data-modo="acao" aria-pressed="${modoSaque==='acao'}">`+
       `<b>Take the stocks</b><em>${linhas.length||'no'} ticker${linhas.length===1?'':'s'}${cifra}</em></button>`+
@@ -1749,6 +1762,12 @@ function pintar(){
 
   document.getElementById('chipSaldo').textContent=saldo;
   document.getElementById('chipMoedas').textContent=Math.floor(bausCofre);
+  const usdTopo=valorEmDolar();
+  const eu=document.getElementById('chipUsd');
+  eu.textContent = usdTopo===null ? 'shares · $—' : 'shares · '+emDolar(usdTopo);
+  eu.title = usdTopo===null
+    ? 'Live stock prices are in. The share-to-stock rate comes from the vault, which does not exist yet.'
+    : 'Live value of everything in the vault, priced stock by stock.';
   const chip=document.getElementById('chipCofre');
   chip.classList.toggle('pronto', bausCofre>=MIN_SAQUE);
   document.getElementById('chipBarra').style.width=
