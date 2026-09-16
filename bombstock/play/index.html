@@ -1920,16 +1920,24 @@ let bausTotais=0;
 let cartaHeroi=null;
 
 // A marca usa o sprite de bomba do proprio jogo, em vez de um vetor a parte.
+// A bomba da marca pisca como a do mapa: dois quadros lentos, e a cada ciclo
+// ela "acende" nos quadros rapidos, como se o pavio estivesse acabando.
+const MARCA_CICLO=2600;
 function pintarMarca(){
   const cv=document.getElementById('marcaBomba');
   const im=FOLHA.bomba;
   if(!cv || !im || !im.complete || !im.naturalWidth) return false;
+  const t=Date.now()%MARCA_CICLO;
+  const acesa=t > MARCA_CICLO*0.62;                 // trecho final, pavio curto
+  const rapido=Math.floor(Date.now()/(acesa?90:170))%2;
+  const q = acesa ? (rapido?3:2) : (rapido?1:0);    // mesma regra do mapa
   const g=cv.getContext('2d');
   g.imageSmoothingEnabled=false;
   g.clearRect(0,0,48,48);
-  // o desenho ocupa 24x33 dentro da celula de 48: recorta e preenche, senao
-  // a bomba aparece minuscula na marca
-  g.drawImage(im, 12,8, 24,33, (48-35)/2, 0, 35, 48);
+  // janela comum aos quatro quadros (27x36 de 48): usar so a do quadro 0
+  // cortava a faisca do pavio nos quadros acesos
+  const alvoL=Math.round(48*27/36);
+  g.drawImage(im, q*48+11, 5, 27,36, (48-alvoL)/2, 0, alvoL, 48);
   return true;
 }
 
@@ -2004,6 +2012,7 @@ function loop(agora){
 
   if(telaAtual==='equipe'||telaAtual==='inventario') animarFichas();
   if(document.getElementById('pacoteOverlay').classList.contains('on')) desenharCarta();
+  if(telaAtual!=='menu') pintarMarca();
   if(telaAtual==='mina'){ desenhar(); }
   requestAnimationFrame(loop);
 }
