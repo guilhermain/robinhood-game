@@ -314,8 +314,9 @@
   .listaAcao .pr{color:var(--mute)}
 
   .chip[data-skill]{cursor:help}
+  .faixaMinas button{cursor:pointer}
   .chip[data-skill]:hover,.chip[data-skill]:focus-visible{border-color:var(--amber);outline:none}
-  .dica{position:fixed;z-index:60;max-width:250px;padding:9px 11px;pointer-events:none;
+  .dica{position:fixed;z-index:60;max-width:270px;padding:9px 11px;pointer-events:none;
     background:#241D14;border:1px solid var(--amber);border-radius:3px;color:var(--chalk);
     font-size:12px;line-height:1.5;opacity:0;transition:opacity .14s;
     box-shadow:0 6px 18px rgba(0,0,0,.55)}
@@ -454,8 +455,7 @@
   <section class="tela" id="mina">
     <div class="linhaMina">
       <h2 class="tituloAba" id="minaTitulo">Mine</h2>
-      <span class="cotacao" id="cotacaoMina"></span>
-      <span class="relogioMina" id="bTempo">0m</span>
+
     </div>
     <div class="faixaMinasEnvelope"><div class="faixaMinas" id="seletorMinas"></div></div>
     <div class="board">
@@ -1718,6 +1718,7 @@ function montarSeletorMinas(){
     b.disabled = m<0 && !podeComprar;
     b.classList.toggle('aComprar', podeComprar);
     b.dataset.mina=def.id;                 // alvo estavel para teste
+    b.dataset.dicaMina=def.id;             // o balao explica o que a mina paga
     b.setAttribute('aria-pressed', m===minaAtual);
     if(m===minaAtual) setTimeout(()=>b.scrollIntoView({block:'nearest',inline:'nearest'}),0);
     b.onclick = m>=0 ? ()=>entrarMina(def.id) : ()=>{
@@ -2148,11 +2149,6 @@ function pintar(){
                  : carteira.slice(0,6)+'…'+carteira.slice(-4));
 
   // cotacao da acao que esta mina paga
-  const ac=acaoDaMina(vista.def.id), pr=precos[ac.tick];
-  const cot=document.getElementById('cotacaoMina');
-  cot.innerHTML = vista.def.id==='verde'
-    ? 'pays in all seven'
-    : (pr ? `pays in ${ac.tick} <b>$${pr.toFixed(2)}</b>` : `pays in ${ac.tick}`);
   ajustarCasca();
   if(telaAtual==='mina') montarSeletorMinas();
   const sig=assinatura();
@@ -2175,14 +2171,43 @@ function pintar(){
 const dica=document.createElement('div');
 dica.className='dica'; dica.setAttribute('role','tooltip');
 document.body.appendChild(dica);
+function textoDaMina(id){
+  const def=MINAS_DEF.find(d=>d.id===id);
+  if(!def) return null;
+  const tenho=minas.some(m=>m.def.id===id);
+  if(id==='verde')
+    return [def.nome, 'Free to mine. Every chest pays in one of the seven stocks, '+
+      'drawn at random — so you collect a bit of everything and take longer to reach '+
+      'the claim minimum in any single one.'];
+  const tk=acaoDaMina(id).tick, pr=precos[tk];
+  const cot = pr ? ` Trading at ${emDolar(pr)} right now.` : '';
+  return [def.nome, `Every chest here pays in ${tk}.${cot} Concentrating on one stock `+
+    `reaches the claim minimum much faster than spreading.`+
+    (tenho ? '' : ` Costs ${def.preco} $BSTOCK to open.`)];
+}
+
 function mostrarDica(alvo){
+  const mina=alvo.dataset.dicaMina;
+  if(mina){
+    const t=textoDaMina(mina);
+    if(!t) return;
+    dica.innerHTML=`<b>${t[0]}</b>${t[1]}`;
+    posicionarDica(alvo, true);
+    return;
+  }
   const k=alvo.dataset.skill; if(!k) return;
   dica.innerHTML=`<b>${SKILLS[k]}</b>${SKILL_DESC[k]}`;
+  posicionarDica(alvo);
+}
+
+function posicionarDica(alvo, abaixo){
   dica.classList.add('on');
   const r=alvo.getBoundingClientRect(), d=dica.getBoundingClientRect();
   let x=Math.max(8, Math.min(r.left+r.width/2-d.width/2, innerWidth-d.width-8));
-  let y=r.top-d.height-8;
+  // a faixa de minas fica colada no topo: acima dela a dica cobriria o titulo
+  let y = abaixo ? r.bottom+8 : r.top-d.height-8;
   if(y<8) y=r.bottom+8;
+  if(y+d.height>innerHeight-8) y=Math.max(8, r.top-d.height-8);
   dica.style.left=Math.round(x)+'px';
   dica.style.top=Math.round(y)+'px';
 }
@@ -2190,17 +2215,17 @@ function mostrarDica(alvo){
 // proprio toque dispara um mouseover fora do chip, que fechava na hora.
 const esconderDica=(forcar)=>{ if(dica._fixa && !forcar) return; dica.classList.remove('on'); };
 document.addEventListener('mouseover', e=>{
-  const c=e.target.closest && e.target.closest('.chip[data-skill]');
+  const c=e.target.closest && e.target.closest('[data-skill],[data-dica-mina]');
   if(c){ dica._fixa=false; mostrarDica(c); } else esconderDica();
 });
 document.addEventListener('focusin', e=>{
-  const c=e.target.closest && e.target.closest('.chip[data-skill]');
+  const c=e.target.closest && e.target.closest('[data-skill],[data-dica-mina]');
   if(c) mostrarDica(c);
 });
 document.addEventListener('focusout', ()=>esconderDica());
 addEventListener('scroll', ()=>{ dica._fixa=false; esconderDica(true); }, true);
 document.addEventListener('click', e=>{
-  const c=e.target.closest && e.target.closest('.chip[data-skill]');
+  const c=e.target.closest && e.target.closest('[data-skill],[data-dica-mina]');
   if(c){ mostrarDica(c); dica._fixa=true; clearTimeout(dica._t);
          dica._t=setTimeout(()=>{ dica._fixa=false; esconderDica(true); },3500); }
   else { dica._fixa=false; esconderDica(true); }
