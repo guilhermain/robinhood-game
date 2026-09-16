@@ -1338,7 +1338,8 @@ function avisarTopo(t){
    O cofre de testnet paga sem prova nenhuma, de proposito: aqui os tokens nao
    valem nada e o objetivo e ver o ciclo. Na mainnet quem vale e o RewardVault,
    com prova de Merkle e raiz publicada por servidor. */
-const COFRE_ADDR='0x9f692A384568E41b930d1784C494cE291B95aB6a';
+const COFRE_ADDR='0x8db9de10C33678f7f7F6caBf0a3916e4ff5610B5';
+const POOL_ADDR ='0xA856Bf43eB7C0c522AF2B4bE31A529bdf724dCC5';
 
 // assinaturas das funcoes, calculadas uma vez
 const SEL={
@@ -1350,6 +1351,27 @@ const SEL={
   sacarCofre:   '0x49ed96da',
 };
 const SEL_SACAR_BSTOCK='0xa09f5838';
+const SEL_COTACAO     ='0x4a08ec62';
+const SEL_PRECO_POOL  ='0xd8787a86';
+
+// Quanto o jogador recebe se converter, perguntado ao contrato — que por sua
+// vez consulta o pool. Nao e estimativa nossa: e a cotacao do mercado.
+async function cotacaoEmBstock(){
+  if(!carteira) return null;
+  let total=0n;
+  for(const t in cofreAcao){
+    const acao=Object.values(ACAO).find(a=>a.tick===t);
+    if(!acao || cofreAcao[t]<=0) continue;
+    const valor=BigInt(Math.floor(cofreAcao[t]*1e15));
+    try{
+      const r=await rpc('eth_call',[{to:COFRE_ADDR,
+        data:SEL_COTACAO+padEnd(acao.addr)+pad(valor)},'latest']);
+      total += BigInt(r);
+    }catch(e){ return null; }
+  }
+  return total;
+}
+let cotaBstock=null;
 const pad=v=>BigInt(v).toString(16).padStart(64,'0');
 const padEnd=a=>a.toLowerCase().replace('0x','').padStart(64,'0');
 
@@ -1928,7 +1950,9 @@ function pintarClaim(){
     `<button data-modo="acao" aria-pressed="${modoSaque==='acao'}">`+
       `<b>Take the stocks</b><em>${linhas.length||'no'} ticker${linhas.length===1?'':'s'}${cifra}</em></button>`+
     `<button data-modo="bstock" aria-pressed="${modoSaque==='bstock'}">`+
-      `<b>Convert to $BSTOCK</b>${cifra?`<em>${cifra.replace(' · ','')}</em>`:''}</button>`;
+      `<b>Convert to $BSTOCK</b>${cotaBstock!==null&&cotaBstock>0n
+          ? `<em>${(Number(cotaBstock)/1e18).toLocaleString(undefined,{maximumFractionDigits:0})} $BSTOCK</em>`
+          : (cifra?`<em>${cifra.replace(' · ','')}</em>`:'')}</button>`;
   for(const b of op.querySelectorAll('button'))
     b.onclick=()=>{ modoSaque=b.dataset.modo; pintar(); };
 
@@ -2031,7 +2055,14 @@ function pintar(){
     comRolagem(document.getElementById('invLista'), pintarInventario);
   if(telaAtual==='equipe' && sig!==assinaturaLista)
     comRolagem(document.getElementById('eqLista'), pintarEquipe);
-  if(telaAtual==='claim') pintarClaim();
+  if(telaAtual==='claim'){
+    pintarClaim();
+    // busca a cotacao uma vez por entrada na tela, nao a cada quadro
+    if(carteira && cotaBstock===null){
+      cotaBstock=0n;
+      cotacaoEmBstock().then(v=>{ cotaBstock=v; pintar(); });
+    }
+  } else cotaBstock=null;
   assinaturaLista=sig;
 }
 

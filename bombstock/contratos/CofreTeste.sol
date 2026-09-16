@@ -4,7 +4,16 @@ pragma solidity ^0.8.24;
 interface IERC20 {
     function transfer(address para, uint256 v) external returns (bool);
     function transferFrom(address de, address para, uint256 v) external returns (bool);
+    function approve(address quem, uint256 v) external returns (bool);
     function balanceOf(address quem) external view returns (uint256);
+}
+
+interface IPool {
+    function comprarA(uint256 entraB, uint256 minimoA) external returns (uint256);
+    function cotar(uint256 entra, uint256 rEntra, uint256 rSai) external view returns (uint256);
+    function reservaA() external view returns (uint112);
+    function reservaB() external view returns (uint112);
+    function preco() external view returns (uint256);
 }
 
 /// SOMENTE TESTNET. Cofre que paga sem prova nenhuma: o jogador diz quanto
@@ -63,15 +72,37 @@ contract CofreTeste {
         taxaBstock[token] = taxa;
     }
 
-    function sacarComoBstock(address token, uint256 valor) external {
+    address public pool;      // BSTOCK/USDG
+    address public usdg;
+
+    function setPool(address p, address u) external soDono { pool = p; usdg = u; }
+
+    /// Converter e uma COMPRA de verdade: o cofre avalia a acao em USDG e vai
+    /// ao pool comprar $BSTOCK com esse dinheiro. O preco sobe conforme se
+    /// compra, e e isso que faz do mecanismo um buyback e nao uma entrega.
+    /// Entregar $BSTOCK do proprio estoque nao geraria pressao de compra
+    /// nenhuma — foi o erro da primeira versao deste contrato.
+    function sacarComoBstock(address token, uint256 valor) external returns (uint256 recebido) {
         require(valor <= tetoPorSaque, "acima do teto");
-        uint256 taxa = taxaBstock[token];
+        require(pool != address(0), "sem pool");
+        uint256 taxa = taxaBstock[token];         // quantos USDG por unidade da acao
         require(taxa > 0, "sem taxa para este token");
-        uint256 saida = valor * taxa / 1e18;
-        require(IERC20(bstock).balanceOf(address(this)) >= saida, "cofre sem bstock");
+        uint256 emUsdg = valor * taxa / 1e18;
+        require(IERC20(usdg).balanceOf(address(this)) >= emUsdg, "cofre sem usdg");
+
+        IERC20(usdg).approve(pool, emUsdg);
+        recebido = IPool(pool).comprarA(emUsdg, 1);   // compra no mercado
         sacadoPor[msg.sender] += valor;
-        IERC20(bstock).transfer(msg.sender, saida);
-        emit Sacado(msg.sender, bstock, saida);
+        IERC20(bstock).transfer(msg.sender, recebido);
+        emit Sacado(msg.sender, bstock, recebido);
+    }
+
+    /// Quanto o jogador receberia hoje, para a tela mostrar antes de assinar.
+    function cotacaoBstock(address token, uint256 valor) external view returns (uint256) {
+        uint256 taxa = taxaBstock[token];
+        if (taxa == 0 || pool == address(0)) return 0;
+        uint256 emUsdg = valor * taxa / 1e18;
+        return IPool(pool).cotar(emUsdg, IPool(pool).reservaB(), IPool(pool).reservaA());
     }
 
     /// Saque livre. Existe so para provar o caminho na testnet.
