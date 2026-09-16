@@ -1338,7 +1338,7 @@ function avisarTopo(t){
    O cofre de testnet paga sem prova nenhuma, de proposito: aqui os tokens nao
    valem nada e o objetivo e ver o ciclo. Na mainnet quem vale e o RewardVault,
    com prova de Merkle e raiz publicada por servidor. */
-const COFRE_ADDR='0x97A54706195aDa31247e650c1dD7d94efcb594C1';
+const COFRE_ADDR='0x9f692A384568E41b930d1784C494cE291B95aB6a';
 
 // assinaturas das funcoes, calculadas uma vez
 const SEL={
@@ -1349,6 +1349,7 @@ const SEL={
   comprarMina:  '0xe0743153',
   sacarCofre:   '0x49ed96da',
 };
+const SEL_SACAR_BSTOCK='0xa09f5838';
 const pad=v=>BigInt(v).toString(16).padStart(64,'0');
 const padEnd=a=>a.toLowerCase().replace('0x','').padStart(64,'0');
 
@@ -1409,14 +1410,27 @@ async function comprarPacoteOnchain(qtd){
   return !!await enviarTx(HEROI_ADDR, SEL_ABRIR+pad(qtd), 'Pack mint');
 }
 
+// Saca TODAS as acoes que o jogador tem, uma transacao por acao, e respeita a
+// escolha entre receber a acao ou converter em $BSTOCK. Antes ele sacava so a
+// acao com mais shares e ignorava o botao de conversao — as outras sumiam.
 async function sacarOnchain(){
-  // saca a acao em que o jogador tem mais shares, so para provar o caminho
-  let alvo=null, maior=0;
-  for(const t in cofreAcao) if(cofreAcao[t]>maior){ maior=cofreAcao[t]; alvo=t; }
-  if(!alvo){ avisarTopo('Nothing to claim yet'); return false; }
-  const addr=Object.values(ACAO).find(a=>a.tick===alvo).addr;
-  const valor=BigInt(Math.floor(maior*1e15));      // 1 share = 0,001 token na testnet
-  return !!await enviarTx(COFRE_ADDR, SEL.sacarCofre+padEnd(addr)+pad(valor), 'Claim');
+  const tickers=Object.keys(cofreAcao).filter(t=>cofreAcao[t]>0);
+  if(!tickers.length){ avisarTopo('Nothing to claim yet'); return false; }
+  const converter = modoSaque==='bstock';
+  const seletor = converter ? SEL_SACAR_BSTOCK : SEL.sacarCofre;
+  let feitas=0;
+  for(const t of tickers){
+    const acao=Object.values(ACAO).find(a=>a.tick===t);
+    if(!acao) continue;
+    const valor=BigInt(Math.floor(cofreAcao[t]*1e15));   // 1 share = 0,001 token na testnet
+    if(valor<=0n) continue;
+    const ok=await enviarTx(COFRE_ADDR, seletor+padEnd(acao.addr)+pad(valor),
+      converter ? `Converting ${t}` : `Claiming ${t}`);
+    if(!ok) return feitas>0;          // parou no meio: o que ja saiu esta pago
+    feitas++;
+  }
+  avisarTopo(converter ? 'Converted to $BSTOCK' : 'Stocks claimed');
+  return feitas>0;
 }
 
 
@@ -1664,16 +1678,25 @@ function entrarMina(id){
 const VENDA_DE_MINA=true;    // liberado para teste; voltar a false antes de lancar
 async function comprarMina(id){
   if(!VENDA_DE_MINA) return;
-  if(carteira && redeOk){
+  const def=MINAS_DEF.find(d=>d.id===id);
+  if(!def || minas.some(m=>m.def.id===id)) return;
+  // Confere ANTES de pagar. Antes o codigo mandava a transacao e so depois
+  // checava o saldo local — dava para pagar e nao receber a mina.
+  const onchain = carteira && redeOk;
+  if(!onchain && saldo<def.preco) return;
+  if(onchain){
+    const custo=BigInt(def.preco)*(10n**18n);
+    const s=await saldoBstock();
+    if(s < custo && !await pegarBstockDeTeste()) return;
+    if(!await garantirPermissao(custo)) return;
     const ok=await enviarTx(COFRE_ADDR,
       SEL.comprarMina + pad(32) + pad(id.length) +
       Array.from(new TextEncoder().encode(id)).map(b=>b.toString(16).padStart(2,'0')).join('').padEnd(64,'0'),
       'Mine purchase');
     if(!ok) return;
+  } else {
+    saldo-=def.preco;   // so desconta o saldo local quando nao houve transacao
   }
-  const def=MINAS_DEF.find(d=>d.id===id);
-  if(!def || saldo<def.preco || minas.some(m=>m.def.id===id)) return;
-  saldo-=def.preco;
   guardar();
   const m=novaMina(def); m.grade=novaGrade(def.id);
   minas.push(m); assinaturaMinas='';

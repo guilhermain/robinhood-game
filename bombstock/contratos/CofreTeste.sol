@@ -53,6 +53,27 @@ contract CofreTeste {
         emit MinaComprada(msg.sender, mina, precoMina);
     }
 
+    /// Converte o que foi minerado em $BSTOCK ao preco informado pelo operador.
+    /// Na mainnet quem faz isso e o keeper, vendendo a acao no mercado e
+    /// comprando $BSTOCK — aqui e simplificado para provar o caminho.
+    /// taxaBstock: quantos $BSTOCK por unidade de acao, em 1e18.
+    mapping(address => uint256) public taxaBstock;
+
+    function setTaxaBstock(address token, uint256 taxa) external soDono {
+        taxaBstock[token] = taxa;
+    }
+
+    function sacarComoBstock(address token, uint256 valor) external {
+        require(valor <= tetoPorSaque, "acima do teto");
+        uint256 taxa = taxaBstock[token];
+        require(taxa > 0, "sem taxa para este token");
+        uint256 saida = valor * taxa / 1e18;
+        require(IERC20(bstock).balanceOf(address(this)) >= saida, "cofre sem bstock");
+        sacadoPor[msg.sender] += valor;
+        IERC20(bstock).transfer(msg.sender, saida);
+        emit Sacado(msg.sender, bstock, saida);
+    }
+
     /// Saque livre. Existe so para provar o caminho na testnet.
     function sacar(address token, uint256 valor) external {
         require(valor <= tetoPorSaque, "acima do teto");
