@@ -58,6 +58,40 @@ grade nascia do tamanho da janela e qualquer zoom refazia o cenário.
 Misto realista = 6 comuns, 2 raros, 1 super raro, 1 épico — o que sai comprando
 pacotes de verdade. A diferença entre topo e realista é 9,4x.
 
+
+## O jogo distribui, não cria (achado de 15/09)
+
+Montando a conta do payback, as unidades mineradas **se cancelaram dos dois
+lados**:
+
+    valor de 1 share = (ação que entrou no cofre) / (shares produzidas no total)
+    retorno do jogador = shares dele x valor de 1 share
+
+Logo: **o jogo não cria ação, distribui a que o cofre comprou.** Minerar mais
+rápido não traz mais NVDA para dentro do jogo — traz mais shares disputando a
+mesma NVDA. Todo mundo dilui junto.
+
+Três consequências que valem para sempre:
+
+1. **Balanceamento de vazão não muda o quanto o jogo paga.** Muda só quem leva
+   quanto. Se alguém propuser "aumenta o drop para atrair jogador", não
+   funciona: dilui todo mundo na mesma proporção.
+2. **O preço do pacote não sai da vazão.** Sai de quanto volume de $BSTOCK
+   existe por herói: `preço = dias de payback x 2,22% x volume diário / heróis`.
+3. **Payback de 60 a 120 dias não é configuração, é aposta em volume futuro.**
+   Se o volume não vier, o payback estica sozinho. Foi assim que o Bombcrypto
+   quebrou. Recomendação: não prometer payback; usar a fórmula como monitoramento.
+
+Vazão medida por raridade (build de 15/09, moedas por hora por herói, 8h
+simuladas): Common 0,89 · Rare 4,28 · Super Rare 7,39 · Epic 15,17 ·
+Legendary 20,85 · S. Legendary 24,85. Herói médio de pacote: 1,84/h = 44,1/dia.
+
+## Vocabulário
+
+A unidade minerada chama-se **share** na interface, não "coin". Ela é fração da
+ação da mina, não uma segunda moeda. O nome "coin" foi usado de 15/09 até a
+troca e causou confusão: parecia existir um token intermediário, que não existe.
+
 ## Pipeline de arte (para não repetir erro)
 
 As folhas vêm com fundo magenta ou branco e **borda suavizada**, apesar de o
