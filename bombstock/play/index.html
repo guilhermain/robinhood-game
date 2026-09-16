@@ -1478,14 +1478,28 @@ function heroiDeOnchain(d){
   return h;
 }
 
+// Conectar troca o inventario local pelo da carteira. Os herois locais nao sao
+// destruidos de proposito — eles nunca existiram na chain —, mas o jogador
+// precisa saber, senao parece que sumiram.
 async function sincronizarHerois(){
   const lista=await heroisDaChain();
   if(!lista) return false;
+  const locais=inventario.filter(x=>!x.onchain).length;
+  if(locais && !confirm(
+      `Connecting switches to your wallet's heroes.\n\n`+
+      `${locais} hero${locais>1?'es':''} you got without a wallet ${locais>1?'are':'is'} not on chain `+
+      `and won't come along. Your local save stays if you disconnect.\n\n`+
+      `Continue?`)){
+    carteira=null; redeOk=false; pintar();
+    avisarTopo('Stayed offline — your local heroes are untouched');
+    return false;
+  }
   const naMina=new Set(ativos.map(x=>x.id));
   inventario.length=0;
   for(const d of lista) inventario.push(heroiDeOnchain(d));
   ativos.length=0;
   for(const x of inventario) if(naMina.has(x.id)) descer(x);
+  if(locais) avisarTopo(`Now showing ${lista.length} hero${lista.length===1?'':'es'} from your wallet`);
   pintar();
   return true;
 }
@@ -2119,6 +2133,12 @@ let salvarPendente=false;
 
 function estadoParaSalvar(){
   guardar();
+  // Com carteira, os herois moram na chain: salvar uma copia local criaria uma
+  // segunda verdade e apagaria o save de quem joga sem carteira.
+  if(carteira && inventario.some(h=>h.onchain)){
+    try{ const antigo=JSON.parse(localStorage.getItem(SAVE_CHAVE)||'null');
+      if(antigo){ antigo.quando=Date.now(); return antigo; } }catch(e){}
+  }
   return {
     v:SAVE_VERSAO, quando:Date.now(),
     saldo, bausCofre, bausTotais, sacado, minasLimpas, tempoMs, proxId,
