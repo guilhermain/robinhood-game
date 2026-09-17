@@ -38,6 +38,36 @@ def preparar():
     cur.execute(open(os.path.join(os.path.dirname(__file__),'esquema.sql')).read())
     asyncio.get_event_loop().create_task(ciclo())
 
+import httpx
+
+RPC = os.environ.get('CHAIN_RPC', 'https://rpc.testnet.chain.robinhood.com')
+HEROI_ADDR = os.environ.get('HEROI_ADDR', '0x6f95BC604aD54c759b03856B783050d9967E2d8c')
+
+def _rpc(metodo, params):
+    r = httpx.post(RPC, json={'jsonrpc':'2.0','id':1,'method':metodo,'params':params}, timeout=20)
+    j = r.json()
+    if 'error' in j: raise RuntimeError(j['error'].get('message','rpc'))
+    return j['result']
+
+def _pad(v):  return format(int(v), '064x')
+def _padA(a): return a.lower().replace('0x','').rjust(64,'0')
+
+def herois_da_chain(carteira):
+    """A chain e dona do inventario. O servidor le, nao inventa."""
+    dados = _rpc('eth_call', [{'to': HEROI_ADDR, 'data': '0x'+SEL_LISTA+_padA(carteira)}, 'latest'])[2:]
+    n = int(dados[64:128], 16)
+    saida = []
+    for i in range(n):
+        tid = int(dados[128+i*64 : 192+i*64], 16)
+        d = _rpc('eth_call', [{'to': HEROI_ADDR, 'data': '0x'+SEL_HEROI+_pad(tid)}, 'latest'])[2:]
+        c = [int(d[j*64:(j+1)*64], 16) for j in range(8)]
+        saida.append({'token_id':tid, 'raridade':c[0], 'personagem':c[1], 'power':c[2],
+                      'stamina':c[3], 'speed':c[4], 'bombas':c[5], 'alcance':c[6], 'skills':c[7]})
+    return saida
+
+SEL_LISTA = '1f08a921'   # heroisDe(address)
+SEL_HEROI = 'bd776cb2'   # herois(uint256)
+
 class Entrada(BaseModel):
     carteira: str
 class Prova(BaseModel):
@@ -63,6 +93,47 @@ def login(p: Prova):
     if not ok:
         raise HTTPException(401, motivo)
     return {'ok': True}
+
+class Descer(BaseModel):
+    carteira: str
+    tema: str
+    tokens: list[int]
+
+@app.post('/mina/entrar')
+def entrar_na_mina(d: Descer):
+    """O jogador escolhe a mina e quem desce. O servidor confere na CHAIN que os
+    herois sao dele: o cliente nao decide isso."""
+    c = d.carteira.lower()
+    cur = cursor()
+    try:
+        meus = {h['token_id']: h for h in herois_da_chain(c)}
+    except Exception as e:
+        raise HTTPException(502, 'nao consegui ler a chain: ' + str(e)[:120])
+    pedidos = [t for t in d.tokens if t in meus]
+    if not pedidos:
+        raise HTTPException(400, 'nenhum desses herois e seu')
+    vagas = int(config(cur, 'vagas', 10))
+    pedidos = pedidos[:vagas]
+
+    cur.execute("insert into jogador (carteira) values (%s) on conflict do nothing", (c,))
+    cur.execute("insert into mina (carteira, tema, atualizada_em) values (%s,%s,now()) "
+                "on conflict (carteira, tema) do update set atualizada_em=mina.atualizada_em "
+                "returning id", (c, d.tema))
+    mid = cur.fetchone()[0]
+    cur.execute("update heroi set mina_id=null where carteira=%s", (c,))
+    for t in pedidos:
+        h = meus[t]
+        cur.execute(
+            "insert into heroi (token_id,carteira,raridade,personagem,power,stamina,"
+            "speed,bombas,alcance,skills,energia,mina_id) "
+            "values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+            "on conflict (token_id) do update set "
+            "carteira=excluded.carteira, mina_id=excluded.mina_id",
+            (t, c, h['raridade'], h['personagem'], h['power'], h['stamina'],
+             h['speed'], h['bombas'], h['alcance'], h['skills'], h['stamina']*50, mid))
+    cur.execute("insert into evento (carteira,tipo,detalhe) values (%s,'descer',%s)",
+                (c, json.dumps({'tema': d.tema, 'herois': pedidos})))
+    return {'ok': True, 'mina': mid, 'herois': len(pedidos)}
 
 @app.get('/estado/{carteira}')
 def estado(carteira: str):
