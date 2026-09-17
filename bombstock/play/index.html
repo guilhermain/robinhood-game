@@ -522,11 +522,50 @@
   .chancesBloco summary{padding:11px 14px;font-size:12px;color:var(--chalk);cursor:pointer}
   .chancesBloco .tabela{border:0;border-top:1px solid var(--rule2)}
   @media (prefers-reduced-motion:reduce){ .capsulaBrilho{animation:none} }
+
+  /* abertura com suspense */
+  .abrindoOverlay{position:fixed;inset:0;z-index:75;display:flex;align-items:center;
+    justify-content:center;background:rgba(10,4,20,.93)}
+  .abrindoOverlay[hidden]{display:none}
+  .abrindoCena{text-align:center}
+  .abCapsula{position:relative;width:168px;height:184px;margin:0 auto;
+    border-radius:84px 84px 12px 12px;overflow:hidden;
+    border:2px solid rgba(53,196,232,.55);
+    background:linear-gradient(180deg, rgba(53,196,232,.18), rgba(53,196,232,.05) 60%, transparent);
+    display:flex;align-items:flex-end;justify-content:center}
+  .abCapsula.rachando{border-color:rgba(242,236,221,.85)}
+  .abCapsula canvas{width:110px;height:124px;image-rendering:pixelated;
+    margin-bottom:8px;position:relative;z-index:2}
+  .abBrilho{position:absolute;left:50%;bottom:-46px;width:170px;height:170px;
+    transform:translateX(-50%);border-radius:50%;z-index:1;
+    background:radial-gradient(circle, rgba(53,196,232,.75), transparent 66%)}
+  .abRachadura{position:absolute;inset:0;z-index:3;opacity:0;
+    background:linear-gradient(115deg, transparent 47%, rgba(242,236,221,.85) 49%, transparent 51%),
+               linear-gradient(60deg, transparent 56%, rgba(242,236,221,.6) 58%, transparent 60%)}
+  .abCapsula.rachando .abRachadura{opacity:1}
+  .abBase{width:180px;height:16px;margin:-2px auto 0;border-radius:0 0 12px 12px;
+    background:linear-gradient(#4A3660,#2A1B3D);border:1px solid var(--rule);border-top:0}
+  .abTexto{margin:18px 0 0;font-size:12px;color:var(--mute)}
+  .abFlash{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .18s}
+  .abFlash.on{opacity:.9}
+  @media (prefers-reduced-motion:reduce){ .abCapsula{transform:none !important} }
 </style>
 </head>
 <body>
 <div class="app">
   <div class="avisoTopo" id="avisoTopo"></div>
+  <div class="abrindoOverlay" id="abrindoOverlay" hidden>
+    <div class="abrindoCena">
+      <div class="abCapsula" id="abCapsula">
+        <div class="abBrilho" id="abBrilho"></div>
+        <canvas id="abArte" width="128" height="144"></canvas>
+        <div class="abRachadura" id="abRachadura"></div>
+      </div>
+      <div class="abBase"></div>
+      <p class="abTexto" id="abTexto">Opening…</p>
+    </div>
+    <div class="abFlash" id="abFlash"></div>
+  </div>
   <div class="esperaOverlay" id="esperaOverlay" hidden>
     <div class="esperaCaixa">
       <div class="esperaBomba"></div>
@@ -2278,9 +2317,62 @@ async function comprar(q){
     for(const h of fila) inventario.push(h);
   }
   filaPos=0;
-  document.getElementById('pacoteOverlay').classList.add('on');
-  mostrarCarta();
+  if(fila.length){
+    await abrirComSuspense();
+    document.getElementById('pacoteOverlay').classList.add('on');
+    mostrarCarta();
+  }
   pintar();
+}
+
+/* Abertura com suspense. A capsula treme, a luz cresce e so no estouro a carta
+   aparece. A cor do brilho NAO entrega a raridade ate o ultimo instante: ate
+   la e ciano, a mesma da vitrine. */
+function abrirComSuspense(){
+  return new Promise(resolve=>{
+    const ov=document.getElementById('abrindoOverlay');
+    const cap=document.getElementById('abCapsula');
+    const bri=document.getElementById('abBrilho');
+    const flash=document.getElementById('abFlash');
+    const txt=document.getElementById('abTexto');
+    const cv=document.getElementById('abArte');
+    const g=cv.getContext('2d');
+    const melhor=fila.reduce((a,b)=>b.idx>a.idx?b:a, fila[0]);
+    ov.hidden=false; flash.classList.remove('on'); cap.className='abCapsula';
+    txt.textContent = fila.length>1 ? `Opening ${fila.length} capsules…` : 'Opening…';
+
+    const t0=performance.now(), DUR=2400;
+    (function passo(t){
+      const p=Math.min(1,(t-t0)/DUR);
+      // silhueta trocando cada vez mais rapido: a duvida acelera
+      const ritmo = 420 - 360*p;
+      const todos=ELENCO.flat();
+      const per=todos[Math.floor(t/ritmo)%todos.length];
+      const im=FOLHAS_RETRATO[per.s];
+      g.clearRect(0,0,cv.width,cv.height);
+      if(im && im.complete && im.naturalWidth){
+        const L=im.naturalWidth/4;
+        g.imageSmoothingEnabled=false;
+        g.drawImage(im, (Math.floor(t/150)%4)*L,0,L,im.naturalHeight, 0,0,cv.width,cv.height);
+        g.globalCompositeOperation='source-in';
+        // a sombra vai clareando na direcao da cor da raridade, so no fim
+        const rev=Math.max(0,(p-0.78)/0.22);
+        g.fillStyle = rev>0 ? corAlfa(melhor.r.cor, 0.35+0.65*rev) : 'rgba(12,6,24,0.93)';
+        g.fillRect(0,0,cv.width,cv.height);
+        g.globalCompositeOperation='source-over';
+      }
+      cap.style.transform=`translate(${(Math.random()-0.5)*p*9}px, ${(Math.random()-0.5)*p*7}px)`;
+      bri.style.opacity=(0.35+0.65*p).toFixed(2);
+      bri.style.transform=`translateX(-50%) scale(${(0.85+p*0.85).toFixed(2)})`;
+      if(p>0.55) cap.classList.add('rachando');
+      if(p<1) requestAnimationFrame(passo);
+      else {
+        flash.style.background=`radial-gradient(circle, ${melhor.r.cor} 0%, transparent 62%)`;
+        flash.classList.add('on');
+        setTimeout(()=>{ ov.hidden=true; flash.classList.remove('on'); resolve(); }, 420);
+      }
+    })(t0);
+  });
 }
 
 function mostrarCarta(){
