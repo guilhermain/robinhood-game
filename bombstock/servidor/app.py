@@ -11,9 +11,9 @@ progresso a ninguem.
 """
 import os, json, time, asyncio, contextlib
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from db import conectar
 from auth import novo_desafio, verificar
@@ -74,13 +74,32 @@ class Prova(BaseModel):
     carteira: str
     assinatura: str
 
+from collections import defaultdict, deque
+_batidas = defaultdict(deque)
+def limitar(chave, maximo, janela_s):
+    """Limite simples em memoria. Nao e perfeito (reinicia no deploy), mas
+    impede o martelo obvio: 60 pedidos em 10s passavam sem nada."""
+    agora = time.time()
+    d = _batidas[chave]
+    while d and agora - d[0] > janela_s:
+        d.popleft()
+    if len(d) >= maximo:
+        raise HTTPException(429, 'devagar')
+    d.append(agora)
+    if len(_batidas) > 20000:
+        _batidas.clear()
+
 @app.get('/saude')
 def saude():
     cur = cursor(); cur.execute('select 1')
     return {'ok': True, 'quando': datetime.now(timezone.utc).isoformat()}
 
 @app.post('/login/desafio')
-def desafio(e: Entrada):
+def desafio(e: Entrada, request: Request):
+    # Cada desafio cria linha no banco SEM prova nenhuma: 12 carteiras novas
+    # entraram em 1,9s no teste. O limite e por origem, nao por carteira,
+    # porque a carteira e de graca.
+    limitar('desafio:'+(request.client.host if request.client else '?'), 20, 60)
     cur = cursor()
     return {'texto': novo_desafio(cur, e.carteira)}
 
@@ -130,18 +149,29 @@ def logout(e: Entrada, authorization: str = Header(default='')):
                 (e.carteira.lower(),))
     return {'ok': True}
 
+# Só estes temas existem. Sem a lista, qualquer texto virava uma mina nova no
+# banco: testado, "GOOGL_FALSO" e um tema de 500 letras foram aceitos.
+TEMAS = {'verde','NVDA','GME','AMZN','MSTR','META','SPCX'}
+
 class Descer(BaseModel):
     carteira: str
     tema: str
-    tokens: list[int]
+    tokens: list[int] = Field(default_factory=list, max_length=64)
 
 @app.post('/mina/entrar')
 def entrar_na_mina(d: Descer, authorization: str = Header(default='')):
     """O jogador escolhe a mina e quem desce. O servidor confere na CHAIN que os
     herois sao dele, e a SESSAO prova que quem pede e o dono da carteira."""
     exigir_sessao(d.carteira, authorization)
+    limitar('entrar:'+d.carteira.lower(), 10, 60)
+    if d.tema not in TEMAS:
+        raise HTTPException(400, 'tema desconhecido')
     c = d.carteira.lower()
     cur = cursor()
+    # Uma mina por vez: sem isto, quatro pedidos ao mesmo tempo criavam quatro
+    # minas para a mesma carteira. Os herois ficavam em uma so, mas as outras
+    # persistiam no banco. O lock serializa a carteira.
+    cur.execute("select pg_advisory_xact_lock(hashtext(%s))", (c,))
     try:
         meus = {h['token_id']: h for h in herois_da_chain(c)}
     except Exception as e:
@@ -174,7 +204,8 @@ def entrar_na_mina(d: Descer, authorization: str = Header(default='')):
 
 
 @app.get('/estado/{carteira}')
-def estado(carteira: str):
+def estado(carteira: str, request: Request):
+    limitar('estado:'+(request.client.host if request.client else '?'), 60, 60)
     """O que o cliente desenha. Ele NAO conta mais nada."""
     c = carteira.lower()
     cur = cursor()
