@@ -2592,9 +2592,7 @@ function pintarClaim(){
   // resumo do topo: o dolar liquido e o quanto falta para o minimo
   const usdSaque=valorEmDolar();
   document.getElementById('rsUsd').textContent = usdSaque===null?'$—':emDolar(usdSaque*liq);
-  document.getElementById('rsSub').textContent = linhas.length
-    ? `across ${linhas.length} ticker${linhas.length>1?'s':''}, after the 3% fee`
-    : 'nothing mined yet';
+  document.getElementById('rsSub').textContent = linhas.length ? '' : 'nothing mined yet';
   const pc=Math.min(100, 100*bruto/MIN_SAQUE);
   const bar=document.getElementById('rsProgresso');
   bar.style.width=pc.toFixed(1)+'%';
