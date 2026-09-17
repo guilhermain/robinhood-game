@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from db import conectar
+from web3 import Web3
 from auth import novo_desafio, verificar
 from economia import valor_bau, config
 from sim import Mina
@@ -212,6 +213,98 @@ def entrar_na_mina(d: Descer, authorization: str = Header(default='')):
                 (c, json.dumps({'tema': d.tema, 'herois': pedidos})))
     return {'ok': True, 'mina': mid, 'herois': len(pedidos)}
 
+
+
+# ----------------------------------------------------------------- epocas
+from merkle import folha as _folha, raiz as _raiz, prova as _prova
+
+VAULT_ADDR = os.environ.get('VAULT_ADDR', '0x62eea8D4bBbC92b08333695Fce6580df21B9dD04')
+ACAO_ADDR = {
+    'NVDA':'0xDC45135193Cb5D39cEB11Fa1A7ACA94EEF354c29',
+    'GME' :'0x845600899De5fA4CEf16d8CEAbeb30A5fc780EDB',
+    'AMZN':'0x7BdBb4C9a3481bb6171D90FAB1f836C721A65151',
+    'MSTR':'0x09939e5aE89c0e22381258F7A63165aeE738Da8d',
+    'META':'0x0517b9166aDdF1A0c5E9499CCF092b27e3F490DB',
+    'SPCX':'0xeF77540f7cCC487c28C67811F3A45E1D1c2fc020',
+    'USDG':'0x19cE998F1d1b0Bb0A85657a08003503E7374213b',
+}
+
+def _preco(ticker):
+    """Preco lido pelo SERVIDOR. Antes a conversao usava o preco do navegador,
+    que qualquer um edita pelo console."""
+    try:
+        ends = ','.join(ACAO_MAINNET.values())
+        r = httpx.get('https://api.geckoterminal.com/api/v2/simple/networks/'
+                      'robinhood/token_price/' + ends, timeout=20).json()
+        m = r['data']['attributes']['token_prices']
+        return float(m[ACAO_MAINNET[ticker].lower()])
+    except Exception:
+        return None
+
+ACAO_MAINNET = {
+    'USDG':'0x5fc5360d0400a0fd4f2af552add042d716f1d168',
+    'NVDA':'0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec',
+    'GME' :'0x1b0e319c6a659f002271b69db8a7df2f911c153e',
+    'AMZN':'0x12f190a9f9d7d37a250758b26824b97ce941bf54',
+    'MSTR':'0xec262a75e413fafd0df80480274532c79d42da09',
+    'META':'0xc0d6457c16cc70d6790dd43521c899c87ce02f35',
+    'SPCX':'0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea',
+}
+
+def montar_epoca(cur, numero):
+    """Transforma os dolares da epoca em folhas de Merkle.
+
+    O dolar vira quantidade de acao AQUI, com o preco lido pelo servidor, e a
+    quantidade e o que entra na folha. Depois disso o contrato so paga quem
+    apresentar a prova: o CofreTeste, que paga o que pedirem, sai de cena."""
+    cur.execute("select carteira, ticker, usd from saldo_epoca "
+                "where epoca=%s and usd > 0 order by carteira, ticker", (numero,))
+    linhas = cur.fetchall()
+    precos = {}
+    folhas, itens = [], []
+    for carteira, ticker, usd in linhas:
+        if ticker not in ACAO_ADDR:
+            continue
+        if ticker not in precos:
+            precos[ticker] = _preco(ticker)
+        p = precos[ticker]
+        if not p:
+            continue
+        qtd = int(float(usd) / p * 10**18)
+        if qtd <= 0:
+            continue
+        end = Web3.to_checksum_address(carteira)
+        tok = Web3.to_checksum_address(ACAO_ADDR[ticker])
+        folhas.append(_folha(numero, end, tok, qtd))
+        itens.append({'carteira': carteira, 'ticker': ticker,
+                      'token': tok, 'quantidade': str(qtd), 'usd': float(usd)})
+    return folhas, itens
+
+@app.get('/epoca/{numero}/previa')
+def previa_epoca(numero: int):
+    """O que a epoca pagaria se fechasse agora. Leitura, nao fecha nada."""
+    cur = cursor()
+    folhas, itens = montar_epoca(cur, numero)
+    return {'epoca': numero, 'jogadores': len({i['carteira'] for i in itens}),
+            'linhas': len(itens), 'raiz': ('0x'+_raiz(folhas).hex()) if folhas else None,
+            'itens': itens[:50]}
+
+@app.get('/epoca/{numero}/prova/{carteira}')
+def prova_do_jogador(numero: int, carteira: str):
+    """A prova que o jogador leva ao contrato. Publica de proposito: ela so
+    serve para quem e dono da carteira que esta dentro dela."""
+    cur = cursor()
+    folhas, itens = montar_epoca(cur, numero)
+    c = carteira.lower()
+    saida = []
+    for i, it in enumerate(itens):
+        if it['carteira'] == c:
+            saida.append({'ticker': it['ticker'], 'token': it['token'],
+                          'quantidade': it['quantidade'],
+                          'prova': ['0x'+x.hex() for x in _prova(folhas, i)]})
+    if not saida:
+        raise HTTPException(404, 'nada a sacar nesta epoca')
+    return {'epoca': numero, 'carteira': c, 'itens': saida}
 
 @app.get('/estado/{carteira}')
 def estado(carteira: str, request: Request):
