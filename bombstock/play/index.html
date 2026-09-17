@@ -446,6 +446,19 @@
   /* A causa do branco: sem color-scheme o navegador assume tema claro e
      desenha barra, campo e menu nativos em cinza claro, por cima de tudo. */
   :root{color-scheme:dark}
+
+  /* menu da carteira */
+  .carteiraCanto{position:relative}
+  .menuCarteira{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:212px;
+    background:var(--panel);border:1px solid var(--rule);border-radius:4px;
+    box-shadow:0 10px 26px rgba(0,0,0,.55);overflow:hidden}
+  .menuCarteira[hidden]{display:none}
+  .mcEndereco{padding:10px 12px;font-family:"Press Start 2P",monospace;font-size:8px;
+    line-height:1.7;color:var(--mute);word-break:break-all;border-bottom:1px solid var(--rule2)}
+  .menuCarteira button{display:block;width:100%;text-align:left;background:none;border:0;
+    padding:10px 12px;color:var(--chalk);font-family:inherit;font-size:12px;cursor:pointer}
+  .menuCarteira button:hover{background:#3A2757}
+  .menuCarteira .mcSair{color:var(--loss);border-top:1px solid var(--rule2)}
 </style>
 </head>
 <body>
@@ -462,7 +475,15 @@
       <span class="carteira" title="$BSTOCK, the token you spend on packs and mines">
         <span class="valor"><b id="chipSaldo">0</b><em>$BSTOCK</em></span>
       </span>
-      <button class="carteiraBtn" id="btnCarteira" onclick="conectar()">Connect</button>
+      <div class="carteiraCanto">
+        <button class="carteiraBtn" id="btnCarteira" onclick="cliqueCarteira()">Connect</button>
+        <div class="menuCarteira" id="menuCarteira" hidden>
+          <div class="mcEndereco" id="mcEndereco"></div>
+          <button onclick="copiarEndereco()">Copy address</button>
+          <button onclick="verNoExplorer()">View on explorer</button>
+          <button class="mcSair" onclick="desconectar()">Disconnect</button>
+        </div>
+      </div>
     </div>
     <div class="fitaCotacao" id="fitaCotacao" aria-hidden="true"><div class="fitaTrilho" id="fitaTrilho"></div></div>
   </header>
@@ -1406,6 +1427,51 @@ async function buscarCofre(){
   if(telaAtual==='claim') pintarTesouro();
   return algum;
 }
+// Clicar no botao: sem carteira conecta, com carteira abre o menu.
+function cliqueCarteira(){
+  if(!carteira){ conectar(); return; }
+  const m=document.getElementById('menuCarteira');
+  const abrir=m.hidden;
+  m.hidden=!abrir;
+  if(abrir) document.getElementById('mcEndereco').textContent=carteira;
+}
+document.addEventListener('click', e=>{
+  const dentro=e.target.closest && e.target.closest('.carteiraCanto');
+  if(!dentro){ const m=document.getElementById('menuCarteira'); if(m) m.hidden=true; }
+});
+
+function copiarEndereco(){
+  if(!carteira) return;
+  navigator.clipboard.writeText(carteira)
+    .then(()=>avisarTopo('Address copied'))
+    .catch(()=>avisarTopo(carteira));
+  document.getElementById('menuCarteira').hidden=true;
+}
+function verNoExplorer(){
+  if(!carteira) return;
+  window.open(CHAIN.explorer+'/address/'+carteira, '_blank', 'noopener');
+  document.getElementById('menuCarteira').hidden=true;
+}
+
+/* Desconectar e do lado do jogo: a carteira nao tem como ser "deslogada" por um
+   site, ela so revoga permissao nas proprias configuracoes. O que se faz aqui e
+   esquecer o endereco e voltar ao estado local. */
+function desconectar(){
+  document.getElementById('menuCarteira').hidden=true;
+  carteira=null; redeOk=false;
+  saldosAcao={}; cotaBstock=null;
+  // os herois vieram da chain: sem carteira, o jogo volta ao save local
+  const tinhaOnchain=inventario.some(h=>h.onchain);
+  if(tinhaOnchain){
+    inventario.length=0; ativos.length=0;
+    if(!carregar()){
+      ELENCO.forEach((grupo,idx)=>grupo.forEach(p=>inventario.push(novoHeroi(idx,p))));
+    }
+  }
+  avisarTopo('Wallet disconnected. To revoke access, use your wallet settings.');
+  pintar();
+}
+
 function tentarCofre(){
   const b=document.getElementById('btnCofreRetry');
   if(b){ b.disabled=true; b.textContent='Trying…'; }
