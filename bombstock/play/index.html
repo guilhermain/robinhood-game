@@ -614,6 +614,53 @@
   .laSkills{display:flex;flex-direction:column;gap:3px;align-items:center}
   .chipSkill.mini{width:22px;height:22px}
   .chipSkill.mini .icoSkill{width:15px;height:15px}
+
+  /* ---- montagem do time: duas caixas, arrastar entre elas ---- */
+  .squadDuplo{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-top:10px}
+  .painelSquad{border:1px solid var(--rule);border-radius:4px;background:var(--panel);
+    overflow:hidden;transition:border-color .15s, background .15s}
+  .painelSquad.emUso{border-color:var(--amber);
+    background:linear-gradient(180deg,#2E1F45,var(--panel) 120px)}
+  .painelSquad.alvo{border-color:var(--gain);background:#24313A}
+  .painelSquad.cheia .psConta.forte{color:var(--gain)}
+  .psTopo{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:11px 13px;border-bottom:1px solid var(--rule2)}
+  .psTopo h3{margin:0;font-size:13px;color:var(--chalk);font-weight:600}
+  .psConta{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--mute)}
+  .psConta.forte{color:var(--amber);font-size:13px}
+  .psDica{margin:0;padding:8px 13px 0;font-size:11px;color:var(--mute)}
+  /* dez vagas desenhadas: da para ver quantas faltam sem ler numero */
+  .psVagas{display:flex;gap:4px;padding:10px 13px 0}
+  .psVagas i{flex:1;height:5px;border-radius:3px;background:#241539;
+    border:1px solid var(--rule2);transition:background .2s}
+  .psVagas i.ocupada{background:var(--amber);border-color:var(--amber)}
+  .psGrade{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));
+    gap:8px;padding:12px 13px;min-height:132px;max-height:52vh;overflow-y:auto}
+  .psVazio{grid-column:1/-1;margin:0;align-self:center;text-align:center;
+    font-size:12px;color:var(--mute);line-height:1.6;padding:22px 8px}
+
+  .cartaHeroi{position:relative;border:1px solid var(--rule);border-left:3px solid var(--rar);
+    border-radius:3px;background:#241539;padding:8px 8px 9px;text-align:center;
+    cursor:grab;user-select:none;transition:transform .12s, border-color .12s, background .12s}
+  .cartaHeroi:hover{transform:translateY(-2px);border-color:var(--rar);background:#2E1F45}
+  .cartaHeroi:active{cursor:grabbing}
+  .cartaHeroi.arrastando{opacity:.45;transform:scale(.96)}
+  .cartaHeroi.bloqueada{opacity:.4;cursor:not-allowed}
+  .cartaHeroi.bloqueada:hover{transform:none}
+  .chArte{width:44px;height:50px;image-rendering:pixelated;display:block;margin:0 auto 4px}
+  .chNome{font-size:11px;color:var(--chalk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chRar{font-size:9px;margin-top:1px}
+  .chStats{display:flex;justify-content:center;gap:7px;margin:5px 0 4px;
+    font-size:10px;color:var(--mute);font-variant-numeric:tabular-nums}
+  .chStats span::before{margin-right:2px;opacity:.85}
+  .chStats span:nth-child(1)::before{content:'\2692'}
+  .chStats span:nth-child(2)::before{content:'\2665'}
+  .chStats span:nth-child(3)::before{content:'\26A1'}
+  .chBarra{height:4px;background:#1B1030;border-radius:2px;overflow:hidden}
+  .chBarra i{display:block;height:100%;border-radius:2px}
+  .chSkills{display:flex;justify-content:center;gap:3px;margin-top:5px}
+  .chSkills .icoSkill{width:14px;height:14px}
+  @media (max-width:760px){ .squadDuplo{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -714,9 +761,28 @@
   <section class="tela" id="equipe">
     <div class="linhaMina"><h2 class="tituloAba">Squad</h2><span class="contaAba"><b id="eqConta">0/10</b> down the mine</span></div>
     <div class="filtros" id="eqMinas"></div>
-    <p class="aviso-linha">Your squad works one mine at a time. Up to 10 go down; everyone left out
-      rests and recharges just the same. Switch mines on the Mine tab.</p>
-    <div class="lista rolagem" id="eqLista"></div>
+
+    <div class="squadDuplo">
+      <section class="painelSquad" id="painelBanco">
+        <header class="psTopo">
+          <h3>Resting</h3>
+          <span class="psConta" id="bancoConta">0</span>
+        </header>
+        <p class="psDica">Drag a hero to the mine, or tap to send.</p>
+        <div class="psGrade" id="bancoLista"></div>
+      </section>
+
+      <section class="painelSquad emUso" id="painelParty">
+        <header class="psTopo">
+          <h3 id="partyTitulo">Down the mine</h3>
+          <span class="psConta forte" id="partyConta">0/10</span>
+        </header>
+        <div class="psVagas" id="partyVagas"></div>
+        <div class="psGrade" id="partyLista"></div>
+      </section>
+    </div>
+    <p class="aviso-linha">Everyone left out rests and recharges just the same.
+      Switch mines on the Mine tab.</p>
   </section>
 
   <!-- ---------------------------------------------------------------- mina -->
@@ -2697,25 +2763,87 @@ function pintarEquipe(){
   }
   document.getElementById('eqConta').textContent=destino.ativos.length+'/'+VAGAS;
 
-  const lista=document.getElementById('eqLista');
-  if(!inventario.length){
-    lista.innerHTML='<div class="vazio">No heroes to field.<br>Buy a pack in the shop.</div>';
+  const banco=document.getElementById('bancoLista');
+  const party=document.getElementById('partyLista');
+  const naMina=inventario.filter(x=>minaDe(x)===destino);
+  const fora=inventario.filter(x=>minaDe(x)!==destino);
+
+  document.getElementById('partyTitulo').textContent=destino.def.nome;
+  document.getElementById('partyConta').textContent=`${naMina.length}/${VAGAS}`;
+  document.getElementById('bancoConta').textContent=fora.length;
+  document.getElementById('painelParty').classList.toggle('cheia', naMina.length>=VAGAS);
+
+  // Vagas desenhadas: mostra de relance quantas faltam, sem ler numero.
+  const vagas=document.getElementById('partyVagas');
+  vagas.innerHTML=Array.from({length:VAGAS},(_,i)=>
+    `<i class="${i<naMina.length?'ocupada':''}"></i>`).join('');
+
+  pintarCaixa(banco, fora, false, destino);
+  pintarCaixa(party, naMina, true, destino);
+}
+
+/* Duas caixas: quem descansa e quem esta na mina. Clicar move; arrastar tambem.
+   O arrastar usa a API nativa do navegador, entao funciona sem biblioteca; no
+   celular, onde arrastar nao existe, o toque resolve. */
+function pintarCaixa(alvo, lista, naMina, destino){
+  if(!lista.length){
+    alvo.innerHTML=`<p class="psVazio">${naMina
+      ? 'Nobody down here. Drag a hero in.'
+      : (inventario.length ? 'Everyone is working.' : 'No heroes yet. Buy a pack in the Shop.')}</p>`;
     return;
   }
-  lista.innerHTML='';
-  const ord=[...inventario].sort((a,b)=>(b.naMina-a.naMina)||b.idx-a.idx);
-  const cheia=destino.ativos.length>=VAGAS;
-  for(const h of ord){
-    const m=minaDe(h);
-    const rot = m===destino ? 'In the mine' : (m ? 'In '+m.def.curto : 'Send down');
-    const cls = m===destino ? 'on' : (m ? 'alt' : '');
-    const trava = !m && cheia ? ' disabled' : '';
-    const el=document.createElement('div'); el.className='heroi';
-    el.innerHTML=fichaHeroi(h, `<button class="${cls}"${trava}>${rot}</button>`);
-    el.querySelector('button').onclick=()=> m ? tirarDaMina(h) : mandarPara(destino,h);
-    lista.appendChild(el);
+  const cheia = destino.ativos.length>=VAGAS;
+  alvo.innerHTML='';
+  for(const h of [...lista].sort((a,b)=>b.idx-a.idx)){
+    const f=Math.max(0, Math.min(1, h.energia/h.st.energiaMax));
+    const cor = f>0.5?'var(--gain)' : f>0.2?'var(--amber)' : 'var(--loss)';
+    const bloqueado = !naMina && cheia;
+    const el=document.createElement('div');
+    el.className='cartaHeroi'+(bloqueado?' bloqueada':'');
+    el.draggable=!bloqueado;
+    el.dataset.id=h.id;
+    el.style.setProperty('--rar', h.r.cor);
+    el.innerHTML=
+      `<canvas class="andando chArte" width="32" height="36" data-id="${h.id}"></canvas>`+
+      `<div class="chNome">${h.p.n}</div>`+
+      `<div class="chRar" style="color:${h.r.cor}">${h.r.nome}</div>`+
+      `<div class="chStats"><span>${h.st.power}</span><span>${h.st.stamina}</span><span>${h.st.speed}</span></div>`+
+      `<div class="chBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></div>`+
+      (h.skills.length? `<div class="chSkills">`+h.skills.map(s=>
+        `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt="" title="${SKILLS[s]}">`).join('')+`</div>` : '');
+    el.onclick=()=>{ naMina ? tirarDaMina(h) : (!cheia && mandarPara(destino,h)); };
+    el.addEventListener('dragstart', ev=>{
+      ev.dataTransfer.setData('text/plain', String(h.id));
+      ev.dataTransfer.effectAllowed='move';
+      el.classList.add('arrastando');
+    });
+    el.addEventListener('dragend', ()=>el.classList.remove('arrastando'));
+    alvo.appendChild(el);
   }
 }
+
+/* As duas caixas recebem o que for solto nelas. */
+function ligarSoltar(){
+  for(const [id, paraMina] of [['bancoLista',false], ['partyLista',true]]){
+    const cx=document.getElementById(id);
+    if(!cx || cx.dataset.ligado) continue;
+    cx.dataset.ligado='1';
+    const painel=cx.closest('.painelSquad');
+    cx.addEventListener('dragover', ev=>{ ev.preventDefault();
+      ev.dataTransfer.dropEffect='move'; painel.classList.add('alvo'); });
+    cx.addEventListener('dragleave', ()=>painel.classList.remove('alvo'));
+    cx.addEventListener('drop', ev=>{
+      ev.preventDefault(); painel.classList.remove('alvo');
+      const h=inventario.find(x=>String(x.id)===ev.dataTransfer.getData('text/plain'));
+      if(!h) return;
+      const destino=minas[minaAtual];
+      const estaNaMina = minaDe(h)===destino;
+      if(paraMina && !estaNaMina) mandarPara(destino, h);
+      if(!paraMina && estaNaMina) tirarDaMina(h);
+    });
+  }
+}
+addEventListener('DOMContentLoaded', ligarSoltar);
 
 /* --------------------------------------------------------------- claim */
 
@@ -2950,6 +3078,7 @@ function assinatura(){
     +':'+h.achados+':'+(h.estado||'')).join('|')+'#'+filtroRar+'#'+equipeDestino;
 }
 function comRolagem(el, desenhar){
+  if(!el){ desenhar(); return; }      // elemento removido: nao derruba a pintura
   const y=el.scrollTop;
   desenhar();
   el.scrollTop=y;
@@ -3001,7 +3130,12 @@ function pintar(){
   if(telaAtual==='inventario' && sig!==assinaturaLista)
     comRolagem(document.getElementById('invLista'), pintarInventario);
   if(telaAtual==='equipe' && sig!==assinaturaLista)
-    comRolagem(document.getElementById('eqLista'), pintarEquipe);
+    {
+      const a=document.getElementById('bancoLista'), b=document.getElementById('partyLista');
+      const ya=a?a.scrollTop:0, yb=b?b.scrollTop:0;
+      pintarEquipe();
+      if(a) a.scrollTop=ya; if(b) b.scrollTop=yb;
+    }
   if(telaAtual==='claim'){
     pintarClaim();
     // busca a cotacao uma vez por entrada na tela, nao a cada quadro
