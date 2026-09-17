@@ -194,7 +194,11 @@
      dois lados. */
   /* contain garante que nada distorce nem e cortado, mesmo se a caixa e o mapa
      nao tiverem exatamente a mesma proporcao por causa de borda e arredondamento */
-  .palco{aspect-ratio:var(--ar, 1);width:min(100%, calc(74vh * var(--ar, 1)));margin:0 auto}
+  /* --livre e a altura que sobra depois do cabecalho, fita, abas, titulo e
+     seletor; o JS mede e escreve. O 74vh fixo de antes ignorava tudo isso e
+     fazia a pagina rolar em telas baixas. */
+  .palco{aspect-ratio:var(--ar, 1);
+    width:min(100%, calc(var(--livre, 74vh) * var(--ar, 1)));margin:0 auto}
   .palco canvas#tela{width:100%;height:100%;display:block;object-fit:contain}
 
   /* sobrando espaco, o conjunto fica centrado em vez de empurrado pro topo */
@@ -581,8 +585,11 @@
   }
   /* A lista acompanha a altura do mapa: as duas colunas esticam junto, entao
      ela nao sobra embaixo nem passa do mapa. */
+  /* Embaixo do mapa ela tambem tem teto e rola por dentro: sem isso, dez
+     herois empilhados empurravam a pagina inteira. */
   .listaAtivos{border:1px solid var(--rule);border-radius:3px;background:var(--panel);
-    overflow-y:auto;min-width:0}
+    overflow-y:auto;min-width:0;max-height:min(30vh,190px)}
+  @media (min-width:1100px){ .listaAtivos{max-height:none} }
   .laTopo{padding:9px 12px;font-size:12px;color:var(--mute);
     border-bottom:1px solid var(--rule2);position:sticky;top:0;background:var(--panel);z-index:2}
   .laTopo b{color:var(--gain);font-family:"Press Start 2P",monospace;font-size:11px}
@@ -600,7 +607,6 @@
   .laVazio{margin:0;padding:14px 12px;font-size:12px;color:var(--mute);line-height:1.5}
   @media (max-width:900px){
     .minaGrade{grid-template-columns:1fr}
-    .listaAtivos{max-height:none}
   }
 
   /* a lista mostra skills e energia; o valor em dolar saiu daqui */
@@ -2670,10 +2676,38 @@ const ESTADO_ROTULO={dormir:'sleeping', fugir:'clear of blast',
 /* A altura do mapa vem da proporcao 19x13 e da largura disponivel; nao ha
    expressao em CSS que a lista possa copiar. Entao ela e medida e aplicada.
    Com align-items:stretch o mapa esticava junto e perdia a proporcao. */
+/* Mede o espaco que sobra para o mapa: altura da janela menos tudo que e fixo
+   na tela da mina. Sem isso o mapa usava 74vh cravado e a pagina rolava. */
+function medirEspacoLivre(){
+  if(telaAtual!=='mina') return;
+  const palco=document.querySelector('.minaGrade .palco');
+  const lista=document.getElementById('listaAtivos');
+  if(!palco) return;
+  const raiz=document.documentElement;
+  // A lista copia a altura do mapa, entao medir com ela presa fazia a correcao
+  // descontar duas vezes e o mapa despencar. Solta, mede, devolve.
+  // So solta a lista quando ela esta AO LADO. Embaixo do mapa ela ocupa altura
+  // de verdade, e zerar para medir subestimava o espaco e deixava rolagem.
+  const lado = getComputedStyle(document.querySelector('.minaGrade'))
+                 .gridTemplateColumns.split(' ').length > 1;
+  const guardada = lista ? lista.style.height : '';
+  if(lista && lado) lista.style.height='0px';
+  const fixo = raiz.scrollHeight - palco.getBoundingClientRect().height;
+    // piso baixo de proposito: em telas curtas (1024x600) o mapa precisa encolher
+  // bastante para caber junto com a lista, e um mapa pequeno e melhor que rolagem
+    // Piso de 260: abaixo disso o mapa fica inutilizavel. Em telas muito baixas
+  // (1024x600 com a lista embaixo) vale mais rolar um pouco do que jogar num
+  // mapa de 170 pixels.
+  raiz.style.setProperty('--livre', Math.max(260, innerHeight - fixo)+'px');
+  if(lista && lado) lista.style.height=guardada;
+}
+addEventListener('resize', ()=>{ medirEspacoLivre(); igualarAlturaLista(); });
+
 function igualarAlturaLista(){
   const alvo=document.getElementById('listaAtivos');
   const palco=document.querySelector('.minaGrade .palco');
   if(!alvo || !palco) return;
+  medirEspacoLivre();   // a lista ja esta pintada aqui; antes dela a conta errava
   const lado = getComputedStyle(document.querySelector('.minaGrade'))
                  .gridTemplateColumns.split(' ').length > 1;
   alvo.style.height = lado ? Math.round(palco.getBoundingClientRect().height)+'px' : '';
@@ -2863,7 +2897,7 @@ function pintar(){
 
   // cotacao da acao que esta mina paga
   ajustarCasca();
-  if(telaAtual==='mina') montarSeletorMinas();
+  if(telaAtual==='mina'){ montarSeletorMinas(); medirEspacoLivre(); }
   if(telaAtual==='loja') silhuetaDaCapsula();
   girarMoeda();
   const sig=assinatura();
@@ -3292,6 +3326,9 @@ abrirPorEndereco();
 // initialization' — e o catch vazio transformava isso em silencio.
 buscarCofre().then(pintar).catch(()=>pintar());
 buscarMintados();
+medirEspacoLivre();
+addEventListener('load', medirEspacoLivre);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(medirEspacoLivre);
 montarLoja(); pintar();
 requestAnimationFrame(loop);
 </script>
