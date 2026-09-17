@@ -71,15 +71,13 @@ contract HeroiTestnet {
         require(IERC20(bstock).transferFrom(msg.sender, tesouro, precoPorHeroi*qtd), "pagamento falhou");
 
         primeiro = totalSupply + 1;
-        bool garantiu = false;
+        // SEM garantia de raridade em pacote grande: todo heroi e sorteado pela
+        // mesma tabela, em qualquer tamanho de pacote. A garantia que existia
+        // aqui era invencao minha e distorcia a curva publicada.
         for (uint256 i=0; i<qtd; i++){
             uint256 semente = uint256(keccak256(abi.encodePacked(
                 blockhash(block.number-1), block.timestamp, msg.sender, ++nonce, i)));
-            uint8 rar = _raridade(semente % 10000);
-            // pacote de 10 garante pelo menos um acima de comum
-            if (qtd==10 && i==qtd-1 && !garantiu && rar==0) rar = 1;
-            if (rar>0) garantiu = true;
-            _mintar(msg.sender, rar, semente);
+            _mintar(msg.sender, _raridade(semente % 10000), semente);
         }
     }
 

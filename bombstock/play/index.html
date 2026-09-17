@@ -1884,7 +1884,7 @@ function fecharEspera(){
 }
 
 async function comprarPacoteOnchain(qtd){
-  const custo=BigInt(qtd)*10n*(10n**18n);
+  const custo=BigInt(PRECOS[qtd])*(10n**18n);
   const s=await saldoBstock();
   const precisaTorneira = s < custo;
   abrirEspera(`Minting ${qtd} hero${qtd>1?'es':''}`,
@@ -1937,7 +1937,7 @@ async function sacarOnchain(){
    antes o jogador editava a raridade pelo console.
    Com carteira conectada o inventario e lido do contrato; sem carteira o jogo
    segue local, para permitir teste sem chain. */
-const HEROI_ADDR='0x9BefA801E9A09aCDE1dFf3B78dF0c99dAaF6F65c';
+const HEROI_ADDR='0x6f95BC604aD54c759b03856B783050d9967E2d8c';
 const SEL_ABRIR    ='0x2b9ea791';
 const SEL_HEROIS_DE='0x1f08a921';
 const SEL_HEROI    ='0xbd776cb2';
@@ -2006,7 +2006,9 @@ async function sincronizarHerois(){
 }
 
 /* ================================================================= estado */
-const PRECOS={1:10, 5:48, 10:90};
+// Preco LINEAR: 10 por heroi, sem desconto por volume. O desconto de 9 e 10%
+// que existia aqui foi invencao minha, nao decisao do G.
+const PRECOS={1:10, 5:50, 10:100};
 // 10 e nao 40: com a Green espalhando em sete acoes, 40 faria um heroi comum
 // esperar 13 dias pelo primeiro saque. Com 10, sao 3 dias. Numero a calibrar.
 const MIN_SAQUE=10, TAXA_SAQUE=0.03;
@@ -2287,9 +2289,9 @@ function montarLoja(){
   document.getElementById('lojaPreco').textContent=PRECOS[lojaQtd];
   document.getElementById('lojaComprar').textContent =
     lojaQtd===1 ? 'Buy hero' : `Buy ${lojaQtd} heroes`;
+  // Sem garantia e sem desconto: cada heroi custa o mesmo e e sorteado igual.
   document.getElementById('lojaGarantia').textContent =
-    lojaQtd===10 ? 'A pack of 10 guarantees at least one above Common.'
-    : (lojaQtd===5 ? `${(PRECOS[5]/5).toFixed(1)} $BSTOCK each` : '');
+    lojaQtd>1 ? `${(PRECOS[lojaQtd]/lojaQtd).toFixed(0)} $BSTOCK each, same odds` : '';
   document.getElementById('lojaComprar').onclick=()=>comprar(lojaQtd);
 
   const t=document.getElementById('chances');
