@@ -976,7 +976,16 @@ const ARTE_RETRATO={
 };
 const FOLHAS={}, FOLHAS_BOMBA={}, FOLHAS_RETRATO={};
 for(const s in ARTE){ const im=new Image(); im.src='data:image/png;base64,'+ARTE[s]; FOLHAS[s]=im; }
-for(const s in ARTE_BOMBA){ const im=new Image(); im.src='data:image/png;base64,'+ARTE_BOMBA[s]; FOLHAS_BOMBA[s]=im; }
+/* As folhas de GESTO agora sao servidas como arquivo, nao embutidas: sao 188 KB
+   e o jogo abre antes delas chegarem. Enquanto nao chegam, o heroi usa a folha
+   de caminhada — o gesto so entra quando a imagem estiver pronta. */
+const ANIM_BASE='../assets/anim2/';
+for(const s in ARTE_BOMBA){
+  const im=new Image();
+  im.src=ANIM_BASE+s+'_bomba.webp';
+  im.onerror=()=>{ im.src='data:image/png;base64,'+ARTE_BOMBA[s]; };  // reserva
+  FOLHAS_BOMBA[s]=im;
+}
 // Retrato: o sprite do jogo tem 32x36 e na carta aparecia ampliado 3x, cada
 // pixel virando um quadrado de 3. A arte de origem tem detalhe de sobra, entao
 // a carta usa um recorte proprio em 128x144 — mesma janela, outra escala.
@@ -1538,8 +1547,12 @@ function desenharHerois(){
     cx.fillStyle='#241539';          cx.fillRect(bx,by,L,2);
     cx.fillStyle = f>0.5 ? '#3FBF6F' : f>0.2 ? '#FFC93C' : '#E5484D';
     if(f>0) cx.fillRect(bx,by,Math.max(1,Math.round(L*f)),2);
-    const folha = plantando ? skinBombaDe(h) : skinDe(h);
-    if(folha && folha.complete) cx.drawImage(folha, quadro*SW, linha*SH, SW, SH, h.px, h.py-5, SW, SH);
+    let folha = plantando ? skinBombaDe(h) : skinDe(h);
+    let q = quadro;
+    if(plantando && (!folha || !folha.complete || !folha.naturalWidth)){
+      folha = skinDe(h); q = Math.floor(h.anim)%4;     // gesto ainda carregando
+    }
+    if(folha && folha.complete) cx.drawImage(folha, q*SW, linha*SH, SW, SH, h.px, h.py-5, SW, SH);
     if(dormindo){
       cx.fillStyle='#7FB8E8'; cx.font='9px "Press Start 2P", monospace';
       cx.fillText('z', h.px+22, h.py-2-(Date.now()/240%6));
