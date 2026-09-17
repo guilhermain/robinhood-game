@@ -483,6 +483,45 @@
   .esperaPassos li.feito{color:var(--gain)}
   .esperaPassos li.feito::before{background:var(--gain);border-color:var(--gain)}
   @media (prefers-reduced-motion:reduce){ .esperaBomba,.esperaPassos li.agora::before{animation:none} }
+
+  /* loja: a capsula e o centro da tela */
+  .capsulaCaixa{border:1px solid var(--rule);border-radius:4px;padding:22px 20px 20px;
+    background:radial-gradient(120% 80% at 50% 0%, #3A2757 0%, var(--panel) 60%);
+    text-align:center;margin-top:12px}
+  .capsula{position:relative;width:168px;margin:0 auto}
+  .capsulaVidro{position:relative;height:172px;border-radius:84px 84px 12px 12px;
+    background:linear-gradient(180deg, rgba(53,196,232,.16), rgba(53,196,232,.05) 60%, transparent);
+    border:2px solid rgba(53,196,232,.4);overflow:hidden;
+    display:flex;align-items:flex-end;justify-content:center}
+  .capsulaVidro canvas{width:104px;height:117px;image-rendering:pixelated;
+    margin-bottom:6px;position:relative;z-index:2}
+  .capsulaBrilho{position:absolute;left:50%;bottom:-40px;width:150px;height:150px;
+    transform:translateX(-50%);border-radius:50%;z-index:1;
+    background:radial-gradient(circle, rgba(53,196,232,.5), transparent 65%);
+    animation:respira 2.6s ease-in-out infinite}
+  .capsulaInterro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    z-index:3;font-family:"Press Start 2P",monospace;font-size:30px;color:rgba(242,236,221,.18)}
+  @keyframes respira{0%,100%{opacity:.4;transform:translateX(-50%) scale(.9)}
+                     50%{opacity:.8;transform:translateX(-50%) scale(1.06)}}
+  .capsulaBase{height:14px;margin-top:-2px;border-radius:0 0 10px 10px;
+    background:linear-gradient(#4A3660,#2A1B3D);border:1px solid var(--rule);border-top:0}
+  .capsulaTexto{margin:12px 0 16px;font-size:12px;color:var(--mute)}
+  .qtdAbas{display:inline-flex;border:1px solid var(--rule);border-radius:3px;
+    overflow:hidden;margin-bottom:14px}
+  .qtdAbas button{background:var(--panel);border:0;border-right:1px solid var(--rule);
+    padding:9px 20px;color:var(--mute);font-family:"Press Start 2P",monospace;font-size:11px;cursor:pointer}
+  .qtdAbas button:last-child{border-right:0}
+  .qtdAbas button[aria-pressed="true"]{background:var(--amber);color:#1E1030}
+  .precoLinha{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:14px}
+  .precoLinha span{font-size:12px;color:var(--mute)}
+  .precoLinha b{font-family:"Press Start 2P",monospace;font-size:20px;color:var(--amber)}
+  .precoLinha em{font-style:normal;font-size:11px;color:var(--mute)}
+  .lojaComprar{width:min(280px,100%);padding:13px}
+  .lojaGarantia{margin:10px 0 0;font-size:11px;color:var(--gain);min-height:14px}
+  .chancesBloco{margin-top:16px;border:1px solid var(--rule);border-radius:3px;background:var(--panel)}
+  .chancesBloco summary{padding:11px 14px;font-size:12px;color:var(--chalk);cursor:pointer}
+  .chancesBloco .tabela{border:0;border-top:1px solid var(--rule2)}
+  @media (prefers-reduced-motion:reduce){ .capsulaBrilho{animation:none} }
 </style>
 </head>
 <body>
@@ -550,10 +589,31 @@
 
   <!-- --------------------------------------------------------------- loja -->
   <section class="tela" id="loja">
-    <div class="linhaMina"><h2 class="tituloAba">Shop</h2><span class="contaAba">packs of 1, 5 and 10</span></div>
-    <div id="pacotes"></div>
-    <div class="tabela" id="chances"></div>
-    <p class="aviso-linha">Rarity and skills are rolled when the pack opens. Heroes get zero to two skills.</p>
+    <div class="linhaMina"><h2 class="tituloAba">Shop</h2>
+      <span class="contaAba"><b id="lojaMintados">—</b> minted so far</span></div>
+
+    <div class="capsulaCaixa">
+      <div class="capsula">
+        <div class="capsulaVidro">
+          <div class="capsulaBrilho"></div>
+          <canvas id="capsulaArte" width="128" height="144"></canvas>
+          <div class="capsulaInterro">?</div>
+        </div>
+        <div class="capsulaBase"></div>
+      </div>
+      <p class="capsulaTexto">Sealed until you open it</p>
+
+      <div class="qtdAbas" id="qtdAbas"></div>
+      <div class="precoLinha"><span>Total</span><b id="lojaPreco">10</b><em>$BSTOCK</em></div>
+      <button class="forte lojaComprar" id="lojaComprar">Buy hero</button>
+      <p class="lojaGarantia" id="lojaGarantia"></p>
+    </div>
+
+    <details class="chancesBloco">
+      <summary>Drop rates</summary>
+      <div class="tabela" id="chances"></div>
+      <p class="aviso-linha">Rarity and skills are rolled inside the contract when the pack opens. Heroes get zero to two skills.</p>
+    </details>
   </section>
 
   <!-- ---------------------------------------------------------- inventário -->
@@ -2145,21 +2205,57 @@ function tirarDaMina(h){
 
 /* ---------------------------------------------------------------- loja */
 
+/* A loja e uma vitrine, nao uma lista de precos. Um produto so, o heroi, e a
+   quantidade e uma escolha. O que esta na capsula NAO e o heroi que vai sair:
+   e uma silhueta, para a revelacao acontecer na carta e nao aqui. */
+let lojaQtd=1;
+
+function silhuetaDaCapsula(){
+  const cv=document.getElementById('capsulaArte');
+  if(!cv) return;
+  const g=cv.getContext('2d');
+  g.clearRect(0,0,cv.width,cv.height);
+  const todos=ELENCO.flat();
+  const p=todos[Math.floor(Date.now()/2600)%todos.length];
+  const im=FOLHAS_RETRATO[p.s];
+  if(!im || !im.complete || !im.naturalWidth) return;
+  const L=im.naturalWidth/4, A=im.naturalHeight;
+  const q=Math.floor(Date.now()/170)%4;
+  g.imageSmoothingEnabled=false;
+  g.drawImage(im, q*L,0,L,A, 0,0, cv.width, cv.height);
+  g.globalCompositeOperation='source-in';     // o desenho vira sombra
+  g.fillStyle='rgba(12,6,24,0.93)';
+  g.fillRect(0,0,cv.width,cv.height);
+  g.globalCompositeOperation='source-over';
+}
+
 function montarLoja(){
-  const alvo=document.getElementById('pacotes');
-  alvo.innerHTML='';
-  for(const q of [1,5,10]){
-    const el=document.createElement('div'); el.className='pacote';
-    el.style.marginBottom='10px';
-    el.innerHTML=`<div><div class="q">${q} hero${q>1?'es':''}</div>`+
-      `<div class="d">${PRECOS[q]} tokens${q>1?` · ${(PRECOS[q]/q).toFixed(1)} each`:''}</div></div>`+
-      `<button data-q="${q}">Buy</button>`;
-    el.querySelector('button').onclick=()=>comprar(q);
-    alvo.appendChild(el);
-  }
+  const abas=document.getElementById('qtdAbas');
+  abas.innerHTML=[1,5,10].map(q=>
+    `<button data-q="${q}" aria-pressed="${q===lojaQtd}">x${q}</button>`).join('');
+  for(const b of abas.querySelectorAll('button'))
+    b.onclick=()=>{ lojaQtd=+b.dataset.q; montarLoja(); };
+
+  document.getElementById('lojaPreco').textContent=PRECOS[lojaQtd];
+  document.getElementById('lojaComprar').textContent =
+    lojaQtd===1 ? 'Buy hero' : `Buy ${lojaQtd} heroes`;
+  document.getElementById('lojaGarantia').textContent =
+    lojaQtd===10 ? 'A pack of 10 guarantees at least one above Common.'
+    : (lojaQtd===5 ? `${(PRECOS[5]/5).toFixed(1)} $BSTOCK each` : '');
+  document.getElementById('lojaComprar').onclick=()=>comprar(lojaQtd);
+
   const t=document.getElementById('chances');
   t.innerHTML=RARIDADES.map(r=>
     `<div><span>${r.nome}</span><span style="color:${r.cor}">${(r.chance/100).toFixed(2)}%</span></div>`).join('');
+}
+
+// Quantos herois ja existem, lido do contrato. Prova social de verdade.
+async function buscarMintados(){
+  try{
+    const r=await rpc('eth_call',[{to:HEROI_ADDR, data:'0x18160ddd'},'latest']);
+    const el=document.getElementById('lojaMintados');
+    if(el) el.textContent=Number(BigInt(r)).toLocaleString();
+  }catch(e){}
 }
 
 // Com carteira conectada, a compra vira transacao de $BSTOCK. Sem carteira, o
@@ -2520,6 +2616,7 @@ function pintar(){
   // cotacao da acao que esta mina paga
   ajustarCasca();
   if(telaAtual==='mina') montarSeletorMinas();
+  if(telaAtual==='loja') silhuetaDaCapsula();
   const sig=assinatura();
   if(telaAtual==='inventario' && sig!==assinaturaLista)
     comRolagem(document.getElementById('invLista'), pintarInventario);
@@ -2930,6 +3027,7 @@ abrirPorEndereco();
 // abaixo no arquivo. Chamada no meio, quebrava com 'cannot access before
 // initialization' — e o catch vazio transformava isso em silencio.
 buscarCofre().then(pintar).catch(()=>pintar());
+buscarMintados();
 montarLoja(); pintar();
 requestAnimationFrame(loop);
 </script>
