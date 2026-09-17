@@ -551,6 +551,12 @@
 
   /* a moeda e o simbolo do $BSTOCK: fica colada no saldo */
   .carteira canvas{width:22px;height:22px;image-rendering:pixelated;display:block;flex:none}
+
+  /* icone da skill dentro do chip, no squad, no heroes e na carta do mint */
+  .chip{display:inline-flex;align-items:center;gap:5px}
+  .icoSkill{width:13px;height:13px;image-rendering:pixelated;flex:none;display:block}
+  .cartaSkills{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:6px}
+  .cartaSkills .chip{font-size:11px}
 </style>
 </head>
 <body>
@@ -1471,21 +1477,6 @@ function desenharHerois(){
     // Barra de ENERGIA de verdade: esvazia conforme o heroi gasta bomba.
     const f=Math.max(0, Math.min(1, h.energia/h.st.energiaMax));
     const L=14, bx=h.px+16-L/2, by=h.py+33;
-    // icones das skills acima do heroi, um ao lado do outro
-    if(h.skills && h.skills.length){
-      // acima da CABECA, nao em cima do sprite: o heroi e desenhado bem mais
-      // alto que a celula, entao py-2 ficava atras dele
-      const N=h.skills.length, LI=11, GAP=2;
-      let ix=Math.round(h.px+16-(N*LI+(N-1)*GAP)/2);
-      const iy=Math.round(h.py-16);
-      for(const k of h.skills){
-        const im=SKILL_ICONE[k];
-        cx.fillStyle='rgba(6,3,14,.72)'; cx.fillRect(ix-1,iy-1,LI+2,LI+2);
-        if(im && im.complete && im.naturalWidth) cx.drawImage(im, ix,iy, LI,LI);
-        ix += LI+GAP;
-      }
-    }
-
     cx.fillStyle='rgba(6,3,14,.75)'; cx.fillRect(bx-1,by-1,L+2,4);
     cx.fillStyle='#241539';          cx.fillRect(bx,by,L,2);
     cx.fillStyle = f>0.5 ? '#3FBF6F' : f>0.2 ? '#FFC93C' : '#E5484D';
@@ -2438,7 +2429,12 @@ function mostrarCarta(){
   document.getElementById('cartaSt').innerHTML=
     `power ${h.st.power} · stamina ${h.st.stamina} · speed ${h.st.speed}<br>`+
     `${h.st.bombas} bomb${h.st.bombas>1?'s':''} · range ${h.st.alcance}<br>`+
-    (h.skills.length? h.skills.map(s=>SKILLS[s]).join(' · ') : 'no skill');
+    (h.skills.length
+      ? '<span class="cartaSkills">'+h.skills.map(s=>
+          `<span class="chip" title="${SKILL_DESC[s]}">`+
+          `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt="">`+
+          `${SKILLS[s]}</span>`).join('')+'</span>'
+      : 'no skill');
   document.getElementById('cartaConta').textContent=`${filaPos+1} of ${fila.length}`;
   document.getElementById('cartaProx').textContent = filaPos===fila.length-1 ? 'Done' : 'Next';
 }
@@ -2461,7 +2457,9 @@ function fichaHeroi(h, botao){
             : (h.estado==='dormir'?'sleeping':((h.estado==='bombardear'||h.estado==='plantando')?'planting bomb'
             :(h.estado==='fugir'?'clear of blast':'mining')));
   const chips=h.skills.length? h.skills.map(s=>`<span class="chip" data-skill="${s}" tabindex="0"`+
-      ` title="${SKILL_DESC[s]}">${SKILLS[s]}</span>`).join('')
+      ` title="${SKILL_DESC[s]}">`+
+      `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt="">`+
+      `${SKILLS[s]}</span>`).join('')
                              : '<span class="chip off">no skill</span>';
   return `<span class="faixa" style="background:${h.r.cor}"></span>`+
     `<canvas class="andando" width="32" height="36" data-id="${h.id}"></canvas>`+
@@ -2772,46 +2770,6 @@ function pintar(){
 const dica=document.createElement('div');
 dica.className='dica'; dica.setAttribute('role','tooltip');
 document.body.appendChild(dica);
-
-/* Balao das skills NO MAPA: descobre qual heroi esta sob o ponteiro e, se o
-   ponteiro estiver na faixa dos icones, diz qual skill e. */
-function skillSobOPonteiro(ev){
-  const r=cv.getBoundingClientRect();
-  const ex=cv.width/r.width, ey=cv.height/r.height;
-  const mx=(ev.clientX-r.left)*ex, my=(ev.clientY-r.top)*ey;
-  for(const h of ativos){
-    if(!h.skills || !h.skills.length) continue;
-    const N=h.skills.length, LI=11, GAP=2;
-    const x0=h.px+16-(N*LI+(N-1)*GAP)/2, y0=h.py-17;
-    if(my<y0 || my>y0+LI+2) continue;
-    const i=Math.floor((mx-x0)/(LI+GAP));
-    if(i>=0 && i<N && mx>=x0) return h.skills[i];
-  }
-  return null;
-}
-
-let skillNoMapa=null;
-function olharMapa(ev){
-  const k=skillSobOPonteiro(ev);
-  if(k===skillNoMapa) return;
-  skillNoMapa=k;
-  if(!k){ dica.classList.remove('on'); return; }
-  dica.innerHTML=`<b>${SKILLS[k]}</b>${SKILL_DESC[k]}`;
-  dica.classList.add('on');
-  const d=dica.getBoundingClientRect();
-  let x=Math.max(8, Math.min(ev.clientX-d.width/2, innerWidth-d.width-8));
-  let y=ev.clientY-d.height-14;
-  if(y<8) y=ev.clientY+16;
-  dica.style.left=Math.round(x)+'px';
-  dica.style.top=Math.round(y)+'px';
-}
-addEventListener('DOMContentLoaded',()=>{
-  const c=document.getElementById('tela');
-  if(!c) return;
-  c.addEventListener('mousemove', olharMapa);
-  c.addEventListener('mouseleave', ()=>{ skillNoMapa=null; dica.classList.remove('on'); });
-  c.addEventListener('click', olharMapa);
-});
 
 function textoDaMina(id){
   const def=MINAS_DEF.find(d=>d.id===id);
