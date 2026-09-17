@@ -574,10 +574,15 @@
   .minaGrade{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
   @media (min-width:1100px){
     body:has(#mina.on) .app{max-width:1056px}    /* 800 + 244 da lista */
-    .minaGrade{grid-template-columns:minmax(0,1fr) 232px}
+    /* A lista estica ate a altura do mapa; o MAPA nao estica, senao a
+       proporcao 19x13 se perde e ele fica espremido na vertical. */
+    .minaGrade{grid-template-columns:minmax(0,1fr) 232px;align-items:start}
+    .minaGrade .listaAtivos{align-self:stretch}
   }
+  /* A lista acompanha a altura do mapa: as duas colunas esticam junto, entao
+     ela nao sobra embaixo nem passa do mapa. */
   .listaAtivos{border:1px solid var(--rule);border-radius:3px;background:var(--panel);
-    max-height:74vh;overflow-y:auto;min-width:0}
+    overflow-y:auto;min-width:0}
   .laTopo{padding:9px 12px;font-size:12px;color:var(--mute);
     border-bottom:1px solid var(--rule2);position:sticky;top:0;background:var(--panel);z-index:2}
   .laTopo b{color:var(--gain);font-family:"Press Start 2P",monospace;font-size:11px}
@@ -2662,12 +2667,26 @@ const ESTADO_ROTULO={dormir:'sleeping', fugir:'clear of blast',
   plantando:'planting', bombardear:'planting', andar:'walking',
   procurar:'looking', esperar:'waiting'};
 
+/* A altura do mapa vem da proporcao 19x13 e da largura disponivel; nao ha
+   expressao em CSS que a lista possa copiar. Entao ela e medida e aplicada.
+   Com align-items:stretch o mapa esticava junto e perdia a proporcao. */
+function igualarAlturaLista(){
+  const alvo=document.getElementById('listaAtivos');
+  const palco=document.querySelector('.minaGrade .palco');
+  if(!alvo || !palco) return;
+  const lado = getComputedStyle(document.querySelector('.minaGrade'))
+                 .gridTemplateColumns.split(' ').length > 1;
+  alvo.style.height = lado ? Math.round(palco.getBoundingClientRect().height)+'px' : '';
+}
+addEventListener('resize', igualarAlturaLista);
+
 function pintarListaAtivos(vista){
   const alvo=document.getElementById('listaAtivos');
   if(!alvo) return;
   const lista=vista.ativos;
   if(!lista.length){
     alvo.innerHTML='<p class="laVazio">No heroes down here yet. Send them from the Squad tab.</p>';
+    igualarAlturaLista();
     return;
   }
   const acordados=lista.filter(x=>x.estado!=='dormir').length;
@@ -2692,6 +2711,7 @@ function pintarListaAtivos(vista){
         `<span class="laSkills">${icones}</span>`+
       `</div>`;
     }).join('');
+  igualarAlturaLista();
 }
 
 function pintarClaim(){
