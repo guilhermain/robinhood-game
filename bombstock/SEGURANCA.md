@@ -136,3 +136,52 @@ então o dano é só de exibição.
   drenado no mesmo dia.
 - Lançar sem multisig. Uma chave, um ponto de falha.
 - Confiar em `msg.sender == tx.origin` como solução do re-roll. É paliativo.
+
+
+---
+
+# Segunda rodada — sessão e concorrência (17/09, tarde)
+
+A primeira rodada olhou contratos e a contagem no cliente. **Não olhou sessão,
+concorrência nem estado duplicado.** O G perguntou "por que consigo abrir duas
+janelas?" e a pergunta expôs a lacuna. Tudo abaixo foi executado, não lido.
+
+## CRÍTICO — encontrado e corrigido
+
+### 5. Qualquer um agia em nome de qualquer carteira
+**Testado:** `POST /mina/entrar` com a carteira de outra pessoa, **sem assinar
+nada**, respondeu 200 e moveu três heróis dela para outra mina.
+
+**Causa:** o login verificava a assinatura e depois esquecia. Nada ligava as
+chamadas seguintes à prova. Não era roubo de dinheiro, mas era agir na conta
+alheia: tirar heróis da mina, mandar para outra ação.
+
+**Correção:** o login emite um token de 24h, guardado como hash no banco; toda
+ação exige `Authorization: Bearer`. Testado: sem token 401, token inventado
+401, token de A usado em B 401, token após logout 401. Confirmado em produção.
+
+## MÉDIO — encontrado, ainda aberto
+
+### 6. Duas abas no modo local se sobrescrevem
+**Testado:** duas abas sem carteira, cada uma minerou; a última a salvar venceu
+e o progresso da outra sumiu ao recarregar. **Perde dinheiro, não duplica** — é o
+oposto de um exploit, mas o jogador vai achar que foi roubado.
+
+Com sessão no servidor não acontece: as duas abas leem o mesmo número e nenhuma
+cria nada (testado: 30 baús no console em cada aba, saldo inalterado).
+
+Correção pendente: aviso de "aberto em outra aba" via `storage` event, ou
+travar o modo local a uma aba.
+
+## OK — testado e passou
+
+- Save local não vaza para outra carteira ao conectar.
+- Login com assinatura lixo: 401.
+- Ler o estado de qualquer carteira é possível — e é intencional: o estado é
+  público como um saldo na chain. Ler não é agir.
+- Sessão persistida por navegador com validade: recarregar não exige assinar de
+  novo; carteira diferente exige.
+
+## O que esta rodada me ensinou
+Auditar só o que dá dinheiro deixa passar o que dá **controle**. Mover os
+heróis de alguém não rouba um centavo e ainda assim é invasão de conta.
