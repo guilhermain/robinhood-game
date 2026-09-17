@@ -1268,6 +1268,12 @@ function desenharCortina(){
   }
 }
 
+// hex para rgba, para a aura poder desaparecer nas bordas
+function corAlfa(hex,a){
+  const n=parseInt(hex.slice(1),16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+
 function desenharHerois(){
   for(const h of ativos){
     const dormindo = h.estado==='dormir';
@@ -1276,9 +1282,25 @@ function desenharHerois(){
       ? Math.min(PLANTA_QUADROS-1, Math.floor(h.plantaMs/PLANTA_MS*PLANTA_QUADROS))
       : (dormindo ? 0 : (Math.floor(h.anim)%4));
     const linha  = dormindo ? DIR.down : h.dir;
+    // Aura da raridade: um halo suave sob o heroi, no lugar da barrinha fixa
+    // que antes so marcava a cor e parecia energia cheia.
+    const aura=cx.createRadialGradient(h.px+16,h.py+20,2, h.px+16,h.py+20,17);
+    aura.addColorStop(0, corAlfa(h.r.cor,0.34));
+    aura.addColorStop(0.55, corAlfa(h.r.cor,0.15));
+    aura.addColorStop(1, corAlfa(h.r.cor,0));
+    cx.fillStyle=aura;
+    cx.beginPath(); cx.ellipse(h.px+16,h.py+20,17,15,0,0,7); cx.fill();
+
     cx.fillStyle='rgba(0,0,0,.28)';
     cx.beginPath(); cx.ellipse(h.px+16,h.py+30,9,3,0,0,7); cx.fill();
-    cx.fillStyle=h.r.cor; cx.fillRect(h.px+10,h.py+33,12,2);
+
+    // Barra de ENERGIA de verdade: esvazia conforme o heroi gasta bomba.
+    const f=Math.max(0, Math.min(1, h.energia/h.st.energiaMax));
+    const L=14, bx=h.px+16-L/2, by=h.py+33;
+    cx.fillStyle='rgba(6,3,14,.75)'; cx.fillRect(bx-1,by-1,L+2,4);
+    cx.fillStyle='#241539';          cx.fillRect(bx,by,L,2);
+    cx.fillStyle = f>0.5 ? '#3FBF6F' : f>0.2 ? '#FFC93C' : '#E5484D';
+    if(f>0) cx.fillRect(bx,by,Math.max(1,Math.round(L*f)),2);
     const folha = plantando ? skinBombaDe(h) : skinDe(h);
     if(folha && folha.complete) cx.drawImage(folha, quadro*SW, linha*SH, SW, SH, h.px, h.py-5, SW, SH);
     if(dormindo){
