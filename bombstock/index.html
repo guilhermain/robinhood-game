@@ -460,6 +460,16 @@
   .rarity-symbol--super-rare{clip-path:polygon(50% 0,72% 30%,50% 50%,72% 70%,50% 100%,28% 70%,50% 50%,28% 30%)}
   .rarity-symbol--super-legendary{clip-path:polygon(50% 0,62% 22%,78% 10%,74% 34%,100% 30%,84% 50%,100% 70%,74% 66%,78% 90%,62% 78%,50% 100%,38% 78%,22% 90%,26% 66%,0 70%,16% 50%,0 30%,26% 34%,22% 10%,38% 22%)}
   .hero-sprite{image-rendering:auto}
+
+  /* barras de rolagem no tema do site */
+  *{scrollbar-color:#4A3660 #1A0E2A}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#1A0E2A}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(#4A3660,#35244D);
+    border:2px solid #1A0E2A;border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:linear-gradient(#63497F,#4A3660)}
+  ::-webkit-scrollbar-thumb:active{background:var(--color-action)}
+  html{scrollbar-color:#4A3660 #1A0E2A}
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->

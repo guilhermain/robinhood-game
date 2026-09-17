@@ -118,7 +118,7 @@
   .filtros button{background:var(--panel);border:1px solid var(--rule);color:var(--mute);
     border-radius:3px;padding:0 13px;min-height:40px;font-family:inherit;font-size:12px;cursor:pointer}
   .filtros button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#3A2757}
-  .lista{border:1px solid var(--rule);background:#171310;overflow-y:auto}
+  .lista{border:1px solid var(--rule);background:#221439;overflow-y:auto}
   .lista.rolagem{max-height:52vh}
   #minasLista{max-height:68vh}
   .vazio{padding:22px 14px;color:var(--mute);font-size:13px;text-align:center;line-height:1.6}
@@ -425,6 +425,27 @@
   .tesouroFalha button{background:var(--panel);border:1px solid var(--rule);color:var(--chalk);
     border-radius:3px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer}
   .tesouroFalha button:disabled{opacity:.5}
+
+  /* Barras de rolagem no tema. Sem isto o navegador desenha a barra clara
+     padrao, que sobre o violeta fica um risco branco. Vale para a pagina,
+     para as listas e para qualquer coisa rolavel. */
+  /* sem scrollbar-width:thin: ele anula a largura definida abaixo no Chromium */
+  *{scrollbar-color:var(--rule) #190E28}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:#190E28;border-radius:6px}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(#4A3660,#3A2757);
+    border:2px solid #190E28;border-radius:6px}
+  ::-webkit-scrollbar-thumb:hover{background:linear-gradient(#63497F,#4A3660)}
+  ::-webkit-scrollbar-thumb:active{background:var(--amber)}
+  ::-webkit-scrollbar-corner{background:#190E28}
+  html{scrollbar-color:var(--rule) #190E28}
+  /* a lista rolavel tem fundo proprio, entao o trilho acompanha ele */
+  .lista::-webkit-scrollbar-track{background:#1B1030}
+  .lista::-webkit-scrollbar-thumb{border-color:#1B1030}
+
+  /* A causa do branco: sem color-scheme o navegador assume tema claro e
+     desenha barra, campo e menu nativos em cinza claro, por cima de tudo. */
+  :root{color-scheme:dark}
 </style>
 </head>
 <body>
