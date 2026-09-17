@@ -2919,24 +2919,31 @@ function medirEspacoLivre(){
   if(telaAtual!=='mina') return;
   const palco=document.querySelector('.minaGrade .palco');
   const lista=document.getElementById('listaAtivos');
-  if(!palco) return;
+  const app=document.querySelector('.app');
+  if(!palco || !app) return;
   const raiz=document.documentElement;
-  // A lista copia a altura do mapa, entao medir com ela presa fazia a correcao
-  // descontar duas vezes e o mapa despencar. Solta, mede, devolve.
-  // So solta a lista quando ela esta AO LADO. Embaixo do mapa ela ocupa altura
-  // de verdade, e zerar para medir subestimava o espaco e deixava rolagem.
   const lado = getComputedStyle(document.querySelector('.minaGrade'))
                  .gridTemplateColumns.split(' ').length > 1;
-  const guardada = lista ? lista.style.height : '';
+
+  /* Duas armadilhas de medicao, as duas ja tropecadas:
+     1. scrollHeight da pagina e limitado pela janela quando o conteudo e menor,
+        entao medir por ele virava ponto fixo e o mapa so encolhia;
+     2. .app tem min-height de uma tela, o que esconde a altura real.
+     Solucao: encolher o mapa, soltar o min-height, medir o conteudo de verdade
+     e so entao calcular. Tudo volta ao normal no fim. */
+  const guardadaLista = lista ? lista.style.height : '';
+  const guardadaMin   = app.style.minHeight;
   if(lista && lado) lista.style.height='0px';
-  const fixo = raiz.scrollHeight - palco.getBoundingClientRect().height;
-    // piso baixo de proposito: em telas curtas (1024x600) o mapa precisa encolher
-  // bastante para caber junto com a lista, e um mapa pequeno e melhor que rolagem
-    // Piso de 260: abaixo disso o mapa fica inutilizavel. Em telas muito baixas
-  // (1024x600 com a lista embaixo) vale mais rolar um pouco do que jogar num
-  // mapa de 170 pixels.
-  raiz.style.setProperty('--livre', Math.max(260, innerHeight - fixo)+'px');
-  if(lista && lado) lista.style.height=guardada;
+  app.style.minHeight='0';
+  raiz.style.setProperty('--livre','120px');
+  void palco.offsetHeight;
+
+  const fixo = app.getBoundingClientRect().height - palco.getBoundingClientRect().height;
+  const livre = Math.max(260, innerHeight - fixo - 16);   // 16 = respiro do rodape
+
+  raiz.style.setProperty('--livre', livre+'px');
+  app.style.minHeight=guardadaMin;
+  if(lista && lado) lista.style.height=guardadaLista;
 }
 addEventListener('resize', ()=>{ medirEspacoLivre(); igualarAlturaLista(); });
 
