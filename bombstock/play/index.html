@@ -600,10 +600,6 @@
 
   /* a lista mostra skills e energia; o valor em dolar saiu daqui */
   .laItem{grid-template-columns:32px minmax(0,1fr) auto}
-  .laEnergia{display:flex;align-items:center;gap:6px}
-  .laEnergia .laBarra{flex:1;min-width:0}
-  .laEnergia em{font-style:normal;font-size:9px;color:var(--mute);
-    font-variant-numeric:tabular-nums;white-space:nowrap}
   .laSkills{display:flex;flex-direction:column;gap:3px;align-items:center}
   .chipSkill.mini{width:22px;height:22px}
   .chipSkill.mini .icoSkill{width:15px;height:15px}
@@ -2668,10 +2664,7 @@ function pintarListaAtivos(vista){
         `<div class="laMeio">`+
           `<span class="laNome" style="color:${x.r.cor}">${x.p.n}</span>`+
           `<span class="laEstado">${est}</span>`+
-          `<span class="laEnergia">`+
-            `<span class="laBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></span>`+
-            `<em>${Math.round(x.energia)}/${x.st.energiaMax}</em>`+
-          `</span>`+
+          `<span class="laBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></span>`+
         `</div>`+
         `<span class="laSkills">${icones}</span>`+
       `</div>`;
