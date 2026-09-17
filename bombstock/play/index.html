@@ -2701,8 +2701,10 @@ function pintar(){
   // o painel fala em dinheiro; o placar interno nao aparece
   const usdMina=vista.achados;   // ja esta em dolar
   document.getElementById('bPontos').textContent = usdMina===null?'$\u2014':emDolar(usdMina);
+  // A taxa precisa de amostra: nos primeiros minutos ela oscila demais, porque
+  // um bau que abre cedo divide por um tempo minusculo e vira um numero enorme.
   document.getElementById('bTaxa').textContent =
-    (usdMina!==null && horas>0.02) ? emDolar(usdMina/horas) : '$\u2014';
+    (usdMina!==null && horas>=0.25) ? emDolar(usdMina/horas) : 'measuring\u2026';
   document.getElementById('bLimpas').textContent = vista.limpas||0;
 
   // carteira
@@ -2907,7 +2909,11 @@ addEventListener('resize',()=>{ clearTimeout(redimTimer); redimTimer=setTimeout(
    O mapa nao e salvo: ele e sorteado de novo ao abrir. O que persiste sao os
    herois, as minas, as moedas e o tempo. */
 const SAVE_CHAVE='bombstock:v1';
-const SAVE_VERSAO=1;
+/* Versao 2: a unidade mudou de PONTO (contagem de bau) para DOLAR. Saves da
+   versao 1 tem numeros em ponto; lidos como dolar, viravam centenas de dolares
+   farmados. Save antigo e descartado em vez de convertido — a conversao exigiria
+   saber o preco da acao no momento de cada bau, que ninguem guardou. */
+const SAVE_VERSAO=2;
 let salvarPendente=false;
 
 function estadoParaSalvar(){
@@ -2949,7 +2955,12 @@ function apagarSave(){
 function carregar(){
   let d;
   try{ d=JSON.parse(localStorage.getItem(SAVE_CHAVE)||'null'); }catch(e){ return false; }
-  if(!d || d.v!==SAVE_VERSAO) return false;
+  if(!d) return false;
+  if(d.v!==SAVE_VERSAO){
+    // save de versao antiga: comeca limpo em vez de mostrar numero errado
+    try{ localStorage.removeItem(SAVE_CHAVE); }catch(e){}
+    return false;
+  }
   try{
     saldo=d.saldo; bausCofre=d.bausCofre; bausTotais=d.bausTotais;
     sacado=d.sacado; minasLimpas=d.minasLimpas||0; tempoMs=d.tempoMs||0;
