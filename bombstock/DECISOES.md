@@ -159,6 +159,84 @@ por conveniência de tela ou de conversa.
 mostra que falta — não um número plausível. Parâmetro de economia nunca se
 escolhe por conveniência.
 
+
+## Economia em dólar (17/09) — substitui a tabela de vazão antiga
+
+**As minas são idênticas**, então o mesmo esforço vale o mesmo dinheiro em
+qualquer uma. A única diferença é qual ação você recebe. O baú paga um valor em
+**dólar**, e o dólar vira quantidade da ação pela cotação no saque.
+
+Antes o baú pagava "pontos" e o ponto era multiplicado pelo preço da ação: isso
+fazia a mina da GME render 30x menos que a da META pelo mesmo trabalho. Era
+distorção, não desenho.
+
+### Erro de método que produziu números errados
+
+As medições antigas (44 shares/dia, payback de 105 dias) foram feitas em janela
+de **8 horas**. Nesse prazo o que se mede é o **estoque inicial de energia**
+sendo gasto, não o regime estável. Um Epic rende 83/h na primeira hora e 6,8/h
+em 48 horas — doze vezes menos.
+
+**Regra: medir vazão em 200h ou mais.** Janela curta num sistema com estoque
+inicial mede o estoque.
+
+No regime estável todos fazem **30 bombas/hora** (a recarga manda). O que muda
+entre raridades é só o dano por bomba.
+
+### Os números, medidos no servidor em 240h
+
+| raridade | US$/dia/herói | paga o herói em |
+|---|---|---|
+| Common | 0,191 | 52,3 dias |
+| Rare | 0,669 | 14,9 dias |
+| Super Rare | 1,306 | 7,7 dias |
+| Epic | 2,044 | 4,9 dias |
+| Legendary | 2,994 | 3,3 dias |
+| S. Legendary | 4,202 | 2,4 dias |
+| **herói médio** | **0,334** | **30,0 dias** |
+
+### Decisões do G
+
+- **Payback de 30 dias**, calibrado pelo herói MÉDIO — como o Bombcrypto fazia,
+  onde 3 comuns devolviam 30 BCOIN em ~32 dias. O preço do herói é fixo e a
+  raridade é o que se está comprando.
+- **Mínimo de saque US$ 10**, em dólar e não em contagem de baús. Em baús, dez
+  baús de META valiam 30x dez de GME e os dois liberavam igual.
+- **Preço linear**: 10 $BSTOCK por herói em qualquer pacote. O desconto de 9 e
+  10% que existia era invenção do Claude.
+- **Sem garantia de raridade** no pacote de 10. A garantia que existia era
+  invenção do Claude e distorcia a curva publicada. Provado na chain com 200
+  heróis: 3 de 20 pacotes saíram só com Common, exatamente o que a matemática
+  prevê sem garantia.
+
+### O valor do baú NÃO foi escolhido
+
+`usd_bau_marrom = 0,009085` sai de três decisões do G mais uma medição:
+preço do herói US$10, payback 30 dias, e 24,9 baús/dia do herói médio medidos no
+servidor. O baú roxo vale 2,31x, proporção do Bombcrypto.
+
+Primeiro cálculo usou 17,8 baús/dia da fórmula teórica e errava **40% para
+menos** — a fórmula ignorava que o herói quebra o mesmo baú em várias bombadas
+e que o mapa se repovoa.
+
+### O que isso exige do cofre
+
+O jogo não cria valor: distribui o que o cofre comprou. Payback de 30 dias
+significa devolver US$0,333 por herói por dia. Com taxa de 3,7% e 60% indo para
+o cofre, cada US$1 de volume gera US$0,022.
+
+| heróis ativos | volume diário necessário |
+|---|---|
+| 1.000 | US$ 15 mil/dia |
+| 10.000 | US$ 150 mil/dia |
+| 100.000 | US$ 1,5 milhão/dia |
+
+Trinta dias exige **3x mais volume** que noventa, permanentemente. O Bombcrypto
+prometia payback rápido e financiava com emissão de token — pagava mais do que
+arrecadava, com 10% de inflação ao mês. **Nosso cofre não tem de onde imprimir.**
+O número está na tabela `config` do banco justamente para ser calibrado com
+volume real, sem deploy.
+
 ## Vocabulário
 
 A unidade minerada chama-se **share** na interface, não "coin". Ela é fração da

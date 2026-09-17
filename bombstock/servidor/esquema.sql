@@ -24,12 +24,14 @@ insert into config (chave, valor, nota) values
   ('densidade',        0.40,  'fracao de celulas livres que viram bloco'),
   ('limpo_bps',        0.10,  'refaz o mapa abaixo desta fracao de blocos'),
   ('regen_ms',         120000,'ms por ponto de energia recuperado'),
-  ('min_saque',        10,    'shares minimas para sacar'),
+  ('min_saque_usd',    10,    'US$ minimo para sacar; decisao do G'),
+  ('usd_bau_marrom', 0.009085, 'US$ por bau marrom; payback 30d do heroi MEDIO, vazao medida em 240h'),
+  ('payback_dias',     30,    'meta de payback do heroi, decisao do G'),
+  ('preco_heroi_usd',  10,    'preco do heroi em US$'),
   ('taxa_saque',       0.03,  'taxa cobrada no saque'),
   ('vagas',            10,    'herois por mina'),
   ('preco_pacote1',    10,    'BSTOCK por heroi'),
-  ('paga_madeira',     1.00,  'shares pelo bau facil'),
-  ('paga_pedra',       2.31,  'shares pelo bau dificil'),
+
   ('epoca_horas',      24,    'duracao da epoca')
 on conflict (chave) do nothing;
 
@@ -40,7 +42,7 @@ create table if not exists mina (
   tema          text not null,                 -- verde, NVDA, GME...
   grade         jsonb,                         -- blocos e vidas
   limpas        int  not null default 0,
-  achados       numeric not null default 0,
+  achados_usd   numeric not null default 0,
   atualizada_em timestamptz not null default now(),
   unique (carteira, tema)
 );
@@ -63,7 +65,7 @@ create table if not exists heroi (
   gx          smallint,
   gy          smallint,
   estado      text not null default 'parado',
-  achados     numeric not null default 0,
+  achados_usd numeric not null default 0,
   sincronizado_em timestamptz not null default now()
 );
 create index if not exists heroi_por_carteira on heroi (carteira);
@@ -71,11 +73,13 @@ create index if not exists heroi_por_mina on heroi (mina_id);
 
 -- Quanto cada carteira minerou de cada acao, por epoca. E isto que vira a raiz
 -- de Merkle no fechamento.
+-- Guarda DOLAR, nao quantidade de acao. A quantidade so e decidida no saque,
+-- pela cotacao do momento. Guardar quantidade congelaria um preco antigo.
 create table if not exists saldo_epoca (
   epoca     int not null,
   carteira  text not null,
   ticker    text not null,
-  shares    numeric not null default 0,
+  usd       numeric not null default 0,
   primary key (epoca, carteira, ticker)
 );
 

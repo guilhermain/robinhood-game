@@ -2038,11 +2038,16 @@ const cofreAcao={};   // shares acumuladas por acao, definido pela mina
    Valor do bau derivado das decisoes do G, nao inventado:
      heroi custa US$10 (preco do pacote)
      payback de 30 dias
-     heroi medio quebra 17,8 baus/dia no regime estavel (medido em 200h)
-   => US$10/30 dias = US$0,333/dia/heroi => bau marrom = US$0,0127 */
+     heroi medio quebra 24,9 baus/dia — MEDIDO no servidor em 240h, nao a
+     formula teorica de 17,8 que eu tinha usado e errava 40% para menos
+   => US$10/30 dias = US$0,333/dia/heroi => bau marrom = US$0,009085
+
+   Calibrado pelo heroi MEDIO, como o Bombcrypto fazia: o preco do heroi e fixo
+   e a raridade e o que voce esta comprando. Na pratica o Common paga em ~52
+   dias e o S. Legendary em ~2,4. */
 const PAYBACK_DIAS=30;              // decisao do G em 17/09
 const PRECO_HEROI_USD=10;
-const USD_BAU_MARROM=0.0127;        // sai das tres linhas acima
+const USD_BAU_MARROM=0.009085;      // sai das tres linhas acima
 const MIN_SAQUE_USD=10;             // decisao do G: so saca com US$10 juntos
 
 // Valor em dolar do que esta no cofre, somando acao por acao pelo preco lido ao
