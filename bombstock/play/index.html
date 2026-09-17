@@ -2173,8 +2173,23 @@ function subir(h){
 function contratar(resgatado){
   const h=novoHeroi();
   inventario.push(h);
-  if(resgatado){ descer(h); avisar(`Jail cracked, ${h.r.nome} rescued`); }
+  if(!resgatado){ pintar(); return; }
+  descer(h);
+  avisar(`Jail cracked, ${h.r.nome} rescued`);
   pintar();
+  // Mesma cena da compra: a capsula treme, racha e estoura na cor da raridade,
+  // e so entao a carta revela quem saiu. Um resgate pode ser um S. Legendary
+  // de graca; antes isso passava como uma linha de texto que sumia.
+  if(document.getElementById('abrindoOverlay').hidden &&
+     !document.getElementById('pacoteOverlay').classList.contains('on')){
+    fila=[h]; filaPos=0;
+    textoAbertura='Someone was locked in there\u2026'; textoResgate=true;
+    abrirComSuspense().then(()=>{
+      textoAbertura=null;
+      document.getElementById('pacoteOverlay').classList.add('on');
+      mostrarCarta();
+    });
+  }
 }
 
 /* =================================================================== telas */
@@ -2402,6 +2417,8 @@ async function comprar(q){
 /* Abertura com suspense. A capsula treme, a luz cresce e so no estouro a carta
    aparece. A cor do brilho NAO entrega a raridade ate o ultimo instante: ate
    la e ciano, a mesma da vitrine. */
+let textoAbertura=null;   // usado pelo resgate da jaula; null = compra normal
+let textoResgate=false;
 function abrirComSuspense(){
   return new Promise(resolve=>{
     const ov=document.getElementById('abrindoOverlay');
@@ -2413,7 +2430,8 @@ function abrirComSuspense(){
     const g=cv.getContext('2d');
     const melhor=fila.reduce((a,b)=>b.idx>a.idx?b:a, fila[0]);
     ov.hidden=false; flash.classList.remove('on'); cap.className='abCapsula';
-    txt.textContent = fila.length>1 ? `Opening ${fila.length} capsules…` : 'Opening…';
+    txt.textContent = textoAbertura || (fila.length>1
+      ? `Opening ${fila.length} capsules…` : 'Opening…');
 
     const t0=performance.now(), DUR=2400;
     (function passo(t){
@@ -2478,7 +2496,8 @@ function mostrarCarta(){
           ` role="img" aria-label="${SKILLS[s]}: ${SKILL_DESC[s]}">`+
           `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt=""></span>`).join('')+'</span>'
       : 'no skill');
-  document.getElementById('cartaConta').textContent=`${filaPos+1} of ${fila.length}`;
+  document.getElementById('cartaConta').textContent =
+    textoResgate ? 'Rescued from the jail' : `${filaPos+1} of ${fila.length}`;
   document.getElementById('cartaProx').textContent = filaPos===fila.length-1 ? 'Done' : 'Next';
 }
 function proximaCarta(){
@@ -2488,7 +2507,11 @@ function proximaCarta(){
 function pularPacote(){
   cartaHeroi=null;
   document.getElementById('pacoteOverlay').classList.remove('on');
-  fila=[]; ir('inventario');
+  fila=[];
+  // resgate volta para a mina, onde o heroi ja esta trabalhando; compra vai
+  // para o inventario, que e onde o jogador quer ver o que comprou
+  if(textoResgate){ textoResgate=false; ir('mina'); }
+  else ir('inventario');
 }
 
 /* ----------------------------------------------------- inventário e equipe */
