@@ -1,0 +1,154 @@
+{
+  "image": "coin-spin-4x4.png",
+  "imageSize": {
+    "width": 256,
+    "height": 256
+  },
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "origin": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "order": "left-to-right, top-to-bottom",
+  "loop": true,
+  "suggestedFrameRate": 12.5,
+  "frameDurationMs": 80,
+  "frontFrame": 0,
+  "edgeFrame": 4,
+  "nativeCoinHeight": 48,
+  "hdScale": 4,
+  "frames": [
+    {
+      "index": 0,
+      "x": 0,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 1,
+      "x": 64,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 2,
+      "x": 128,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 3,
+      "x": 192,
+      "y": 0,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 4,
+      "x": 0,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 5,
+      "x": 64,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 6,
+      "x": 128,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 7,
+      "x": 192,
+      "y": 64,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 8,
+      "x": 0,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 9,
+      "x": 64,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 10,
+      "x": 128,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 11,
+      "x": 192,
+      "y": 128,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 12,
+      "x": 0,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 13,
+      "x": 64,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 14,
+      "x": 128,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    },
+    {
+      "index": 15,
+      "x": 192,
+      "y": 192,
+      "width": 64,
+      "height": 64,
+      "durationMs": 80
+    }
+  ]
+}
