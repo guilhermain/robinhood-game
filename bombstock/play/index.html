@@ -934,6 +934,23 @@ const DIR={up:0,left:1,down:2,right:3};
 
 const SKILLS={jail:'Jail Breaker',pierce:'Pierce Block',battery:'Save Battery',
   charge:'Fast Charge',bombpass:'Bomb Pass',blockpass:'Block Pass',hunter:'Treasure Hunter'};
+/* Icones das skills, 16x16, desenhados para este jogo. Nao sao copia dos do
+   Bombcrypto: arte de jogo e material protegido. Cada um diz a mesma coisa. */
+const SKILL_ICONE_B64={
+  jail:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgElEQVR42mNgGPKAEZkza/Gm/8RoSov1Y8QpiWwILjYyYMJnU6paF0HX4DTg/0mb/7NvlTH8P2mD11ssOAPH/Ajj/5MM/yG0zf/Zt0g0gIGBgeGz8kKG/yfj/8MMSyM1DFZsvwo1BOIdkgORgYGBgU9EmZHR/AgjyYE4cAlp6AEAlvE2QbZ4p00AAAAASUVORK5CYII=',
+  pierce:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAP0lEQVR42mNgGAW0A7MWb/pPjBgTOYZ/7bCCG8SILsjlSJyZ3/b/Y+CuOMbINCBhgOwFslzAXXGMcTSZUREAAFuAGXadNdnLAAAAAElFTkSuQmCC',
+  battery:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQ0lEQVR42mNgGNTg05u7/z+9ufsfnxomSi1hxGYrPg18IsqMBJ1NihwLLsX2+/NRFB90nMhIkzAYNYBW0UgoMQ0uAABAGyIsI6Z/pAAAAABJRU5ErkJggg==',
+  charge:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQklEQVR42mNgGBLg/0mb/wOn+dObu/8HXvP/kzb/cXmFCZvmz8oLGfhElBkZGBgYyHYFTDPZgThwmimO+8FnCM0BAGLeRkAKhJVaAAAAAElFTkSuQmCC',
+  bombpass:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAWklEQVR42mNgGFLA9MiL/1Q3hJFU00/bSDCaHnnx/7SNBCMDAwMD09AIh68dVv8p1owLMOKS4GGTgGv88usFTnVMhDRj4+M1AJdiXOIURyP1DcAVYPgCkiIAAEbLJ03cPXoYAAAAAElFTkSuQmCC',
+  blockpass:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgUlEQVR42mNgGGjAiE1w1uJN/2HsouQ0hr65s+ByabF+KHqYKHUBE028wMMm8R+Xhi+/XjCaHnnx/7SNBCNOU2ct3vSfh03i/6zFm+AYxoepMT3y4j8DAwMDI4xBKjhtI8FoeuTF/4EJA5gXTttIMJKVDpADkYlc/9MvISE7f3ACAAomP6+wLxHIAAAAAElFTkSuQmCC',
+  hunter:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAiUlEQVR42mNgGBTg05u7/8nVw4gu8f+kDV7DGM2PMOKUJKQZmxomZM63/f8IOh1dDRM5/kcOB7h/eNgk/n8+rEKURl7bOwxffr1gZGBgYGAh1QvogAmfJJcjEwOXI14lDCheQJeEeYnX9g6GRqxeeNmkhNUWdHHxuntwNgspUUayF/ABmBcGHgAATqI6+Km9kAQAAAAASUVORK5CYII='
+};
+const SKILL_ICONE={};
+for(const k in SKILL_ICONE_B64){
+  const im=new Image(); im.src='data:image/png;base64,'+SKILL_ICONE_B64[k];
+  SKILL_ICONE[k]=im;
+}
+
 const SKILL_DESC={
   jail:'+5 damage against jail blocks, the ones that free a hero.',
   pierce:'The blast keeps going through blocks instead of stopping at the first.',
@@ -1454,6 +1471,21 @@ function desenharHerois(){
     // Barra de ENERGIA de verdade: esvazia conforme o heroi gasta bomba.
     const f=Math.max(0, Math.min(1, h.energia/h.st.energiaMax));
     const L=14, bx=h.px+16-L/2, by=h.py+33;
+    // icones das skills acima do heroi, um ao lado do outro
+    if(h.skills && h.skills.length){
+      // acima da CABECA, nao em cima do sprite: o heroi e desenhado bem mais
+      // alto que a celula, entao py-2 ficava atras dele
+      const N=h.skills.length, LI=11, GAP=2;
+      let ix=Math.round(h.px+16-(N*LI+(N-1)*GAP)/2);
+      const iy=Math.round(h.py-16);
+      for(const k of h.skills){
+        const im=SKILL_ICONE[k];
+        cx.fillStyle='rgba(6,3,14,.72)'; cx.fillRect(ix-1,iy-1,LI+2,LI+2);
+        if(im && im.complete && im.naturalWidth) cx.drawImage(im, ix,iy, LI,LI);
+        ix += LI+GAP;
+      }
+    }
+
     cx.fillStyle='rgba(6,3,14,.75)'; cx.fillRect(bx-1,by-1,L+2,4);
     cx.fillStyle='#241539';          cx.fillRect(bx,by,L,2);
     cx.fillStyle = f>0.5 ? '#3FBF6F' : f>0.2 ? '#FFC93C' : '#E5484D';
@@ -2740,6 +2772,47 @@ function pintar(){
 const dica=document.createElement('div');
 dica.className='dica'; dica.setAttribute('role','tooltip');
 document.body.appendChild(dica);
+
+/* Balao das skills NO MAPA: descobre qual heroi esta sob o ponteiro e, se o
+   ponteiro estiver na faixa dos icones, diz qual skill e. */
+function skillSobOPonteiro(ev){
+  const r=cv.getBoundingClientRect();
+  const ex=cv.width/r.width, ey=cv.height/r.height;
+  const mx=(ev.clientX-r.left)*ex, my=(ev.clientY-r.top)*ey;
+  for(const h of ativos){
+    if(!h.skills || !h.skills.length) continue;
+    const N=h.skills.length, LI=11, GAP=2;
+    const x0=h.px+16-(N*LI+(N-1)*GAP)/2, y0=h.py-17;
+    if(my<y0 || my>y0+LI+2) continue;
+    const i=Math.floor((mx-x0)/(LI+GAP));
+    if(i>=0 && i<N && mx>=x0) return h.skills[i];
+  }
+  return null;
+}
+
+let skillNoMapa=null;
+function olharMapa(ev){
+  const k=skillSobOPonteiro(ev);
+  if(k===skillNoMapa) return;
+  skillNoMapa=k;
+  if(!k){ dica.classList.remove('on'); return; }
+  dica.innerHTML=`<b>${SKILLS[k]}</b>${SKILL_DESC[k]}`;
+  dica.classList.add('on');
+  const d=dica.getBoundingClientRect();
+  let x=Math.max(8, Math.min(ev.clientX-d.width/2, innerWidth-d.width-8));
+  let y=ev.clientY-d.height-14;
+  if(y<8) y=ev.clientY+16;
+  dica.style.left=Math.round(x)+'px';
+  dica.style.top=Math.round(y)+'px';
+}
+addEventListener('DOMContentLoaded',()=>{
+  const c=document.getElementById('tela');
+  if(!c) return;
+  c.addEventListener('mousemove', olharMapa);
+  c.addEventListener('mouseleave', ()=>{ skillNoMapa=null; dica.classList.remove('on'); });
+  c.addEventListener('click', olharMapa);
+});
+
 function textoDaMina(id){
   const def=MINAS_DEF.find(d=>d.id===id);
   if(!def) return null;
