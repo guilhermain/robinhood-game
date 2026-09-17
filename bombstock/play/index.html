@@ -17,10 +17,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* Paleta unica do projeto, vinda do pacote de telas: violeta com laranja.
+     Antes o jogo era ambar sobre marrom e o site violeta, duas identidades. */
   :root{
-    --ink:#12100C; --panel:#1D1913; --rule:#3A3227; --rule2:#241E17;
-    --amber:#E8A33D; --gain:#41C07A; --loss:#E2564D; --jail:#7FB8E8;
-    --chalk:#EDE6D6; --mute:#9A8F7A;
+    --ink:#1E1030; --panel:#2A1B3D; --rule:#4A3660; --rule2:#33234A;
+    --amber:#F5883A; --gain:#3FBF6F; --loss:#E5484D; --jail:#35C4E8;
+    --chalk:#F2ECDD; --mute:#9AA3B2;
+    --rar-common:#9AA3B2; --rar-rare:#35C4E8; --rar-super-rare:#6F8CFF;
+    --rar-epic:#A45CF0; --rar-legendary:#FFC93C; --rar-super-legendary:#E94FD8;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{min-height:100%}
@@ -113,7 +117,7 @@
   .filtros{display:flex;gap:6px;flex-wrap:wrap}
   .filtros button{background:var(--panel);border:1px solid var(--rule);color:var(--mute);
     border-radius:3px;padding:0 13px;min-height:40px;font-family:inherit;font-size:12px;cursor:pointer}
-  .filtros button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#2A2117}
+  .filtros button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#3A2757}
   .lista{border:1px solid var(--rule);background:#171310;overflow-y:auto}
   .lista.rolagem{max-height:52vh}
   #minasLista{max-height:68vh}
@@ -134,13 +138,13 @@
   .chip{font-size:10px;padding:2px 6px;border:1px solid var(--rule);color:var(--amber);background:#231C13}
   .chip.off{color:#6B6255;border-style:dashed}
   .energia{grid-column:2/4;display:flex;align-items:center;gap:8px;margin-top:8px}
-  .energia .trilho{flex:1;height:7px;background:#241E17;border:1px solid var(--rule);overflow:hidden}
+  .energia .trilho{flex:1;height:7px;background:#33234A;border:1px solid var(--rule);overflow:hidden}
   .energia i{display:block;height:100%;background:var(--gain)}
   .energia.rest i{background:var(--loss)}
   .energia em{font-style:normal;font-size:10px;color:var(--mute);min-width:86px;text-align:right}
 
   /* --------------------------------------------------------------- mina */
-  .board{background:linear-gradient(#221D16,#191510);border:1px solid var(--rule);
+  .board{background:linear-gradient(#2E1F45,#241539);border:1px solid var(--rule);
     display:grid;grid-template-columns:repeat(4,1fr)}
   .board div{padding:10px 4px;border-right:1px solid var(--rule);
     display:flex;flex-direction:column;gap:6px;align-items:center}
@@ -243,11 +247,11 @@
   .leitura{display:flex;align-items:center;gap:12px}
   .carteira{font-size:12px;color:var(--mute);white-space:nowrap}
   .carteira b{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--chalk);font-weight:400}
-  .cofre{display:flex;align-items:center;gap:7px;background:#221B12;border:1px solid var(--amber);
+  .cofre{display:flex;align-items:center;gap:7px;background:#2E1F45;border:1px solid var(--amber);
     border-radius:3px;padding:6px 10px;cursor:pointer;font-family:inherit}
   .cofre b{font-family:"Press Start 2P",monospace;font-size:11px;color:var(--amber);font-weight:400}
-  .cofre.pronto{background:#2E2513;box-shadow:0 0 0 1px rgba(232,163,61,.35)}
-  .trilhoMini{width:34px;height:4px;background:#3A3227;overflow:hidden;display:block}
+  .cofre.pronto{background:#3E2A16;box-shadow:0 0 0 1px rgba(232,163,61,.35)}
+  .trilhoMini{width:34px;height:4px;background:#4A3660;overflow:hidden;display:block}
   .trilhoMini i{display:block;height:100%;width:0;background:var(--amber)}
   .cofre.pronto .trilhoMini i{background:var(--gain)}
 
@@ -257,7 +261,7 @@
   .abas button{display:flex;flex-direction:column;align-items:center;gap:4px;
     background:var(--ink);border:0;padding:10px 4px 11px;color:var(--mute);
     font-family:inherit;font-size:11px;cursor:pointer}
-  .abas button[aria-current="true"]{color:var(--amber);background:#1A1610;
+  .abas button[aria-current="true"]{color:var(--amber);background:#261744;
     box-shadow:inset 0 2px 0 var(--amber)}
   .abas .ico{opacity:.55}
   .abas button[aria-current="true"] .ico{opacity:1}
@@ -285,12 +289,12 @@
   .faixaMinas button{flex:none;display:inline-flex;align-items:center;min-height:34px;
     padding:0 9px;background:var(--panel);border:1px solid var(--rule);border-radius:3px;
     color:var(--mute);font-family:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
-  .faixaMinas button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#2A2117}
+  .faixaMinas button[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);background:#3A2757}
   /* mina a venda: preco visivel no proprio chip */
   .faixaMinas button.aComprar{color:var(--chalk);border-style:dashed}
-  .precoMina{margin-left:6px;padding:1px 5px;border-radius:2px;background:#2E2513;
+  .precoMina{margin-left:6px;padding:1px 5px;border-radius:2px;background:#3E2A16;
     color:var(--amber);font-family:"Press Start 2P",monospace;font-size:8px}
-  .faixaMinas button:disabled .precoMina{background:#241E17;color:var(--mute)}
+  .faixaMinas button:disabled .precoMina{background:#33234A;color:var(--mute)}
   .faixaMinas button:disabled{opacity:.5}
   /* o painel da mina encosta no mapa: uma peca so */
   .board{border-bottom:0}
@@ -302,7 +306,7 @@
   .carteiraBtn.ligada{border-color:var(--gain);color:var(--gain)}
   .carteiraBtn.rede{border-color:var(--loss);color:var(--loss)}
   .avisoTopo{position:fixed;top:0;left:0;right:0;z-index:40;text-align:center;font-size:12px;
-    padding:9px 12px;background:#2E2513;color:var(--amber);border-bottom:1px solid var(--amber);
+    padding:9px 12px;background:#3E2A16;color:var(--amber);border-bottom:1px solid var(--amber);
     transform:translateY(-100%);transition:transform .25s}
   .avisoTopo.on{transform:none}
   .cotacao{font-size:11px;color:var(--mute);margin-left:auto;white-space:nowrap}
@@ -319,7 +323,7 @@
   .faixaMinas button{cursor:pointer}
   .chip[data-skill]:hover,.chip[data-skill]:focus-visible{border-color:var(--amber);outline:none}
   .dica{position:fixed;z-index:60;max-width:270px;padding:9px 11px;pointer-events:none;
-    background:#241D14;border:1px solid var(--amber);border-radius:3px;color:var(--chalk);
+    background:#33234A;border:1px solid var(--amber);border-radius:3px;color:var(--chalk);
     font-size:12px;line-height:1.5;opacity:0;transition:opacity .14s;
     box-shadow:0 6px 18px rgba(0,0,0,.55)}
   .dica.on{opacity:1}
@@ -340,7 +344,7 @@
     color:var(--mute);font-family:inherit;text-align:left;cursor:pointer}
   .modoSaque button b{font-size:13px;color:var(--chalk);font-weight:600}
   .modoSaque button em{font-style:normal;font-size:11px}
-  .modoSaque button[aria-pressed="true"]{border-color:var(--amber);background:#2A2117}
+  .modoSaque button[aria-pressed="true"]{border-color:var(--amber);background:#3A2757}
   .modoSaque button[aria-pressed="true"] b{color:var(--amber)}
   @media (max-width:430px){ .modoSaque{grid-template-columns:1fr} }
 
@@ -356,7 +360,7 @@
     0%{transform:scale(1)} 35%{transform:scale(1.13)} 100%{transform:scale(1)} }
 
   /* Treasury: o que lastreia o saque. Vem da chain, nao e enfeite. */
-  .tesouro{border:1px solid var(--rule);background:linear-gradient(#1D1811,#17130F);
+  .tesouro{border:1px solid var(--rule);background:linear-gradient(#2A1B3D,#221439);
     border-radius:3px;margin:14px 0;overflow:hidden}
   .tesouro header{display:flex;align-items:flex-start;justify-content:space-between;
     gap:14px;padding:14px 16px 12px;border-bottom:1px solid var(--rule2)}
@@ -370,7 +374,7 @@
     gap:10px;padding:8px 16px;font-size:12px}
   .tesouroItem .tk{font-family:"Press Start 2P",monospace;font-size:10px}
   .tesouroItem .qt{color:var(--chalk);text-align:right}
-  .tesouroItem .barra{height:6px;background:#241E17;border-radius:2px;overflow:hidden}
+  .tesouroItem .barra{height:6px;background:#33234A;border-radius:2px;overflow:hidden}
   .tesouroItem .barra i{display:block;height:100%;border-radius:2px}
   .tesouroItem .vl{color:var(--chalk);text-align:right;font-variant-numeric:tabular-nums}
   .tesouroItem .pc{color:var(--mute);text-align:right}
@@ -384,7 +388,7 @@
 
   /* fita de cotacao rolando abaixo do cabecalho */
   .fitaCotacao{grid-column:1/-1;margin:10px -2px 0;overflow:hidden;
-    background:#15120E;border-bottom:1px solid var(--rule2);
+    background:#190E28;border-bottom:1px solid var(--rule2);
     mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
     -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
   .fitaTrilho{display:flex;width:max-content;animation:fitaAnda 34s linear infinite}
@@ -402,12 +406,12 @@
 
   /* resumo do saque: dolar em destaque e barra ate o minimo. O numero solto de
      shares somava sete acoes de preco diferente como se fossem iguais. */
-  .resumoSaque{border:1px solid var(--rule);background:linear-gradient(#211B14,#191410);
+  .resumoSaque{border:1px solid var(--rule);background:linear-gradient(#2E1F45,#191410);
     border-radius:3px;padding:18px 18px 16px;margin-top:10px}
   .rsValor{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
   .rsValor b{font-family:"Press Start 2P",monospace;font-size:26px;color:var(--amber)}
   .rsValor span{font-size:12px;color:var(--mute)}
-  .rsBarra{height:7px;background:#2A2219;border-radius:4px;overflow:hidden;margin:14px 0 8px}
+  .rsBarra{height:7px;background:#3A2757;border-radius:4px;overflow:hidden;margin:14px 0 8px}
   .rsBarra i{display:block;height:100%;width:0;border-radius:4px;background:var(--amber);transition:width .4s}
   .rsBarra i.cheio{background:var(--gain)}
   .rsFalta{font-size:12px;color:var(--mute)}
@@ -785,13 +789,14 @@ const SKILL_DESC={
 const CHAVES=Object.keys(SKILLS);
 
 // Seis raridades da v1, com as chances reais divulgadas na época.
+// Cores iguais as do pacote de telas, para jogo e site falarem a mesma lingua.
 const RARIDADES=[
-  {nome:'Common',       faixa:[1,3],  chance:8287, cor:'#8C8577'},
-  {nome:'Rare',        faixa:[4,6],  chance:1036, cor:'#4C8FD6'},
-  {nome:'Super Rare',  faixa:[7,9],  chance:518,  cor:'#41C07A'},
-  {nome:'Epic',       faixa:[10,12],chance:104,  cor:'#9B6BD6'},
-  {nome:'Legendary',    faixa:[13,15],chance:52,   cor:'#E8A33D'},
-  {nome:'S. Legendary', faixa:[16,18],chance:4,    cor:'#E2564D'},
+  {nome:'Common',       faixa:[1,3],  chance:8287, cor:'#9AA3B2'},
+  {nome:'Rare',         faixa:[4,6],  chance:1036, cor:'#35C4E8'},
+  {nome:'Super Rare',   faixa:[7,9],  chance:518,  cor:'#6F8CFF'},
+  {nome:'Epic',         faixa:[10,12],chance:104,  cor:'#A45CF0'},
+  {nome:'Legendary',    faixa:[13,15],chance:52,   cor:'#FFC93C'},
+  {nome:'S. Legendary', faixa:[16,18],chance:4,    cor:'#E94FD8'},
 ];
 
 // Baú de madeira = 80, documentado. Os outros são escala nossa.
@@ -1855,7 +1860,7 @@ const assinaturaMina=()=>minas.map(m=>m.def.id+':'+m.ativos.length).join('|')+'#
 
 const CADEADO='<svg viewBox="0 0 24 24" fill="none" stroke="#EDE6D6" stroke-width="2.2" '+
   'stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2" '+
-  'fill="#1A1610"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.5" fill="#EDE6D6" '+
+  'fill="#261744"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.5" fill="#EDE6D6" '+
   'stroke="none"/></svg>';
 
 // Espiada do cenario: monta uma cena de 5x2 tiles com o chao, a parede e o
