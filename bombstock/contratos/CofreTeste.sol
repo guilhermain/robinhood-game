@@ -105,6 +105,46 @@ contract CofreTeste {
         return IPool(pool).cotar(emUsdg, IPool(pool).reservaB(), IPool(pool).reservaA());
     }
 
+    /// Saque de VARIAS acoes numa transacao so. Sem isto o jogador assina uma
+    /// vez por acao: com sete acoes sao sete confirmacoes seguidas, e entre
+    /// elas a tela fica parada. Uma assinatura, um saque.
+    function sacarVarios(address[] calldata tokens, uint256[] calldata valores) external {
+        require(tokens.length == valores.length && tokens.length > 0, "listas invalidas");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 v = valores[i];
+            if (v == 0) continue;
+            require(v <= tetoPorSaque, "acima do teto");
+            require(IERC20(tokens[i]).balanceOf(address(this)) >= v, "cofre vazio");
+            sacadoPor[msg.sender] += v;
+            IERC20(tokens[i]).transfer(msg.sender, v);
+            emit Sacado(msg.sender, tokens[i], v);
+        }
+    }
+
+    /// Conversao em lote: uma assinatura para todas as acoes.
+    function converterVarios(address[] calldata tokens, uint256[] calldata valores)
+        external returns (uint256 recebido)
+    {
+        require(tokens.length == valores.length && tokens.length > 0, "listas invalidas");
+        require(pool != address(0), "sem pool");
+        uint256 emUsdg;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 v = valores[i];
+            if (v == 0) continue;
+            require(v <= tetoPorSaque, "acima do teto");
+            uint256 taxa = taxaBstock[tokens[i]];
+            require(taxa > 0, "sem taxa para este token");
+            emUsdg += v * taxa / 1e18;
+            sacadoPor[msg.sender] += v;
+        }
+        require(emUsdg > 0, "nada a converter");
+        require(IERC20(usdg).balanceOf(address(this)) >= emUsdg, "cofre sem usdg");
+        IERC20(usdg).approve(pool, emUsdg);
+        recebido = IPool(pool).comprarA(emUsdg, 1);
+        IERC20(bstock).transfer(msg.sender, recebido);
+        emit Sacado(msg.sender, bstock, recebido);
+    }
+
     /// Saque livre. Existe so para provar o caminho na testnet.
     function sacar(address token, uint256 valor) external {
         require(valor <= tetoPorSaque, "acima do teto");

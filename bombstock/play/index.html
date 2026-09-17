@@ -1555,7 +1555,7 @@ function avisarTopo(t){
    O cofre de testnet paga sem prova nenhuma, de proposito: aqui os tokens nao
    valem nada e o objetivo e ver o ciclo. Na mainnet quem vale e o RewardVault,
    com prova de Merkle e raiz publicada por servidor. */
-const COFRE_ADDR='0x8db9de10C33678f7f7F6caBf0a3916e4ff5610B5';
+const COFRE_ADDR='0x4C393939B35D9c7C58bb955b277ffF0C52C77f21';
 const POOL_ADDR ='0xA856Bf43eB7C0c522AF2B4bE31A529bdf724dCC5';
 
 // assinaturas das funcoes, calculadas uma vez
@@ -1568,6 +1568,18 @@ const SEL={
   sacarCofre:   '0x49ed96da',
 };
 const SEL_SACAR_BSTOCK='0xa09f5838';
+const SEL_SACAR_LOTE ='0x24430476';
+const SEL_CONV_LOTE  ='0x4ae14d5d';
+
+// Codifica (address[], uint256[]) para uma chamada com duas listas. Sem isto o
+// saque saia uma transacao por acao: com sete acoes, sete assinaturas.
+function loteCalldata(seletor, enderecos, valores){
+  const n=enderecos.length;
+  const cab = pad(64) + pad(64 + 32 + n*32);           // dois offsets
+  const listaA = pad(n) + enderecos.map(a=>padEnd(a)).join('');
+  const listaV = pad(n) + valores.map(v=>pad(v)).join('');
+  return seletor + cab + listaA + listaV;
+}
 const SEL_COTACAO     ='0x4a08ec62';
 const SEL_PRECO_POOL  ='0xd8787a86';
 
@@ -1650,24 +1662,25 @@ async function comprarPacoteOnchain(qtd){
 // Saca TODAS as acoes que o jogador tem, uma transacao por acao, e respeita a
 // escolha entre receber a acao ou converter em $BSTOCK. Antes ele sacava so a
 // acao com mais shares e ignorava o botao de conversao — as outras sumiam.
+// UMA transacao para todas as acoes. Antes era uma por acao, e entre elas a
+// tela ficava parada esperando confirmacao: parecia que nada acontecia.
 async function sacarOnchain(){
-  const tickers=Object.keys(cofreAcao).filter(t=>cofreAcao[t]>0);
-  if(!tickers.length){ avisarTopo('Nothing to claim yet'); return false; }
-  const converter = modoSaque==='bstock';
-  const seletor = converter ? SEL_SACAR_BSTOCK : SEL.sacarCofre;
-  let feitas=0;
-  for(const t of tickers){
+  const enderecos=[], valores=[], nomes=[];
+  for(const t in cofreAcao){
     const acao=Object.values(ACAO).find(a=>a.tick===t);
-    if(!acao) continue;
-    const valor=BigInt(Math.floor(cofreAcao[t]*1e15));   // 1 share = 0,001 token na testnet
+    if(!acao || cofreAcao[t]<=0) continue;
+    const valor=BigInt(Math.floor(cofreAcao[t]*1e15));   // 1 share = 0,001 token
     if(valor<=0n) continue;
-    const ok=await enviarTx(COFRE_ADDR, seletor+padEnd(acao.addr)+pad(valor),
-      converter ? `Converting ${t}` : `Claiming ${t}`);
-    if(!ok) return feitas>0;          // parou no meio: o que ja saiu esta pago
-    feitas++;
+    enderecos.push(acao.addr); valores.push(valor); nomes.push(t);
   }
-  avisarTopo(converter ? 'Converted to $BSTOCK' : 'Stocks claimed');
-  return feitas>0;
+  if(!enderecos.length){ avisarTopo('Nothing to claim yet'); return false; }
+  const converter = modoSaque==='bstock';
+  const data=loteCalldata(converter?SEL_CONV_LOTE:SEL_SACAR_LOTE, enderecos, valores);
+  const rotulo = converter ? `Converting ${nomes.length} tickers to $BSTOCK`
+                           : `Claiming ${nomes.length} ticker${nomes.length>1?'s':''}`;
+  const ok=await enviarTx(COFRE_ADDR, data, rotulo);
+  if(ok) avisarTopo(converter ? 'Converted to $BSTOCK' : 'Stocks are in your wallet');
+  return !!ok;
 }
 
 
