@@ -597,6 +597,16 @@
     .minaGrade{grid-template-columns:1fr}
     .listaAtivos{max-height:none}
   }
+
+  /* a lista mostra skills e energia; o valor em dolar saiu daqui */
+  .laItem{grid-template-columns:32px minmax(0,1fr) auto}
+  .laEnergia{display:flex;align-items:center;gap:6px}
+  .laEnergia .laBarra{flex:1;min-width:0}
+  .laEnergia em{font-style:normal;font-size:9px;color:var(--mute);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .laSkills{display:flex;flex-direction:column;gap:3px;align-items:center}
+  .chipSkill.mini{width:22px;height:22px}
+  .chipSkill.mini .icoSkill{width:15px;height:15px}
 </style>
 </head>
 <body>
@@ -2648,14 +2658,22 @@ function pintarListaAtivos(vista){
       const f=Math.max(0, Math.min(1, x.energia/x.st.energiaMax));
       const cor = f>0.5?'var(--gain)' : f>0.2?'var(--amber)' : 'var(--loss)';
       const est = ESTADO_ROTULO[x.estado] || 'mining';
+      const icones = x.skills && x.skills.length
+        ? x.skills.map(s=>`<span class="chipSkill mini" data-skill="${s}" tabindex="0"`+
+            ` role="img" aria-label="${SKILLS[s]}: ${SKILL_DESC[s]}">`+
+            `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt=""></span>`).join('')
+        : '';
       return `<div class="laItem${x.estado==='dormir'?' dormindo':''}">`+
         `<canvas class="andando laArte" width="32" height="36" data-id="${x.id}"></canvas>`+
         `<div class="laMeio">`+
           `<span class="laNome" style="color:${x.r.cor}">${x.p.n}</span>`+
           `<span class="laEstado">${est}</span>`+
-          `<span class="laBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></span>`+
+          `<span class="laEnergia">`+
+            `<span class="laBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></span>`+
+            `<em>${Math.round(x.energia)}/${x.st.energiaMax}</em>`+
+          `</span>`+
         `</div>`+
-        `<span class="laUsd">${emDolar(x.achados||0)}</span>`+
+        `<span class="laSkills">${icones}</span>`+
       `</div>`;
     }).join('');
 }
