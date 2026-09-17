@@ -135,6 +135,29 @@ def entrar_na_mina(d: Descer):
                 (c, json.dumps({'tema': d.tema, 'herois': pedidos})))
     return {'ok': True, 'mina': mid, 'herois': len(pedidos)}
 
+
+@app.get('/diag/{carteira}')
+def diag(carteira: str):
+    """Diagnostico: o que o ciclo enxerga. Temporario."""
+    c = carteira.lower()
+    cur = cursor()
+    cur.execute("select id, tema, achados_usd, limpas, atualizada_em, "
+                "extract(epoch from (now()-atualizada_em)) from mina where carteira=%s", (c,))
+    minas = [{'id':r[0],'tema':r[1],'usd':float(r[2]),'limpas':r[3],
+              'segundos_parada':round(float(r[5]),1)} for r in cur.fetchall()]
+    cur.execute("select count(*), coalesce(sum(case when mina_id is null then 1 else 0 end),0) "
+                "from heroi where carteira=%s", (c,))
+    n, fora = cur.fetchone()
+    cur.execute("select chave, valor from config where chave in "
+                "('usd_bau_marrom','densidade','regen_ms','vagas')")
+    cfg = {k: float(v) for k, v in cur.fetchall()}
+    cur.execute("select tipo, detalhe, quando from evento where tipo='erro' order by id desc limit 3")
+    erros = [{'detalhe':r[1],'quando':r[2].isoformat()} for r in cur.fetchall()]
+    cur.execute("select power, stamina, speed, mina_id from heroi where carteira=%s limit 5", (c,))
+    amostra = [{'power':r[0],'stamina':r[1],'speed':r[2],'mina':r[3]} for r in cur.fetchall()]
+    return {'minas':minas, 'herois':n, 'fora_da_mina':fora, 'config':cfg,
+            'erros':erros, 'amostra':amostra, 'ciclo_s':CICLO_S}
+
 @app.get('/estado/{carteira}')
 def estado(carteira: str):
     """O que o cliente desenha. Ele NAO conta mais nada."""
