@@ -36,6 +36,8 @@ def cursor():
 def preparar():
     cur = cursor()
     cur.execute(open(os.path.join(os.path.dirname(__file__),'esquema.sql')).read())
+    # Faxina: minas de tema invalido criadas antes da lista de temas existir.
+    cur.execute("delete from mina where tema <> all(%s)", (list(TEMAS),))
     asyncio.get_event_loop().create_task(ciclo())
 
 import httpx
@@ -76,6 +78,14 @@ class Prova(BaseModel):
 
 from collections import defaultdict, deque
 _batidas = defaultdict(deque)
+def origem(request):
+    """O Railway poe um IP interno diferente a cada pedido, entao request.client
+    nao identifica ninguem: 70 chamadas passaram pelo limite sem barrar uma.
+    O IP real vem no cabecalho do proxy."""
+    ff = request.headers.get('x-forwarded-for', '')
+    if ff: return ff.split(',')[0].strip()
+    return request.client.host if request.client else '?'
+
 def limitar(chave, maximo, janela_s):
     """Limite simples em memoria. Nao e perfeito (reinicia no deploy), mas
     impede o martelo obvio: 60 pedidos em 10s passavam sem nada."""
@@ -99,7 +109,7 @@ def desafio(e: Entrada, request: Request):
     # Cada desafio cria linha no banco SEM prova nenhuma: 12 carteiras novas
     # entraram em 1,9s no teste. O limite e por origem, nao por carteira,
     # porque a carteira e de graca.
-    limitar('desafio:'+(request.client.host if request.client else '?'), 20, 60)
+    limitar('desafio:'+origem(request), 20, 60)
     cur = cursor()
     return {'texto': novo_desafio(cur, e.carteira)}
 
@@ -205,7 +215,7 @@ def entrar_na_mina(d: Descer, authorization: str = Header(default='')):
 
 @app.get('/estado/{carteira}')
 def estado(carteira: str, request: Request):
-    limitar('estado:'+(request.client.host if request.client else '?'), 60, 60)
+    limitar('estado:'+origem(request), 60, 60)
     """O que o cliente desenha. Ele NAO conta mais nada."""
     c = carteira.lower()
     cur = cursor()
