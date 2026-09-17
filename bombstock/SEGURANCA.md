@@ -185,3 +185,57 @@ travar o modo local a uma aba.
 ## O que esta rodada me ensinou
 Auditar só o que dá dinheiro deixa passar o que dá **controle**. Mover os
 heróis de alguém não rouba um centavo e ainda assim é invasão de conta.
+
+
+---
+
+# Terceira rodada — limites, concorrência e entradas hostis (17/09, noite)
+
+Feita por iniciativa própria, antes de ligar o fechamento de época. A segunda
+rodada só existiu porque o G perguntou; esta veio da suspeita de que havia mais
+famílias de problema não olhadas. Havia.
+
+## Encontrado e corrigido
+
+### 7. Qualquer texto virava uma mina
+**Testado:** `tema: "GOOGL_FALSO"` → 200, mina criada. `tema` com 500 letras →
+200, mina criada com o nome inteiro no banco. Dava para encher a tabela com
+lixo e criar minas de ações que não existem.
+**Corrigido:** lista fechada de sete temas. Testado depois: 400 nos dois.
+Faxina no arranque apaga as minas de tema inválido que já entraram.
+
+### 8. Lista de tokens sem teto
+**Testado:** 20.000 tokens numa chamada, aceita.
+**Corrigido:** máximo de 64 por chamada (o limite de vagas é 10). Testado: 422.
+
+### 9. Corrida na mesma carteira
+**Testado:** quatro pedidos simultâneos para minas diferentes → quatro 200.
+**Corrigido:** `pg_advisory_xact_lock` por carteira serializa os pedidos.
+
+### 10. Sem limite de pedidos
+**Testado:** 60 leituras em 10s, todas aceitas; 12 carteiras novas criadas em
+1,9s sem assinar nada — cada `/login/desafio` grava linha no banco de graça.
+**Corrigido nas AÇÕES:** limite por carteira em `/mina/entrar`, 10/min.
+Testado: 16 chamadas → 10 aceitas, 6 barradas (429).
+
+## Aberto
+
+### 11. Limite por IP não funciona atrás do proxy do Railway
+Os logs mostram um IP interno diferente a cada pedido (100.64.0.2, .3, .4…), e
+`x-forwarded-for` não resolveu: 80 leituras passaram sem barrar nenhuma.
+Só o limite por carteira segura, e leitura de estado não exige sessão.
+
+Impacto: leitura é pública e barata, então o risco é custo/disponibilidade, não
+roubo. Correção real exige limite na borda (Cloudflare) ou contador no Postgres
+em vez de memória.
+
+### 12. Amplificação de leitura da chain
+Cada `/mina/entrar` lê a chain uma vez por herói da carteira. Um dono de 200
+heróis gera ~201 chamadas RPC por pedido. Com o limite de 10/min por carteira o
+teto é ~2.000 chamadas/min por conta — alto. Cache do inventário por alguns
+minutos resolve.
+
+## O que esta rodada me ensinou
+As duas primeiras rodadas olharam **dinheiro** e **controle**. Esta olhou
+**custo e abuso de recurso** — e era onde estava tudo o que faltava. Nenhum dos
+itens 7 a 12 rouba um centavo; todos degradam ou sujam o sistema.
