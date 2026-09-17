@@ -568,9 +568,16 @@
   .cartaSkills{gap:6px}
 
   /* mapa e lista dos ativos lado a lado */
-  .minaGrade{display:grid;grid-template-columns:1fr 232px;gap:12px;align-items:start}
+  /* O mapa nao encolhe por causa da lista. O container do app tem 800px, entao
+     a lista ao lado roubava largura do mapa; aqui o container cresce o tanto
+     que a lista ocupa, e o mapa fica exatamente do mesmo tamanho de antes. */
+  .minaGrade{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+  @media (min-width:1100px){
+    body:has(#mina.on) .app{max-width:1056px}    /* 800 + 244 da lista */
+    .minaGrade{grid-template-columns:minmax(0,1fr) 232px}
+  }
   .listaAtivos{border:1px solid var(--rule);border-radius:3px;background:var(--panel);
-    max-height:70vh;overflow-y:auto}
+    max-height:74vh;overflow-y:auto;min-width:0}
   .laTopo{padding:9px 12px;font-size:12px;color:var(--mute);
     border-bottom:1px solid var(--rule2);position:sticky;top:0;background:var(--panel);z-index:2}
   .laTopo b{color:var(--gain);font-family:"Press Start 2P",monospace;font-size:11px}
