@@ -84,6 +84,14 @@ def desafio(e: Entrada):
     cur = cursor()
     return {'texto': novo_desafio(cur, e.carteira)}
 
+import hashlib, secrets as _sec
+from fastapi import Header
+from datetime import timedelta
+
+SESSAO_HORAS = 24
+
+def _hash(t): return hashlib.sha256(t.encode()).hexdigest()
+
 @app.post('/login/verificar')
 def login(p: Prova):
     cur = cursor()
@@ -92,6 +100,34 @@ def login(p: Prova):
                 (p.carteira.lower(), 'login', json.dumps({'ok': ok, 'motivo': motivo})))
     if not ok:
         raise HTTPException(401, motivo)
+    # Emite a sessao. Sem isto, o login verificava quem voce e e depois
+    # esquecia: qualquer um chamava /mina/entrar em nome de qualquer carteira.
+    token = _sec.token_urlsafe(32)
+    cur.execute("update jogador set sessao_hash=%s, sessao_expira=%s where carteira=%s",
+                (_hash(token), datetime.now(timezone.utc)+timedelta(hours=SESSAO_HORAS),
+                 p.carteira.lower()))
+    return {'ok': True, 'token': token, 'expira_h': SESSAO_HORAS}
+
+def exigir_sessao(carteira: str, authorization: str):
+    """Toda acao passa por aqui. Token errado, vencido ou de outra carteira: 401."""
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(401, 'sem sessao')
+    token = authorization[7:].strip()
+    cur = cursor()
+    cur.execute("select sessao_hash, sessao_expira from jogador where carteira=%s",
+                (carteira.lower(),))
+    r = cur.fetchone()
+    if not r or not r[0] or r[0] != _hash(token):
+        raise HTTPException(401, 'sessao invalida')
+    if r[1] is None or datetime.now(timezone.utc) > r[1]:
+        raise HTTPException(401, 'sessao expirada')
+
+@app.post('/logout')
+def logout(e: Entrada, authorization: str = Header(default='')):
+    exigir_sessao(e.carteira, authorization)
+    cur = cursor()
+    cur.execute("update jogador set sessao_hash=null, sessao_expira=null where carteira=%s",
+                (e.carteira.lower(),))
     return {'ok': True}
 
 class Descer(BaseModel):
@@ -100,9 +136,10 @@ class Descer(BaseModel):
     tokens: list[int]
 
 @app.post('/mina/entrar')
-def entrar_na_mina(d: Descer):
+def entrar_na_mina(d: Descer, authorization: str = Header(default='')):
     """O jogador escolhe a mina e quem desce. O servidor confere na CHAIN que os
-    herois sao dele: o cliente nao decide isso."""
+    herois sao dele, e a SESSAO prova que quem pede e o dono da carteira."""
+    exigir_sessao(d.carteira, authorization)
     c = d.carteira.lower()
     cur = cursor()
     try:

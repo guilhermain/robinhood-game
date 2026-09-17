@@ -1730,7 +1730,9 @@ function desconectar(){
   document.getElementById('menuCarteira').hidden=true;
   carteira=null; redeOk=false;
   saldosAcao={}; cotaBstock=null;
-  sessaoServidor=null; estadoServidor=null;
+  if(sessaoServidor && tokenServidor) apiServidor('/logout',{carteira:sessaoServidor}).catch(()=>{});
+  sessaoServidor=null; estadoServidor=null; tokenServidor=null;
+  try{ localStorage.removeItem('bombstock:sessao'); }catch(e){}
   // os herois vieram da chain: sem carteira, o jogo volta ao save local
   const tinhaOnchain=inventario.some(h=>h.onchain);
   if(tinhaOnchain){
@@ -1900,6 +1902,7 @@ function avisarTopo(t){
    Sem carteira o jogo segue local, para dar para experimentar sem assinar. */
 const SERVIDOR='https://robinhood-game-production-3577.up.railway.app';
 let sessaoServidor=null;      // carteira autenticada
+let tokenServidor=null;       // prova da sessao; vai em toda acao
 let estadoServidor=null;      // ultimo estado recebido
 let servidorFalhou=false;
 
@@ -1907,9 +1910,11 @@ async function apiServidor(caminho, corpo){
   const ctrl=new AbortController();
   const t=setTimeout(()=>ctrl.abort(), 15000);
   try{
+    const cab={};
+    if(corpo) cab['content-type']='application/json';
+    if(tokenServidor) cab['authorization']='Bearer '+tokenServidor;
     const r=await fetch(SERVIDOR+caminho, {
-      method: corpo? 'POST':'GET', signal:ctrl.signal,
-      headers: corpo? {'content-type':'application/json'} : undefined,
+      method: corpo? 'POST':'GET', signal:ctrl.signal, headers:cab,
       body: corpo? JSON.stringify(corpo) : undefined });
     const j=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(j.detail || ('HTTP '+r.status));
@@ -1922,11 +1927,21 @@ async function apiServidor(caminho, corpo){
 async function entrarNoServidor(){
   if(!carteira) return false;
   try{
+    const g=JSON.parse(localStorage.getItem('bombstock:sessao')||'null');
+    if(g && g.carteira===carteira && g.ate>Date.now() && g.token){
+      tokenServidor=g.token; sessaoServidor=carteira;
+      puxarEstado(); return true;      // sessao valida: sem assinar de novo
+    }
+  }catch(e){}
+  try{
     const d=await apiServidor('/login/desafio', {carteira});
     const assinatura=await ethereum.request({
       method:'personal_sign', params:[d.texto, carteira]});
-    await apiServidor('/login/verificar', {carteira, assinatura});
-    sessaoServidor=carteira; servidorFalhou=false;
+    const v=await apiServidor('/login/verificar', {carteira, assinatura});
+    tokenServidor=v.token; sessaoServidor=carteira; servidorFalhou=false;
+    // guarda por navegador, com validade: recarregar nao pede assinatura de novo
+    try{ localStorage.setItem('bombstock:sessao', JSON.stringify(
+      {carteira, token:v.token, ate:Date.now()+(v.expira_h||24)*3600000})); }catch(e){}
     avisarTopo('Signed in');
     puxarEstado();
     return true;

@@ -8,7 +8,11 @@ create table if not exists jogador (
   criado_em     timestamptz not null default now(),
   visto_em      timestamptz not null default now(),
   desafio       text,                          -- o texto EXATO que foi pedido
-  desafio_expira timestamptz
+  desafio_expira timestamptz,
+  -- Sessao: o login emite um token; toda acao exige ele. Guardado como hash,
+  -- porque a tabela nao pode ser a chave da conta de ninguem se vazar.
+  sessao_hash   text,
+  sessao_expira timestamptz
 );
 
 -- Os numeros da economia vivem AQUI, nao no codigo. Trocar densidade ou preco
@@ -101,3 +105,8 @@ create table if not exists evento (
   detalhe   jsonb
 );
 create index if not exists evento_por_carteira on evento (carteira, quando desc);
+
+-- Migracoes: "create table if not exists" nao adiciona coluna em tabela que ja
+-- existe. Cada coluna nova entra aqui, de forma idempotente.
+alter table jogador add column if not exists sessao_hash text;
+alter table jogador add column if not exists sessao_expira timestamptz;
