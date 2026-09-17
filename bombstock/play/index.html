@@ -1263,7 +1263,7 @@ function danificar(x,y,h){
                 jaula:tipo==='prisao', bau:EH_BAU(tipo), tipo});
   if(tipo==='prisao'){ contratar(true); return; }
   if(EH_BAU(tipo)){
-    const paga=TIPOS[tipo].paga||1;
+    const paga=(TIPOS[tipo].paga||1)*USD_BAU_MARROM;   // em DOLAR, nao em ponto
     moedaVoando(x,y);
     bausTotais+=paga; bausCofre+=paga; h.achados+=paga;
     if(minaViva){
@@ -1916,7 +1916,8 @@ async function sacarOnchain(){
   for(const t in cofreAcao){
     const acao=Object.values(ACAO).find(a=>a.tick===t);
     if(!acao || cofreAcao[t]<=0) continue;
-    const valor=BigInt(Math.floor(cofreAcao[t]*1e15));   // 1 share = 0,001 token
+    const q=acaoDoDolar(cofreAcao[t], t);
+    const valor=q===null?0n:BigInt(Math.floor(q*1e18));   // quantidade da acao
     if(valor<=0n) continue;
     enderecos.push(acao.addr); valores.push(valor); nomes.push(t);
   }
@@ -2011,7 +2012,7 @@ async function sincronizarHerois(){
 const PRECOS={1:10, 5:50, 10:100};
 // 10 e nao 40: com a Green espalhando em sete acoes, 40 faria um heroi comum
 // esperar 13 dias pelo primeiro saque. Com 10, sao 3 dias. Numero a calibrar.
-const MIN_SAQUE=10, TAXA_SAQUE=0.03;
+const TAXA_SAQUE=0.03;   // MIN_SAQUE_USD virou MIN_SAQUE_USD, em dolar
 
 let saldo=200, inventario=[], ativos=[], bausCofre=0, sacado=0;
 const cofreAcao={};   // shares acumuladas por acao, definido pela mina
@@ -2026,12 +2027,23 @@ const cofreAcao={};   // shares acumuladas por acao, definido pela mina
    tudo. */
 // Converter em $BSTOCK paga o MESMO que receber a acao. Sem bonus — decidido
 // pelo G em 15/09. Nao reintroduzir.
-// Quanto de acao vale 1 share. Valor ILUSTRATIVO enquanto a economia nao roda:
-// escolhido a partir da meta do G de 60 a 120 dias de payback. Com 44 shares
-// por dia por heroi medio e NVDA a ~US$216, 0,00001 da US$0,10/dia e paga um
-// pacote de US$10 em ~105 dias. Quando o cofre real existir isto deixa de ser
-// constante e vira (acao no cofre) / (shares da epoca).
-const FRACAO=0.00001;
+/* ECONOMIA EM DOLAR. As minas sao identicas: mesmo mapa, mesmos baus, mesma
+   dificuldade. Entao o mesmo esforco vale o MESMO DINHEIRO em qualquer uma; a
+   unica diferenca e qual acao voce recebe.
+
+   O bau paga um valor em DOLAR, e o dolar vira quantidade da acao pela cotacao.
+   Antes o bau pagava "pontos" e o ponto era multiplicado pelo preco da acao, o
+   que fazia a mina da GME render 30x menos que a da META pelo mesmo trabalho.
+
+   Valor do bau derivado das decisoes do G, nao inventado:
+     heroi custa US$10 (preco do pacote)
+     payback de 30 dias
+     heroi medio quebra 17,8 baus/dia no regime estavel (medido em 200h)
+   => US$10/30 dias = US$0,333/dia/heroi => bau marrom = US$0,0127 */
+const PAYBACK_DIAS=30;              // decisao do G em 17/09
+const PRECO_HEROI_USD=10;
+const USD_BAU_MARROM=0.0127;        // sai das tres linhas acima
+const MIN_SAQUE_USD=10;             // decisao do G: so saca com US$10 juntos
 
 // Valor em dolar do que esta no cofre, somando acao por acao pelo preco lido ao
 // vivo. Devolve null enquanto a taxa de conversao nao existir — melhor mostrar
@@ -2039,21 +2051,19 @@ const FRACAO=0.00001;
 // Converte o placar interno (baus quebrados) em dolar. O jogador nunca ve o
 // placar: ele ve dinheiro. "44 shares" sugeria 44 acoes da NVDA, um valor
 // absurdo — o placar e contagem de bau, nao ativo.
-function emDolarDoPlacar(pontos, ticker){
-  if(FRACAO===null) return null;
+// O cofre ja guarda DOLAR. Esta funcao so existe para nao espalhar mudanca.
+function emDolarDoPlacar(usd){ return usd; }
+
+// Quanto da acao voce recebe: o dolar dividido pela cotacao.
+function acaoDoDolar(usd, ticker){
   const p=precos[ticker];
-  if(!p) return null;
-  return pontos*FRACAO*p;
+  return p ? usd/p : null;
 }
 
+// O cofre por acao ja esta em dolar: basta somar.
 function valorEmDolar(){
-  if(FRACAO===null) return null;
   let usd=0;
-  for(const t in cofreAcao){
-    const p=precos[t];
-    if(!p) return null;                 // faltou preco de alguma: nao arredonda
-    usd += cofreAcao[t]*FRACAO*p;
-  }
+  for(const t in cofreAcao) usd += cofreAcao[t];
   return usd;
 }
 // Formato de dolar em toda a escala: o cofre chega a dezenas de milhoes e uma
@@ -2479,7 +2489,7 @@ function pintarInventario(){
   lista.innerHTML='';
   for(const h of vis){
     const el=document.createElement('div'); el.className='heroi';
-    el.innerHTML=fichaHeroi(h, `<b>${(()=>{const v=emDolarDoPlacar(h.achados,'NVDA');return v===null?'$\u2014':emDolar(v);})()}</b><span>farmed</span>`);
+    el.innerHTML=fichaHeroi(h, `<b>${emDolar(h.achados)}</b><span>farmed</span>`);
     lista.appendChild(el);
   }
 }
@@ -2553,7 +2563,7 @@ function pintarTesouro(){
     </div>`;
   }).join('');
   document.getElementById('tesouroUsd').textContent = total?emDolar(total):'$—';
-  const porBau=FRACAO!==null && precos.NVDA ? FRACAO*precos.NVDA : null;
+  const porBau=USD_BAU_MARROM;
   document.getElementById('tesouroRodape').textContent = porBau!==null
     ? `Every wooden chest is worth about ${emDolar(porBau)} at today's prices. Illustrative until the epoch closes.`
     : 'Payout rate is set when an epoch closes.';
@@ -2582,7 +2592,7 @@ function pintarClaim(){
   linhas.sort((a,b)=>(cofreAcao[b]*(precos[b]||0))-(cofreAcao[a]*(precos[a]||0)));
   porAcao.innerHTML = linhas.length ? linhas.map(t=>{
     const pr=precos[t];
-    const qtd=FRACAO!==null ? cofreAcao[t]*FRACAO*liq : null;
+    const qtd=acaoDoDolar(cofreAcao[t]*liq, t);   // dolar -> quantidade da acao
     const val=(qtd!==null&&pr)? qtd*pr : null;
     return `<div><span class="tk">${t}</span>`+
       `<span class="mo">${qtd!==null? fmtAcao(qtd)+' '+t : cofreAcao[t].toFixed(1)+' chests'}</span>`+
@@ -2593,13 +2603,13 @@ function pintarClaim(){
   const usdSaque=valorEmDolar();
   document.getElementById('rsUsd').textContent = usdSaque===null?'$—':emDolar(usdSaque*liq);
   document.getElementById('rsSub').textContent = linhas.length ? '' : 'nothing mined yet';
-  const pc=Math.min(100, 100*bruto/MIN_SAQUE);
+  const pc=Math.min(100, 100*bruto/MIN_SAQUE_USD);
   const bar=document.getElementById('rsProgresso');
   bar.style.width=pc.toFixed(1)+'%';
-  bar.classList.toggle('cheio', bruto>=MIN_SAQUE);
-  document.getElementById('rsFalta').textContent = bruto>=MIN_SAQUE
+  bar.classList.toggle('cheio', bruto>=MIN_SAQUE_USD);
+  document.getElementById('rsFalta').textContent = bruto>=MIN_SAQUE_USD
     ? 'Ready to claim'
-    : `${(()=>{const v=emDolarDoPlacar(MIN_SAQUE-bruto,'NVDA');return v===null?'a bit more':emDolar(v)+' more';})()} to reach the minimum`;
+    : `${emDolar(MIN_SAQUE_USD-bruto)} more to reach the minimum`;
 
   // valor em dolar do que esta no cofre, pelas cotacoes lidas ao vivo
   // So da para mostrar cifra quando a taxa de conversao existir
@@ -2620,7 +2630,7 @@ function pintarClaim(){
     b.onclick=()=>{ modoSaque=b.dataset.modo; pintar(); };
 
   document.getElementById('claimResumo').innerHTML=
-    `<div><span>minimum to claim</span><span>${(()=>{const v=emDolarDoPlacar(MIN_SAQUE,'NVDA');return v===null?'\u2014':emDolar(v);})()}</span></div>`+
+    `<div><span>minimum to claim</span><span>${emDolar(MIN_SAQUE_USD)}</span></div>`+
     `<div><span>claim fee</span><span>3% · ${taxa.toFixed(1)}</span></div>`+
 
     `<div><span>you get</span><span>${cifra
@@ -2629,8 +2639,8 @@ function pintarClaim(){
     `<div><span>already claimed</span><span>${sacado.toFixed(1)}</span></div>`;
   const b=document.getElementById('claimBtn');
   const semCarteira = !carteira || !redeOk;
-  b.disabled = bruto<MIN_SAQUE || semCarteira;
-  b.textContent = bruto<MIN_SAQUE ? `${(()=>{const v=emDolarDoPlacar(MIN_SAQUE-bruto,'NVDA');return v===null?'Not enough yet':emDolar(v)+' to go';})()}`
+  b.disabled = bruto<MIN_SAQUE_USD || semCarteira;
+  b.textContent = bruto<MIN_SAQUE_USD ? `${emDolar(MIN_SAQUE_USD-bruto)} to go`
                 : semCarteira ? 'Connect wallet to claim'
                 : (modoSaque==='bstock' ? 'Convert to $BSTOCK' : 'Claim stocks');
   if(semCarteira){
@@ -2642,7 +2652,7 @@ function pintarClaim(){
     : 'Your cut of the stocks the vault bought this epoch, paid in the tickers you mined.';
 }
 async function sacar(){
-  if(bausCofre<MIN_SAQUE) return;
+  if(bausCofre<MIN_SAQUE_USD) return;
   // Sem carteira nao ha para onde o token ir. Zerar o cofre local fingiria um
   // recebimento que nao aconteceu — diferente de comprar pacote, aqui nao
   // existe versao offline que faca sentido.
@@ -2692,9 +2702,9 @@ function pintar(){
     ? 'Live stock prices are in. The payout rate comes from the vault, which does not exist yet.'
     : 'Live value of everything in the vault, priced stock by stock.';
   const chip=document.getElementById('chipCofre');
-  chip.classList.toggle('pronto', bausCofre>=MIN_SAQUE);
+  chip.classList.toggle('pronto', bausCofre>=MIN_SAQUE_USD);
   document.getElementById('chipBarra').style.width=
-    Math.min(100, bausCofre/MIN_SAQUE*100).toFixed(0)+'%';
+    Math.min(100, bausCofre/MIN_SAQUE_USD*100).toFixed(0)+'%';
   document.getElementById('minaTitulo').textContent=vista.def.nome;
 
   // Painel da mina. As quatro linhas abaixo tinham sumido quando a tela Base
@@ -2702,8 +2712,7 @@ function pintar(){
   document.getElementById('bAtivos').innerHTML =
     `<span>awake</span><b>${vistaAcordados}/${vista.ativos.length}</b>`;
   // o painel fala em dinheiro; o placar interno nao aparece
-  const acaoVista=acaoDaMina(vista.def.id).tick;
-  const usdMina=emDolarDoPlacar(vista.achados, acaoVista);
+  const usdMina=vista.achados;   // ja esta em dolar
   document.getElementById('bPontos').textContent = usdMina===null?'$\u2014':emDolar(usdMina);
   document.getElementById('bTaxa').textContent =
     (usdMina!==null && horas>0.02) ? emDolar(usdMina/horas) : '$\u2014';
