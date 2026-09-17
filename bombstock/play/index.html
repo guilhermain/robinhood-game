@@ -1285,8 +1285,8 @@ function desenharHerois(){
     // Aura da raridade: um halo suave sob o heroi, no lugar da barrinha fixa
     // que antes so marcava a cor e parecia energia cheia.
     const aura=cx.createRadialGradient(h.px+16,h.py+20,2, h.px+16,h.py+20,17);
-    aura.addColorStop(0, corAlfa(h.r.cor,0.34));
-    aura.addColorStop(0.55, corAlfa(h.r.cor,0.15));
+    aura.addColorStop(0, corAlfa(h.r.cor,0.51));
+    aura.addColorStop(0.55, corAlfa(h.r.cor,0.23));
     aura.addColorStop(1, corAlfa(h.r.cor,0));
     cx.fillStyle=aura;
     cx.beginPath(); cx.ellipse(h.px+16,h.py+20,17,15,0,0,7); cx.fill();
