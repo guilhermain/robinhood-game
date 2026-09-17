@@ -1322,6 +1322,9 @@ function danificar(x,y,h){
   if(tipo==='prisao'){ contratar(true); return; }
   if(EH_BAU(tipo)){
     const paga=(TIPOS[tipo].paga||1)*USD_BAU_MARROM;   // em DOLAR, nao em ponto
+    // Com sessao no servidor, a conta e LA. Aqui so a animacao acontece: o
+    // jogador pode quebrar o que quiser no console que nao muda o saldo.
+    if(sessaoServidor){ moedaVoando(x,y); return; }   // a funcao acaba aqui
     moedaVoando(x,y);
     bausTotais+=paga; bausCofre+=paga; h.achados+=paga;
     if(minaViva){
@@ -1648,6 +1651,7 @@ function desconectar(){
   document.getElementById('menuCarteira').hidden=true;
   carteira=null; redeOk=false;
   saldosAcao={}; cotaBstock=null;
+  sessaoServidor=null; estadoServidor=null;
   // os herois vieram da chain: sem carteira, o jogo volta ao save local
   const tinhaOnchain=inventario.some(h=>h.onchain);
   if(tinhaOnchain){
@@ -1700,6 +1704,7 @@ async function conectar(){
     ethereum.on && ethereum.on('chainChanged', ()=>{ garantirRede(); });
     atualizarCripto();
     sincronizarHerois();
+    entrarNoServidor();
   }catch(e){ avisarTopo(e.message||'Connection refused'); }
   pintar();
 }
@@ -1809,6 +1814,75 @@ function avisarTopo(t){
    O cofre de testnet paga sem prova nenhuma, de proposito: aqui os tokens nao
    valem nada e o objetivo e ver o ciclo. Na mainnet quem vale e o RewardVault,
    com prova de Merkle e raiz publicada por servidor. */
+/* ================================ o servidor manda no que foi minerado
+   Ate aqui a contagem nascia neste arquivo, ou seja, na maquina de quem ganha.
+   Um contrato de oito linhas drenava o cofre (SEGURANCA.md, ataque 1). Agora o
+   numero vem do servidor; o canvas continua animando, mas e enfeite.
+   Sem carteira o jogo segue local, para dar para experimentar sem assinar. */
+const SERVIDOR='https://robinhood-game-production-3577.up.railway.app';
+let sessaoServidor=null;      // carteira autenticada
+let estadoServidor=null;      // ultimo estado recebido
+let servidorFalhou=false;
+
+async function apiServidor(caminho, corpo){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(), 15000);
+  try{
+    const r=await fetch(SERVIDOR+caminho, {
+      method: corpo? 'POST':'GET', signal:ctrl.signal,
+      headers: corpo? {'content-type':'application/json'} : undefined,
+      body: corpo? JSON.stringify(corpo) : undefined });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(j.detail || ('HTTP '+r.status));
+    return j;
+  } finally { clearTimeout(t); }
+}
+
+/* Login por assinatura: o servidor sorteia o texto, a carteira assina, e o
+   servidor confere. Nao ha senha e nada que possa vazar. */
+async function entrarNoServidor(){
+  if(!carteira) return false;
+  try{
+    const d=await apiServidor('/login/desafio', {carteira});
+    const assinatura=await ethereum.request({
+      method:'personal_sign', params:[d.texto, carteira]});
+    await apiServidor('/login/verificar', {carteira, assinatura});
+    sessaoServidor=carteira; servidorFalhou=false;
+    avisarTopo('Signed in');
+    puxarEstado();
+    return true;
+  }catch(e){
+    servidorFalhou=true;
+    avisarTopo((e.message||'Sign-in failed').slice(0,90));
+    return false;
+  }
+}
+
+async function puxarEstado(){
+  if(!sessaoServidor) return;
+  try{
+    estadoServidor=await apiServidor('/estado/'+sessaoServidor);
+    servidorFalhou=false;
+    // o cofre local passa a ser apenas o espelho do que o servidor diz
+    for(const k in cofreAcao) delete cofreAcao[k];
+    for(const t in estadoServidor.cofre) cofreAcao[t]=estadoServidor.cofre[t];
+    bausCofre=estadoServidor.total_usd;
+    pintar();
+  }catch(e){ servidorFalhou=true; }
+}
+setInterval(puxarEstado, 20000);
+
+/* Descer o esquadrao: quem decide e o servidor, que confere na chain se os
+   herois sao mesmo desta carteira. */
+async function descerNoServidor(tema, tokens){
+  if(!sessaoServidor) return false;
+  try{
+    await apiServidor('/mina/entrar', {carteira:sessaoServidor, tema, tokens});
+    puxarEstado();
+    return true;
+  }catch(e){ avisarTopo((e.message||'Failed').slice(0,90)); return false; }
+}
+
 const COFRE_ADDR='0x4C393939B35D9c7C58bb955b277ffF0C52C77f21';
 const POOL_ADDR ='0xA856Bf43eB7C0c522AF2B4bE31A529bdf724dCC5';
 
@@ -2161,6 +2235,13 @@ function novoHeroi(forcarIdx, forcarP){
 // Coloca o herói no mapa. Os campos de posição só existem enquanto ele trabalha.
 function descer(h){
   if(ativos.length>=VAGAS || h.naMina) return false;
+  // avisa o servidor: ele confere na chain se o heroi e desta carteira
+  if(sessaoServidor && h.onchain){
+    setTimeout(()=>{
+      const tema=minas[minaAtual].def.id==='verde'?'verde':minas[minaAtual].def.id;
+      descerNoServidor(tema, ativos.filter(a=>a.onchain).map(a=>a.id));
+    }, 200);
+  }
   const livres=[];
   for(let y=1;y<ROWS-1;y++) for(let x=1;x<COLS-1;x++)
     if(!parede(x,y)&&!bloco(x,y)&&!ativos.some(a=>a.gx===x&&a.gy===y)) livres.push([x,y]);
@@ -2780,7 +2861,10 @@ function pintarClaim(){
   // resumo do topo: o dolar liquido e o quanto falta para o minimo
   const usdSaque=valorEmDolar();
   document.getElementById('rsUsd').textContent = usdSaque===null?'$—':emDolar(usdSaque*liq);
-  document.getElementById('rsSub').textContent = linhas.length ? '' : 'nothing mined yet';
+  document.getElementById('rsSub').textContent =
+    servidorFalhou ? 'server unreachable — showing last known'
+    : sessaoServidor ? 'counted by the server'
+    : (linhas.length ? '' : 'nothing mined yet');
   const pc=Math.min(100, 100*bruto/MIN_SAQUE_USD);
   const bar=document.getElementById('rsProgresso');
   bar.style.width=pc.toFixed(1)+'%';
