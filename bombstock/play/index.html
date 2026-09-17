@@ -557,6 +557,15 @@
   .icoSkill{width:13px;height:13px;image-rendering:pixelated;flex:none;display:block}
   .cartaSkills{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:6px}
   .cartaSkills .chip{font-size:11px}
+
+  /* so o icone, maior; o nome aparece no balao */
+  .chipSkill{display:inline-flex;align-items:center;justify-content:center;
+    width:28px;height:28px;padding:0;border:1px solid var(--rule);border-radius:3px;
+    background:var(--panel);cursor:help}
+  .chipSkill:hover,.chipSkill:focus-visible{border-color:var(--amber);outline:none;
+    background:#3A2757}
+  .chipSkill .icoSkill{width:20px;height:20px}
+  .cartaSkills{gap:6px}
 </style>
 </head>
 <body>
@@ -2431,9 +2440,9 @@ function mostrarCarta(){
     `${h.st.bombas} bomb${h.st.bombas>1?'s':''} · range ${h.st.alcance}<br>`+
     (h.skills.length
       ? '<span class="cartaSkills">'+h.skills.map(s=>
-          `<span class="chip" title="${SKILL_DESC[s]}">`+
-          `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt="">`+
-          `${SKILLS[s]}</span>`).join('')+'</span>'
+          `<span class="chipSkill" data-skill="${s}" tabindex="0"`+
+          ` role="img" aria-label="${SKILLS[s]}: ${SKILL_DESC[s]}">`+
+          `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt=""></span>`).join('')+'</span>'
       : 'no skill');
   document.getElementById('cartaConta').textContent=`${filaPos+1} of ${fila.length}`;
   document.getElementById('cartaProx').textContent = filaPos===fila.length-1 ? 'Done' : 'Next';
@@ -2456,10 +2465,11 @@ function fichaHeroi(h, botao){
   const est = !h.naMina ? (h.energia>=h.st.energiaMax?'rested':'recharging')
             : (h.estado==='dormir'?'sleeping':((h.estado==='bombardear'||h.estado==='plantando')?'planting bomb'
             :(h.estado==='fugir'?'clear of blast':'mining')));
-  const chips=h.skills.length? h.skills.map(s=>`<span class="chip" data-skill="${s}" tabindex="0"`+
-      ` title="${SKILL_DESC[s]}">`+
-      `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt="">`+
-      `${SKILLS[s]}</span>`).join('')
+  // So o icone. O nome vem no balao ao passar o mouse; sem atributo title,
+  // senao o navegador desenha um segundo balao por cima do nosso.
+  const chips=h.skills.length? h.skills.map(s=>`<span class="chipSkill" data-skill="${s}" tabindex="0"`+
+      ` role="img" aria-label="${SKILLS[s]}: ${SKILL_DESC[s]}">`+
+      `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt=""></span>`).join('')
                              : '<span class="chip off">no skill</span>';
   return `<span class="faixa" style="background:${h.r.cor}"></span>`+
     `<canvas class="andando" width="32" height="36" data-id="${h.id}"></canvas>`+
