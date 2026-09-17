@@ -1,0 +1,11 @@
+{
+ "celula": 42,
+ "ancoraX": 20.87,
+ "ancoraY": 37.33,
+ "quadros": 16,
+ "msQuadro": 40,
+ "nasceNoQuadro": 8,
+ "pulsoMs": 70,
+ "explosaoMs": 60,
+ "explosaoVazio": 15
+}
