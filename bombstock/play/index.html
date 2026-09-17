@@ -1305,6 +1305,10 @@ function desenharHerois(){
     const linha  = dormindo ? DIR.down : h.dir;
     // Aura da raridade: um halo suave sob o heroi, no lugar da barrinha fixa
     // que antes so marcava a cor e parecia energia cheia.
+    // Trava: um unico valor nao finito aqui derrubava o desenho inteiro do
+    // canvas, e nenhum heroi aparecia.
+    if(!Number.isFinite(h.px)||!Number.isFinite(h.py)){ h.px=h.gx*T; h.py=h.gy*T; }
+    if(!Number.isFinite(h.px)||!Number.isFinite(h.py)) continue;
     const aura=cx.createRadialGradient(h.px+16,h.py+20,2, h.px+16,h.py+20,17);
     aura.addColorStop(0, corAlfa(h.r.cor,0.51));
     aura.addColorStop(0.55, corAlfa(h.r.cor,0.23));
@@ -1703,7 +1707,11 @@ function heroiDeOnchain(d){
   const elenco=ELENCO[idx];
   const p=elenco[d.pers % elenco.length];
   const skills=ORDEM_SKILL.filter((_,i)=>d.skills & (1<<i));
+  // vel FALTAVA aqui: o movimento faz (dt/st.vel), e sem ele a posicao virava
+  // NaN e o heroi nunca aparecia no mapa. Mesma formula do rolarStats, para os
+  // dois caminhos darem o mesmo resultado.
   const st={power:d.power, stamina:d.stamina, speed:d.speed,
+            vel:1000/Math.max(1,d.speed)*LENTIDAO,
             bombas:d.bombas, alcance:d.alcance, energiaMax:d.stamina*50};
   const h={id:d.id, idx, r:RARIDADES[idx], p, st, energia:st.energiaMax, regen:0,
            achados:0, skills, tem:{}, naMina:false, onchain:true};
@@ -2329,6 +2337,15 @@ function pintar(){
   document.getElementById('chipBarra').style.width=
     Math.min(100, bausCofre/MIN_SAQUE*100).toFixed(0)+'%';
   document.getElementById('minaTitulo').textContent=vista.def.nome;
+
+  // Painel da mina. As quatro linhas abaixo tinham sumido quando a tela Base
+  // foi removida, e o painel vinha mostrando zero desde entao.
+  document.getElementById('bAtivos').innerHTML =
+    `<span>awake</span><b>${vistaAcordados}/${vista.ativos.length}</b>`;
+  document.getElementById('bPontos').textContent = Math.round(vista.achados);
+  document.getElementById('bTaxa').textContent =
+    horas>0.02 ? (vista.achados/horas).toFixed(1) : '\u2014';
+  document.getElementById('bLimpas').textContent = vista.limpas||0;
 
   // carteira
   const bc=document.getElementById('btnCarteira');
