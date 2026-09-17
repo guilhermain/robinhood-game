@@ -566,6 +566,30 @@
     background:#3A2757}
   .chipSkill .icoSkill{width:20px;height:20px}
   .cartaSkills{gap:6px}
+
+  /* mapa e lista dos ativos lado a lado */
+  .minaGrade{display:grid;grid-template-columns:1fr 232px;gap:12px;align-items:start}
+  .listaAtivos{border:1px solid var(--rule);border-radius:3px;background:var(--panel);
+    max-height:70vh;overflow-y:auto}
+  .laTopo{padding:9px 12px;font-size:12px;color:var(--mute);
+    border-bottom:1px solid var(--rule2);position:sticky;top:0;background:var(--panel);z-index:2}
+  .laTopo b{color:var(--gain);font-family:"Press Start 2P",monospace;font-size:11px}
+  .laItem{display:grid;grid-template-columns:32px 1fr auto;gap:8px;align-items:center;
+    padding:8px 12px;border-bottom:1px solid var(--rule2)}
+  .laItem:last-child{border-bottom:0}
+  .laItem.dormindo{opacity:.55}
+  .laArte{width:32px;height:36px;image-rendering:pixelated;display:block}
+  .laMeio{min-width:0;display:flex;flex-direction:column;gap:3px}
+  .laNome{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .laEstado{font-size:10px;color:var(--mute)}
+  .laBarra{height:4px;background:#241539;border-radius:2px;overflow:hidden}
+  .laBarra i{display:block;height:100%;border-radius:2px;transition:width .3s}
+  .laUsd{font-size:11px;color:var(--gain);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .laVazio{margin:0;padding:14px 12px;font-size:12px;color:var(--mute);line-height:1.5}
+  @media (max-width:900px){
+    .minaGrade{grid-template-columns:1fr}
+    .listaAtivos{max-height:none}
+  }
 </style>
 </head>
 <body>
@@ -678,15 +702,12 @@
 
     </div>
     <div class="faixaMinasEnvelope"><div class="faixaMinas" id="seletorMinas"></div></div>
-    <div class="board">
-      <div id="bAtivos"><span>awake</span><b>0/0</b></div>
-      <div><span>farmed</span><b id="bPontos">$—</b></div>
-      <div><span>per hour</span><b id="bTaxa">$—</b></div>
-      <div><span>cleared</span><b id="bLimpas">0</b></div>
-    </div>
-    <div class="palco">
-      <canvas id="tela"></canvas>
-      <div id="aviso"></div>
+    <div class="minaGrade">
+      <div class="palco">
+        <canvas id="tela"></canvas>
+        <div id="aviso"></div>
+      </div>
+      <aside class="listaAtivos" id="listaAtivos"></aside>
     </div>
     
     
@@ -2597,6 +2618,41 @@ function pintarTesouro(){
 }
 
 let cofrePedido=false;
+/* Lista dos herois que estao na mina, ao lado do mapa. Substitui o painel de
+   quatro numeros: "awake 10/10" e "cleared 3" nao ajudavam a decidir nada, e a
+   taxa por hora oscilava demais para ser lida. Aqui da para ver quem esta
+   trabalhando, quem dorme e quanto cada um ja rendeu. */
+const ESTADO_ROTULO={dormir:'sleeping', fugir:'clear of blast',
+  plantando:'planting', bombardear:'planting', andar:'walking',
+  procurar:'looking', esperar:'waiting'};
+
+function pintarListaAtivos(vista){
+  const alvo=document.getElementById('listaAtivos');
+  if(!alvo) return;
+  const lista=vista.ativos;
+  if(!lista.length){
+    alvo.innerHTML='<p class="laVazio">No heroes down here yet. Send them from the Squad tab.</p>';
+    return;
+  }
+  const acordados=lista.filter(x=>x.estado!=='dormir').length;
+  alvo.innerHTML =
+    `<header class="laTopo"><b>${acordados}</b> of ${lista.length} awake</header>`+
+    lista.map(x=>{
+      const f=Math.max(0, Math.min(1, x.energia/x.st.energiaMax));
+      const cor = f>0.5?'var(--gain)' : f>0.2?'var(--amber)' : 'var(--loss)';
+      const est = ESTADO_ROTULO[x.estado] || 'mining';
+      return `<div class="laItem${x.estado==='dormir'?' dormindo':''}">`+
+        `<canvas class="andando laArte" width="32" height="36" data-id="${x.id}"></canvas>`+
+        `<div class="laMeio">`+
+          `<span class="laNome" style="color:${x.r.cor}">${x.p.n}</span>`+
+          `<span class="laEstado">${est}</span>`+
+          `<span class="laBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></span>`+
+        `</div>`+
+        `<span class="laUsd">${emDolar(x.achados||0)}</span>`+
+      `</div>`;
+    }).join('');
+}
+
 function pintarClaim(){
   // UMA tentativa automatica. Antes eu religava a cada repintura: falhou,
   // repinta, tenta de novo. Deu 1.624 chamadas a RPC em 4 segundos e o estado
@@ -2734,18 +2790,7 @@ function pintar(){
     Math.min(100, bausCofre/MIN_SAQUE_USD*100).toFixed(0)+'%';
   document.getElementById('minaTitulo').textContent=vista.def.nome;
 
-  // Painel da mina. As quatro linhas abaixo tinham sumido quando a tela Base
-  // foi removida, e o painel vinha mostrando zero desde entao.
-  document.getElementById('bAtivos').innerHTML =
-    `<span>awake</span><b>${vistaAcordados}/${vista.ativos.length}</b>`;
-  // o painel fala em dinheiro; o placar interno nao aparece
-  const usdMina=vista.achados;   // ja esta em dolar
-  document.getElementById('bPontos').textContent = usdMina===null?'$\u2014':emDolar(usdMina);
-  // A taxa precisa de amostra: nos primeiros minutos ela oscila demais, porque
-  // um bau que abre cedo divide por um tempo minusculo e vira um numero enorme.
-  document.getElementById('bTaxa').textContent =
-    (usdMina!==null && horas>=0.25) ? emDolar(usdMina/horas) : 'measuring\u2026';
-  document.getElementById('bLimpas').textContent = vista.limpas||0;
+  pintarListaAtivos(vista);
 
   // carteira
   const bc=document.getElementById('btnCarteira');
@@ -3092,7 +3137,7 @@ function animarFichas(){
   if(!cvs.length) return;
   const q=Math.floor(Date.now()/150)%4;
   for(const c of cvs){
-    const h=inventario.find(x=>x.id===+c.dataset.id);
+    const h=inventario.find(x=>x.id===+c.dataset.id) || ativos.find(x=>x.id===+c.dataset.id);
     if(!h) continue;
     const folha=skinDe(h);
     if(!folha || !folha.complete || !folha.naturalWidth) continue;
@@ -3139,7 +3184,8 @@ function loop(agora){
   accHud+=bruto; if(accHud>=400){ accHud=0; pintar(); }
   if(salvarPendente){ salvarPendente=false; salvar(); }
 
-  if(telaAtual==='equipe'||telaAtual==='inventario') animarFichas();
+  // a mina tambem tem retratos agora, na lista dos ativos
+  if(telaAtual==='equipe'||telaAtual==='inventario'||telaAtual==='mina') animarFichas();
   if(document.getElementById('pacoteOverlay').classList.contains('on')) desenharCarta();
   if(telaAtual==='mina'){ desenhar(); }
   requestAnimationFrame(loop);
