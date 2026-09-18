@@ -2163,13 +2163,16 @@ async function enviarTx(to, data, rotulo){
 
 // O cofre gasta $BSTOCK do jogador, entao precisa de permissao antes.
 async function garantirPermissao(quanto, gastador){
-  gastador=gastador||COFRE_ADDR;
+  /* Aprovacao do valor EXATO, nunca infinita. Antes era 'f' repetido 64 vezes,
+     ou seja permissao ilimitada: um bug no contrato levaria a carteira inteira
+     do jogador, nao so o preco da compra. Custa uma assinatura a mais quando o
+     valor muda; e o preco da contencao. (MAINNET.md, item 7) */
+  if(!gastador) { avisarTopo('Internal: missing spender'); return false; }
   const data=SEL.allowance+padEnd(carteira)+padEnd(gastador);
   let atual=0n;
   try{ atual=BigInt(await rpc('eth_call',[{to:BSTOCK_ADDR, data},'latest'])); }catch(e){}
   if(atual >= quanto) return true;
-  const max='0x'+'f'.repeat(64);
-  const ok=await enviarTx(BSTOCK_ADDR, SEL.approve+padEnd(gastador)+'f'.repeat(64), 'Approval');
+  const ok=await enviarTx(BSTOCK_ADDR, SEL.approve+padEnd(gastador)+pad(quanto), 'Approval');
   return !!ok;
 }
 
@@ -2253,25 +2256,7 @@ async function comprarPacoteOnchain(qtd){
 // acao com mais shares e ignorava o botao de conversao — as outras sumiam.
 // UMA transacao para todas as acoes. Antes era uma por acao, e entre elas a
 // tela ficava parada esperando confirmacao: parecia que nada acontecia.
-async function sacarOnchain(){
-  const enderecos=[], valores=[], nomes=[];
-  for(const t in cofreAcao){
-    const acao=Object.values(ACAO).find(a=>a.tick===t);
-    if(!acao || cofreAcao[t]<=0) continue;
-    const q=acaoDoDolar(cofreAcao[t], t);
-    const valor=q===null?0n:BigInt(Math.floor(q*1e18));   // quantidade da acao
-    if(valor<=0n) continue;
-    enderecos.push(acao.addr); valores.push(valor); nomes.push(t);
-  }
-  if(!enderecos.length){ avisarTopo('Nothing to claim yet'); return false; }
-  const converter = modoSaque==='bstock';
-  const data=loteCalldata(converter?SEL_CONV_LOTE:SEL_SACAR_LOTE, enderecos, valores);
-  const rotulo = converter ? `Converting ${nomes.length} tickers to $BSTOCK`
-                           : `Claiming ${nomes.length} ticker${nomes.length>1?'s':''}`;
-  const ok=await enviarTx(COFRE_ADDR, data, rotulo);
-  if(ok) avisarTopo(converter ? 'Converted to $BSTOCK' : 'Stocks are in your wallet');
-  return !!ok;
-}
+/* sacarOnchain() removida: mirava o CofreTeste, que paga sem prova. */
 
 
 /* ================================ herois vindos da chain (testnet)
@@ -2618,7 +2603,7 @@ async function comprarMina(id){
     const custo=BigInt(def.preco)*(10n**18n);
     const s=await saldoBstock();
     if(s < custo && !await pegarBstockDeTeste()) return;
-    if(!await garantirPermissao(custo)) return;
+    if(!await garantirPermissao(custo, COFRE_ADDR)) return;
     const ok=await enviarTx(COFRE_ADDR,
       SEL.comprarMina + pad(32) + pad(id.length) +
       Array.from(new TextEncoder().encode(id)).map(b=>b.toString(16).padStart(2,'0')).join('').padEnd(64,'0'),
@@ -3295,9 +3280,11 @@ async function sacar(){
   // recebimento que nao aconteceu — diferente de comprar pacote, aqui nao
   // existe versao offline que faca sentido.
   if(!carteira || !redeOk){ avisarTopo('Connect your wallet to claim'); return; }
-  // Com servidor, o saque passa pelo cofre de Merkle: a prova vem de la e o
-  // contrato confere. Sem servidor, cai no cofre de teste (so testnet).
-  const ok = sessaoServidor ? await sacarComProva() : await sacarOnchain();
+  // O CofreTeste paga o que qualquer um pedir: um contrato de oito linhas levou
+  // 20.000 NVDA dele numa transacao (SEGURANCA.md, ataque 1). O saque passa SO
+  // pelo cofre de Merkle, que exige prova. Sem servidor nao ha saque.
+  if(!sessaoServidor){ avisarTopo('Sign in to claim your stocks'); return; }
+  const ok = await sacarComProva();
   if(!ok) return;                         // sem transacao confirmada, nao zera
   salvarLogo();
   sacado += bausCofre*(1-TAXA_SAQUE);

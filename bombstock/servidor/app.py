@@ -180,8 +180,8 @@ class Batida(BaseModel):
 
 @app.post('/mina/batida')
 def batida(bt: Batida, authorization: str = Header(default='')):
-    """O cliente avisa que a mina esta ABERTA e visivel. So o tempo coberto por
-    estas batidas e minerado: minimizar ou fechar a aba para o farm."""
+    """Sinal de presenca. NAO decide mais quanto se ganha — a mineracao acontece
+    de qualquer jeito. Mantido so para saber quem esta com o jogo aberto."""
     exigir_sessao(bt.carteira, authorization)
     cur = cursor()
     cur.execute("update mina set visto_em=now() where carteira=%s and tema=%s",
@@ -458,12 +458,14 @@ def teto_diario(power, base):
 def avancar_todas():
     cur = cursor()
     agora = datetime.now(timezone.utc)
-    # So minas VISTAS ha pouco: o jogador precisa estar com a tela aberta.
+    # Minera SEMPRE, como no Bombcrypto original. A exigencia de tela aberta
+    # dependia de uma batida do cliente, e cliente nao e confiavel: um script
+    # de dez linhas farmava 24h sem abrir o jogo, ganhando 3x mais que quem
+    # jogava de verdade (SEGURANCA.md, achado 16). Tirar a exigencia fecha o
+    # furo, porque nao ha mais o que forjar. O teto diario continua valendo.
     cur.execute("""select id, carteira, tema, grade, achados_usd, limpas,
                           atualizada_em, visto_em
-                   from mina
-                   where visto_em is not null
-                     and visto_em > now() - interval '60 seconds'""")
+                   from mina""")
     linhas = cur.fetchall()
     if not linhas:
         return
@@ -476,7 +478,10 @@ def avancar_todas():
         # fechada tres horas e voltou agora, ele minera o intervalo do ciclo,
         # nao as tres horas.
         segundos = max(0.0, (agora - quando).total_seconds())
-        segundos = min(segundos, (agora - visto).total_seconds() + CICLO_S)
+        # Teto de 24h por avanco: se o servidor ficar dias fora, ele nao credita
+        # tudo de uma vez. O teto diario por heroi ja limita o valor, este limita
+        # o custo de simular.
+        segundos = min(segundos, 86400.0)
         if segundos <= 0:
             continue
         cur.execute("""select token_id, power, stamina, speed, bombas, alcance, skills, energia
