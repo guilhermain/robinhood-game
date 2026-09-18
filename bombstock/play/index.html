@@ -702,8 +702,10 @@
   #abCaps{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
   /* A arte da capsula JA tem silhueta. Desenhar a do jogo por cima punha duas
      figuras lado a lado. Ela so aparece no fim, quando o vidro ja quebrou. */
+  /* A silhueta que fica passando precisa ocupar o vidro: 96px era metade da
+     capsula e o heroi aparecia pequeno no fim da animacao. */
   .abCapsula #abArte{position:absolute;left:50%;transform:translateX(-50%);
-    top:24%;width:96px;height:108px;z-index:2;opacity:0;transition:opacity .25s}
+    top:17%;width:150px;height:169px;z-index:2;opacity:0;transition:opacity .25s}
   .abCapsula.revelando #abArte{opacity:1}
   .abCapsula .abBrilho{z-index:1}
 </style>
