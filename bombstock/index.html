@@ -516,6 +516,10 @@
     .nav-link[aria-current="page"]{color:var(--color-action);box-shadow:inset 0 -3px 0 var(--color-action)}
 
     .mine-card__free{color:var(--color-up);font-size:12px;font-weight:600}
+
+    .game-video{display:block;width:100%;aspect-ratio:16/11;object-fit:cover;background:var(--color-background);
+      border:2px solid var(--color-ivory)}
+    .gameplay-card figcaption{margin-top:8px;text-align:center;font-weight:600}
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->
@@ -586,10 +590,27 @@
       </div>
     </section>
 <section class="section container" id="gameplay" aria-labelledby="gameplay-heading">
-      <div class="section-heading"><h2 class="section-title display" id="gameplay-heading">WATCH THE GAMEPLAY</h2></div>
-      <div class="gameplay-grid"><figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Enter the mines"><img class="game-image gameplay-image" src="assets/gameplay-mines.png" width="480" height="270" alt="A grid mine with the hero and bomb obstacles" loading="lazy"></a><figcaption>Enter the mines</figcaption></figure>
-<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Open chests"><img class="game-image gameplay-image" src="assets/gameplay-chests.png" width="480" height="270" alt="A hero approaching a reward chest" loading="lazy"></a><figcaption>Open chests</figcaption></figure>
-<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Play your way"><img class="game-image gameplay-image" src="assets/gameplay-bomb.png" width="480" height="270" alt="A pixel bomb gameplay preview" loading="lazy"></a><figcaption>Play your way</figcaption></figure></div>
+      <div class="section-heading"><h2 class="section-title display" id="gameplay-heading">WATCH THE GAMEPLAY</h2><p>Recorded from the game as it runs today.</p></div>
+      <div class="gameplay-grid">
+        <figure class="gameplay-card">
+          <video class="game-video" autoplay muted loop playsinline preload="metadata" poster="assets/gameplay-mines.png">
+            <source src="assets/mining.webm" type="video/webm"><source src="assets/mining.mp4" type="video/mp4">
+          </video>
+          <figcaption>Enter the mines</figcaption>
+        </figure>
+        <figure class="gameplay-card">
+          <video class="game-video" autoplay muted loop playsinline preload="metadata" poster="assets/gameplay-chests.png">
+            <source src="assets/chests.webm" type="video/webm"><source src="assets/chests.mp4" type="video/mp4">
+          </video>
+          <figcaption>Open chests</figcaption>
+        </figure>
+        <figure class="gameplay-card">
+          <video class="game-video" autoplay muted loop playsinline preload="metadata">
+            <source src="assets/capsule.webm" type="video/webm"><source src="assets/capsule.mp4" type="video/mp4">
+          </video>
+          <figcaption>Roll a hero</figcaption>
+        </figure>
+      </div>
     </section>
 </div>
 <div class="aba" data-aba="mines">
