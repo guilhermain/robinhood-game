@@ -65,13 +65,29 @@ Repare que **três dos cinco dependem do Safe**. Não é burocracia: é o ponto
 
 - O `CofreTeste` não precisa ser consertado nem substituído: some.
 - Não existe "contrato de compra de mina" a escrever. A compra de mina gasta
-  $BSTOCK, e $BSTOCK é da Pons — o gasto vira transferência para o Safe, ou é
-  queimado, conforme o G decidir. **Decisão pendente.**
+  $BSTOCK, e $BSTOCK é da Pons — o gasto vai para o **cofre de $BSTOCK**.
 - A entrada do jogo é em USDG. O `usd_bau_marrom` já está em dólar, então a
   economia do servidor não muda.
 
+## Cofre de $BSTOCK (decidido pelo G em 18/09)
+
+Todo $BSTOCK gasto **dentro do jogo** — pacotes de herói, compra de mina, o que
+vier — vai para uma carteira única, o **cofre de $BSTOCK**. O que fazer com o
+que se acumula ali (queimar, recomprar ação, financiar prêmio) é decisão do G,
+tomada depois e sobre o saldo real.
+
+Por que uma carteira e não um contrato: o destino do saldo ainda não está
+decidido, e contrato não se edita. Uma carteira mantém a decisão aberta sem
+custar nada; se mais tarde virar regra fixa, aí sim vale um contrato.
+
+**Ela é separada do `RewardVault`.** O cofre de recompensa só pode conter o que
+já foi prometido aos jogadores; misturar o dinheiro gasto no jogo com o dinheiro
+devido a eles torna impossível saber se o cofre está solvente.
+
+Como o gasto é uma transferência simples de ERC-20, o jogo paga direto para o
+endereço dela — não há contrato intermediário, e portanto nada a ser drenado.
+
 ## Pendências desta página
-1. O que acontece com o $BSTOCK gasto dentro do jogo (pacotes, minas): vai para
-   o Safe, é queimado, ou volta ao cofre? **G decide.**
+1. O endereço do cofre de $BSTOCK: **G cria a carteira e informa.**
 2. Com que frequência o keeper saca o escrow da Pons.
 3. Se a compra de ações na Robinhood é manual (o G comprando) ou automática.
