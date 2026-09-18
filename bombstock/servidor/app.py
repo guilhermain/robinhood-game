@@ -499,14 +499,22 @@ def avancar_todas():
             cur.execute("update mina set atualizada_em=%s where id=%s", (agora, mid))
             continue
         m = Mina(herois, cfg, mid)
-        if grade:
-            m.grade = grade
+        # restaura a fila de eventos, nao so o mapa: senao cada ciclo recomeca
+        m.restaurar(grade if isinstance(grade, dict) else {'grade': grade})
         ganho_unidades = m.avancar(segundos)
         ganho_usd = ganho_unidades * base
         # O TETO manda: o bot e o jogador honesto param no mesmo lugar.
         ganho_usd = min(ganho_usd, restante)
         if ganho_usd <= 0:
-            cur.execute("update mina set atualizada_em=%s where id=%s", (agora, mid))
+            # Ciclo sem ganho ainda avancou a simulacao: SALVA o estado. Antes
+            # eu so mexia em atualizada_em e o progresso (vida dos baus, fila de
+            # eventos) era jogado fora a cada 30s — nada era minerado nunca.
+            cur.execute("""update mina set grade=%s, limpas=%s, atualizada_em=%s
+                           where id=%s""",
+                        (json.dumps(m.estado()), m.limpas, agora, mid))
+            for h in m.herois:
+                cur.execute("update heroi set energia=%s where token_id=%s",
+                            (h['energia'], h['id']))
             continue
         # divide o consumo do teto entre os herois, na proporcao do dano
         soma_pw = sum(h['power'] for h in herois) or 1
@@ -530,7 +538,7 @@ def avancar_todas():
                         (ep, carteira, tk, ganho_usd/len(destinos)))
         cur.execute("""update mina set grade=%s, achados_usd=achados_usd+%s,
                        limpas=%s, atualizada_em=%s where id=%s""",
-                    (json.dumps(m.grade), ganho_usd, m.limpas, agora, mid))
+                    (json.dumps(m.estado()), ganho_usd, m.limpas, agora, mid))
         for h in m.herois:
             cur.execute("update heroi set energia=%s, achados_usd=achados_usd+%s where token_id=%s",
                         (h['energia'], h['achados'] * base, h['id']))

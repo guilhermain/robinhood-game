@@ -99,5 +99,27 @@ class Mina:
         return ganho
 
     def estado(self):
-        return {'grade':self.grade,'herois':self.herois,'agora':self.agora,
-                'achados':self.achados,'limpas':self.limpas}
+        """Tudo que precisa sobreviver entre ciclos.
+
+        Sem a FILA salva, cada ciclo recomecava do zero: o heroi andava ate o
+        bau e o ciclo de 30s acabava antes da bomba estourar, entao nada era
+        minerado nunca. Antes passava batido porque as fatias eram de horas."""
+        return {'grade': self.grade, 'herois': self.herois, 'agora': self.agora,
+                'achados': self.achados, 'limpas': self.limpas,
+                'fila': [[t - self.agora, i, tipo] for (t, i, tipo) in self.fila]}
+
+    def restaurar(self, d):
+        if not d: return
+        if d.get('grade'): self.grade = d['grade']
+        if d.get('herois'):
+            for i, h in enumerate(d['herois']):
+                if i < len(self.herois):
+                    self.herois[i].update(h)
+        self.achados = float(d.get('achados', 0))
+        self.limpas = int(d.get('limpas', 0))
+        if d.get('fila'):
+            import heapq as _h
+            self.fila = []
+            for dt, i, tipo in d['fila']:
+                if i < len(self.herois):
+                    _h.heappush(self.fila, (max(0.0, float(dt)), int(i), tipo))
