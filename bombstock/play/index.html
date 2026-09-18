@@ -1531,6 +1531,16 @@ function desenhar(){
     if(c.bloco==='prisao'){
       const f=c.hp/c.hpMax, q = f>0.66?0 : (f>0.33?1:2);
       peca(JAULA, q*R48, 0, R48,R48, x*T-RECUO, y*T-RECUO, R48,R48);
+      // Barra de vida SEMPRE visivel na jaula, mesmo intacta. Ela tem 2000 de
+      // vida, 25x o bau marrom: com herois fracos leva dias, e sem a barra
+      // parece que os herois a estao ignorando. Em CIANO, que e a cor dela.
+      {
+        const L=24, A=3, bx=x*T+(T-L)/2, by=y*T+T-4;
+        cx.fillStyle='rgba(8,4,16,.85)'; cx.fillRect(bx-1,by-1,L+2,A+2);
+        cx.fillStyle='#241539';          cx.fillRect(bx,by,L,A);
+        cx.fillStyle = f>0.5 ? '#35C4E8' : (f>0.2 ? '#6F8CFF' : '#A45CF0');
+        cx.fillRect(bx,by,Math.max(1,Math.round(L*f)),A);
+      }
       continue;
     }
     if(EH_BAU(c.bloco)){
