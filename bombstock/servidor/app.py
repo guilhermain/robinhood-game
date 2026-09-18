@@ -458,12 +458,18 @@ def avancar_todas():
             m.grade = grade
         ganho_unidades = m.avancar(segundos)
         ganho_usd = ganho_unidades * base
-        ticker = 'USDG' if tema == 'verde' else tema
-        cur.execute("""insert into saldo_epoca (epoca,carteira,ticker,usd)
-                       values (%s,%s,%s,%s)
-                       on conflict (epoca,carteira,ticker)
-                       do update set usd = saldo_epoca.usd + excluded.usd""",
-                    (ep, carteira, ticker, ganho_usd))
+        # Green Field paga as SETE acoes, como no jogo. Antes o servidor creditava
+        # tudo em USDG — achado no teste de ponta a ponta: o jogador via o cofre
+        # com "USDG: 0" numa mina que no cliente paga NVDA, META, GME...
+        # Divide igual entre as sete: mesma esperanca do sorteio por bau.
+        destinos = (['NVDA','GME','AMZN','MSTR','META','SPCX','USDG'] if tema == 'verde'
+                    else [tema])
+        for tk in destinos:
+            cur.execute("""insert into saldo_epoca (epoca,carteira,ticker,usd)
+                           values (%s,%s,%s,%s)
+                           on conflict (epoca,carteira,ticker)
+                           do update set usd = saldo_epoca.usd + excluded.usd""",
+                        (ep, carteira, tk, ganho_usd/len(destinos)))
         cur.execute("""update mina set grade=%s, achados_usd=achados_usd+%s,
                        limpas=%s, atualizada_em=%s where id=%s""",
                     (json.dumps(m.grade), ganho_usd, m.limpas, agora, mid))
