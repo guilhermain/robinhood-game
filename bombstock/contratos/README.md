@@ -1,13 +1,21 @@
 # Contratos do BOMBSTOCK
 
-Escritos e testados em 15/09/2026. **Nada foi deployado em rede pública** — os
-testes rodam numa EVM local. O deploy na testnet 46630 depende de uma carteira
-com ETH de testnet, e os faucets exigem verificação humana.
+Escritos em 15/09/2026. **Deployados na testnet 46630 em 16/09** e usados
+pelo jogo desde então. Endereços em `enderecos_testnet.json`. A carteira de
+deploy foi gerada num container: trate como comprometida.
+
+**Dois destes contratos NÃO podem existir na mainnet:** `CofreTeste` (paga o
+que pedirem — provado: 20.000 NVDA numa transação) e `Tokens.sol` (torneira
+aberta). Ver `../MAINNET.md`.
 
 ## Arquivos
 
 | arquivo | o que é |
 |---|---|
+| `HeroiTestnet.sol` | NFT do herói. Raridade sorteada no contrato. **Explorável por re-roll** (40 tentativas ruins custaram zero): a mainnet exige commit-reveal. |
+| `CofreTeste.sol` | Paga sem prova, de propósito, para testar o caminho. Saque e conversão em lote numa transação. **Só testnet.** |
+| `MiniPool.sol` | Pool BSTOCK/USDG de produto constante. Não emite cota: quem põe não tira. **Só testnet.** |
+| `Atacante.sol` | Os contratos de ataque da auditoria (re-roll e dreno). Para reproduzir. |
 | `Tokens.sol` | ERC-20 mínimo. Na testnet vira o $BSTOCK e as sete ações de mentira. Tem torneira aberta para qualquer carteira pegar 1.000 e testar. **Não vai para mainnet**: lá as ações são os contratos reais da Robinhood e o $BSTOCK sai da Pons. |
 | `RewardVault.sol` | O cofre. Uma raiz de Merkle por época; o jogador puxa o que é dele provando estar na árvore. |
 | `merkle.py` | Monta árvore, raiz e prova compatíveis com o `verificar()` do cofre. |

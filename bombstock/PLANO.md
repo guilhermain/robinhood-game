@@ -3,6 +3,10 @@
 Escrito em 15/09/2026, depois de eu propor peças soltas fora de ordem.
 Este arquivo manda; `PROXIMOS_PASSOS.md` é a lista curta do dia.
 
+**Atualizado em 18/09:** as etapas 1 e 2 fecharam. A seção 1 abaixo descreve o
+jogo de 15/09 e está mantida como registro histórico; o estado atual está em
+`PROXIMOS_PASSOS.md`, e o que falta para a mainnet em `MAINNET.md`.
+
 ## 1. O que existe hoje
 
 **O jogo.** Um HTML de 577 KB, 66 funções, 6 telas, 7 minas, 62 folhas de arte.
@@ -54,7 +58,7 @@ contrato o que ainda muda é lacrar alvo móvel. Três decisões travam o Lado A
 - preço e tamanho de pacote, hoje 10/48/90 em número solto
 - se comprar mina dá vantagem de jogo ou continua só a ação em que se é pago
 
-### Etapa 1 — testnet 46630, caminho de escrita inteiro
+### Etapa 1 — testnet 46630, caminho de escrita inteiro — FEITA em 16/09
 Chain 46630, RPC `https://rpc.testnet.chain.robinhood.com`, CORS liberado,
 faucet público. Aqui a trapaça não custa nada, então dá para montar tudo:
 1. $BSTOCK de teste
@@ -65,11 +69,11 @@ faucet público. Aqui a trapaça não custa nada, então dá para montar tudo:
 Sai daqui um jogo **funcional de ponta a ponta** sem risco: conecta, compra,
 recebe, minera, saca, vê o token chegar na carteira.
 
-### Etapa 2 — servidor
+### Etapa 2 — servidor — FEITA em 17/09 (Railway, keeper no ar)
 Só depois da testnet provar o caminho. Simulação no servidor, login por
 assinatura, banco, fechamento de época, raiz Merkle. É o que destrava a mainnet.
 
-### Etapa 3 — mainnet
+### Etapa 3 — mainnet — ver `MAINNET.md`
 Lado A pode ir antes, se você quiser adiantar. Lado B só depois da etapa 2.
 
 ## 5. O que NÃO fazer

@@ -39,10 +39,39 @@ honesto passa.
 
 - [x] Esquema do banco, aplicado e testado em Postgres real
 - [x] Login por assinatura, com os sete ataques bloqueados
-- [ ] Simulação da mina no servidor
-- [ ] Endpoint de estado (o cliente para de contar e passa a só desenhar)
-- [ ] Fechamento de época e raiz de Merkle
-- [ ] Deploy no Railway (bloqueado: trial da conta expirou)
+- [x] **Sessão com token** (24h, hash no banco). Antes qualquer um agia em nome de qualquer carteira
+- [x] Simulação da mina por evento: mil minas custam 6,5% de um núcleo
+- [x] Economia em dólar; payback de 30 dias confirmado em 240h
+- [x] `/estado`: o cliente para de contar e passa a só desenhar
+- [x] Servidor lê os heróis da chain e confere propriedade antes de descer
+- [x] Fechamento de época: congela dólar e cotação, monta Merkle, serve prova
+- [x] **Keeper**: fecha e publica sozinho, alinhado com `epocaAtual()` do contrato
+- [x] Deploy no Railway: https://robinhood-game-production-3577.up.railway.app
+- [x] Lista fechada de temas, lock por carteira, limite por carteira nas ações
+
+## Endpoints
+
+| rota | o que faz |
+|---|---|
+| `POST /login/desafio` | sorteia o texto a assinar |
+| `POST /login/verificar` | confere a assinatura, emite o token |
+| `POST /logout` | invalida o token |
+| `POST /mina/entrar` | desce heróis; exige sessão; confere na chain |
+| `GET /estado/{carteira}` | o que o cliente desenha |
+| `GET /epoca/estado` | onde as épocas estão |
+| `GET /epoca/{n}/previa` | o que a época pagaria |
+| `GET /epoca/{n}/prova/{carteira}` | a prova para o contrato; só de época fechada |
+| `POST /epoca/fechar` | congela e abre a próxima; só com `KEEPER_CHAVE` |
+
+## Variáveis de ambiente
+
+`DATABASE_URL`, `CHAIN_RPC`, `CHAIN_ID`, `HEROI_ADDR`, `VAULT_ADDR`,
+`KEEPER_CHAVE` (fecha época por HTTP), `KEEPER_PK` (assina a publicação; sem ela
+o keeper não roda), `EPOCA_HORAS` (24).
+
+## Aberto
+
+Ver `../SEGURANCA.md` achados 11 a 15 e `../MAINNET.md`.
 
 ## Rodar local
 

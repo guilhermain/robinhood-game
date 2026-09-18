@@ -237,6 +237,22 @@ arrecadava, com 10% de inflação ao mês. **Nosso cofre não tem de onde imprim
 O número está na tabela `config` do banco justamente para ser calibrado com
 volume real, sem deploy.
 
+## Decisões de 17 e 18/09
+
+| decisão | valor | quem |
+|---|---|---|
+| Hospedagem do servidor | Railway, Postgres com volume, deploy por commit em `bombstock/servidor/**` | G |
+| Números da economia | no banco (`config`), ajustáveis sem deploy | G |
+| Payback | 30 dias, calibrado pelo herói MÉDIO como o Bombcrypto | G |
+| Mínimo de saque | US$ 10, em dólar e não em baús | G |
+| Unidade interna | dólar; "share" saiu da interface | G |
+| Preço do pacote | linear, 10 por herói; sem desconto | G |
+| Pacote de 10 | sem garantia de raridade | G |
+| Época | 24h; keeper fecha e publica sozinho | Claude, aprovado |
+| Animações novas | servidas como arquivo, não embutidas | G |
+| Ícones das skills | desenhados para o jogo; G quer os do Bombcrypto, Claude recusou | ABERTO |
+| Jaula | dá herói de graça; única fonte fora do caixa | ABERTO |
+
 ## Vocabulário
 
 A unidade minerada chama-se **share** na interface, não "coin". Ela é fração da
