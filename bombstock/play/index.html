@@ -2435,6 +2435,7 @@ function novoHeroi(forcarIdx, forcarP){
 // Coloca o herói no mapa. Os campos de posição só existem enquanto ele trabalha.
 function descer(h){
   if(ativos.length>=VAGAS || h.naMina) return false;
+  const eraPausado = !!h.pausado;
   // avisa o servidor: ele confere na chain se o heroi e desta carteira
   if(sessaoServidor && h.onchain){
     setTimeout(()=>{
@@ -2447,8 +2448,13 @@ function descer(h){
     if(!parede(x,y)&&!bloco(x,y)&&!ativos.some(a=>a.gx===x&&a.gy===y)) livres.push([x,y]);
   if(!livres.length) return false;
   const [gx,gy]=livres[Math.floor(Math.random()*livres.length)];
-  Object.assign(h,{gx,gy,px:gx*T,py:gy*T,estado:'procurar',path:null,esperar:0,
+  Object.assign(h,{gx,gy,px:gx*T,py:gy*T,path:null,esperar:0,
                    minhasBombas:0,dir:DIR.down,anim:0,naMina:true,
+                   // Quem estava pausado DESCE PAUSADO. Antes descer sempre
+                   // punha em 'procurar', entao recarregar a pagina ressuscitava
+                   // todo mundo trabalhando.
+                   estado: eraPausado ? 'dormir' : 'procurar',
+                   pausado: eraPausado,
                    minaId: minaViva?minaViva.def.id:null});
   ativos.push(h);
   salvarLogo();
@@ -3546,7 +3552,10 @@ function estadoParaSalvar(){
     minas: minas.map(m=>({id:m.def.id, achados:m.achados, limpas:m.limpas||0,
                           equipe:m.ativos.map(h=>h.id)})),
     herois: inventario.map(h=>({id:h.id, idx:h.idx, p:h.p, st:h.st,
-      energia:Math.round(h.energia), achados:h.achados, skills:h.skills})),
+      energia:Math.round(h.energia), achados:h.achados, skills:h.skills,
+      // Sem estas duas o refresh ressuscitava todo mundo trabalhando: quem o
+      // jogador tinha mandado descansar voltava farmando sozinho.
+      pausado: !!h.pausado, dormindo: h.estado==='dormir'})),
   };
 }
 
@@ -3587,7 +3596,9 @@ function carregar(){
     for(const s of d.herois){
       const r=RARIDADES[s.idx];
       const h={id:s.id, idx:s.idx, r, p:s.p, st:s.st, energia:s.energia, regen:0,
-               achados:s.achados||0, skills:s.skills||[], tem:{}, naMina:false};
+               achados:s.achados||0, skills:s.skills||[], tem:{}, naMina:false,
+               pausado: !!s.pausado,
+               estado: (s.pausado||s.dormindo) ? 'dormir' : 'procurar'};
       for(const k of h.skills) h.tem[k]=true;
       inventario.push(h); porId[h.id]=h;
     }
