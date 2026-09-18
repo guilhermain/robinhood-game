@@ -48,7 +48,31 @@ da mina por evento, economia em dólar, estado do banco. Medido: mil minas custa
 
 **Economia:** payback de 30 dias confirmado no servidor em 240h de simulação.
 
-## O PRÓXIMO PASSO
+## Fase A — o que já fechou
+
+- [x] **Servidor conta a mineração.** Com sessão, quebrar baú pelo console não
+      credita nada (testado: 16 baús, saldo inalterado).
+- [x] **Sessão com token.** Antes qualquer um agia em nome de qualquer carteira.
+- [x] **Fechamento de época com Merkle.** Servidor congela dólar e cotação,
+      monta a árvore, publica a raiz. O jogador saca com prova.
+- [x] **Keeper.** Fecha e publica sozinho, alinhado com `epocaAtual()` do
+      contrato. Confirmado em produção: fechou a época 5 e publicou a raiz na
+      tx `0x7840fa0e82b8d483ac7d0c40c65899796f6021a662bc4921f7cf7bd8de3085e8`;
+      a raiz na chain bate com a do servidor e o saque com prova pagou
+      0,01142069 NVDA.
+
+## Falta na fase A
+
+### Multisig — depende do G
+Uma chave é dona de todos os contratos, é o operador do cofre **e agora assina
+como keeper**. Ela foi gerada no container: trate como comprometida. Na mainnet
+isso não pode existir.
+
+### Exigir carteira
+Enquanto o caminho local existir, o `CofreTeste` — que paga o que pedirem —
+continua no código.
+
+### Antigo próximo passo (feito)
 
 ### Ligar o cliente ao servidor
 É o que fecha o ataque nº 1 do `SEGURANCA.md`: hoje a quantidade minerada nasce
