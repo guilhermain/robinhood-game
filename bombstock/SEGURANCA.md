@@ -284,3 +284,52 @@ horas para eles. O saque com prova foi provado nas rodadas anteriores com outra
 carteira (épocas 4 e 5), e o calldata que o botão monta foi decodificado pelo
 contrato. Falta só ver os dois juntos com um jogador de verdade — depende de
 tempo de mineração, não de código.
+
+
+---
+
+# Quinta rodada — a batida que eu mesmo criei (18/09)
+
+O G pediu para tirar o ganho offline: só minera com a mina aberta na tela.
+Implementei com uma **batida** — o cliente avisa a cada 20s que está visível, e
+o servidor só minera o tempo coberto. Funciona: 100s de aba fechada renderam
+0,00000000. **E abre um buraco.**
+
+## 16. A batida é forjável por script — ABERTO, GRAVE
+
+**Testado em produção:** um script Python, sem navegador nenhum, mandou
+batidas e minerou 0,039 USD em 100s. Depois, **uma batida por minuto** bastou
+para farmar contínuo.
+
+**Por que é grave:** a batida é uma afirmação do cliente, e cliente não é
+confiável. Quem roda um bot farma 24h; quem joga de verdade farma as horas em
+que deixa a aba aberta.
+
+| jogador | rende por dia por herói |
+|---|---|
+| honesto, 4h/dia de tela aberta | US$ 0,056 |
+| honesto, 8h/dia | US$ 0,111 |
+| **bot, 24h/dia** | **US$ 0,334** |
+
+O bot ganha **3 a 6 vezes mais** que quem joga de verdade. E não dá para
+detectar por volume: um bot a 1 pedido/min e um jogador com 8h de tela aberta
+fazem os mesmos ~1.440 pedidos por dia.
+
+**A ironia:** a exigência de tela aberta foi feita para ser mais justa, e do
+jeito que está ela **premia quem automatiza** e pune quem joga honestamente.
+
+### Caminhos (nenhum é perfeito, e é preciso escolher)
+1. **Aceitar** — é o comportamento de quase todo idle web. O bot vira "o jeito
+   esperto de jogar" e o teto por época limita o dano.
+2. **Encarecer a batida** — exigir na batida algo que só o jogo real produz:
+   um resumo do estado do mapa que bate com o do servidor. Sobe o custo do bot
+   de trivial para "reimplementar o jogo".
+3. **Prova de presença** — captcha ou interação eventual. Estraga um idle.
+4. **Voltar ao ganho offline** — mata o incentivo ao bot de uma vez, porque não
+   há o que ganhar automatizando. Foi o que o G pediu para remover.
+
+## Regra que fica
+**Toda mecânica nova passa por auditoria antes de ser considerada pronta.**
+Esta foi encontrada no mesmo dia porque o G cobrou; as três anteriores vieram
+de rodadas que eu só fiz depois de ele perguntar. Auditar deixa de ser etapa e
+vira parte de implementar.
