@@ -174,6 +174,20 @@ def logout(e: Entrada, authorization: str = Header(default='')):
 # banco: testado, "GOOGL_FALSO" e um tema de 500 letras foram aceitos.
 TEMAS = {'verde','NVDA','GME','AMZN','MSTR','META','SPCX'}
 
+class Batida(BaseModel):
+    carteira: str
+    tema: str
+
+@app.post('/mina/batida')
+def batida(bt: Batida, authorization: str = Header(default='')):
+    """O cliente avisa que a mina esta ABERTA e visivel. So o tempo coberto por
+    estas batidas e minerado: minimizar ou fechar a aba para o farm."""
+    exigir_sessao(bt.carteira, authorization)
+    cur = cursor()
+    cur.execute("update mina set visto_em=now() where carteira=%s and tema=%s",
+                (bt.carteira.lower(), bt.tema))
+    return {'ok': True}
+
 class Descer(BaseModel):
     carteira: str
     tema: str
@@ -219,6 +233,7 @@ def entrar_na_mina(d: Descer, authorization: str = Header(default='')):
             "carteira=excluded.carteira, mina_id=excluded.mina_id",
             (t, c, h['raridade'], h['personagem'], h['power'], h['stamina'],
              h['speed'], h['bombas'], h['alcance'], h['skills'], h['stamina']*50, mid))
+    cur.execute("update mina set visto_em=now(), atualizada_em=now() where id=%s", (mid,))
     cur.execute("insert into evento (carteira,tipo,detalhe) values (%s,'descer',%s)",
                 (c, json.dumps({'tema': d.tema, 'herois': pedidos})))
     return {'ok': True, 'mina': mid, 'herois': len(pedidos)}
@@ -432,8 +447,12 @@ async def ciclo():
 def avancar_todas():
     cur = cursor()
     agora = datetime.now(timezone.utc)
-    cur.execute("""select id, carteira, tema, grade, achados_usd, limpas, atualizada_em
-                   from mina""")
+    # So minas VISTAS ha pouco: o jogador precisa estar com a tela aberta.
+    cur.execute("""select id, carteira, tema, grade, achados_usd, limpas,
+                          atualizada_em, visto_em
+                   from mina
+                   where visto_em is not null
+                     and visto_em > now() - interval '60 seconds'""")
     linhas = cur.fetchall()
     if not linhas:
         return
@@ -441,8 +460,12 @@ def avancar_todas():
            'regen_ms': config(cur, 'regen_ms', 120000)}
     base = config(cur, 'usd_bau_marrom', 0.0127)
     ep = epoca_atual(cur)
-    for mid, carteira, tema, grade, achados, limpas, quando in linhas:
+    for mid, carteira, tema, grade, achados, limpas, quando, visto in linhas:
+        # Nunca mais do que o tempo desde a ultima batida: se a aba ficou
+        # fechada tres horas e voltou agora, ele minera o intervalo do ciclo,
+        # nao as tres horas.
         segundos = max(0.0, (agora - quando).total_seconds())
+        segundos = min(segundos, (agora - visto).total_seconds() + CICLO_S)
         if segundos <= 0:
             continue
         cur.execute("""select token_id, power, stamina, speed, bombas, alcance, skills, energia

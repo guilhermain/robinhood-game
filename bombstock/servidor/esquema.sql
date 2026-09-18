@@ -110,6 +110,9 @@ create index if not exists evento_por_carteira on evento (carteira, quando desc)
 -- existe. Cada coluna nova entra aqui, de forma idempotente.
 alter table jogador add column if not exists sessao_hash text;
 alter table jogador add column if not exists sessao_expira timestamptz;
+-- Batida do cliente: o servidor so minera o tempo em que a mina esteve ABERTA
+-- na tela. Sem isto o jogo farmava com o navegador fechado, o que o G nao quer.
+alter table mina add column if not exists visto_em timestamptz;
 -- Cotacao congelada no fechamento. Sem isto a quantidade era dolar dividido
 -- pelo preco DO MOMENTO, e a raiz mudava a cada chamada mesmo com a epoca
 -- fechada: 0xb9c995d4 virou 0xe09e9d78 em 35 segundos.
