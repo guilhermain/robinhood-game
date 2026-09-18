@@ -689,6 +689,8 @@
   .laBtn.dormindo{border-color:var(--amber);color:var(--amber)}
   .laBtn:hover:not(:disabled){background:#3A2757}
   .laBtn:disabled{opacity:.42;cursor:not-allowed;border-color:var(--rule);color:var(--mute)}
+
+  .laBtn.pausado{border-color:var(--jail);color:var(--jail)}
 </style>
 </head>
 <body>
@@ -1310,7 +1312,7 @@ function danoDe(h,tipo){
 }
 
 function pensar(h,dt){
-  if(h.energia<=0 && h.estado!=='dormir'){ h.estado='dormir'; h.path=null; }
+  if(h.energia<=0 && h.estado!=='dormir'){ h.estado='dormir'; h.path=null; h.pausado=false; }
   switch(h.estado){
     case 'dormir':
       h.regen += dt*(h.tem.charge?1.7:1);
@@ -3067,14 +3069,18 @@ const MIN_TRABALHO=0.15;
 function acordarHeroi(id){
   const h=ativos.find(x=>x.id===id) || inventario.find(x=>x.id===id);
   if(!h || h.estado!=='dormir') return;
-  if(h.energia < h.st.energiaMax*MIN_TRABALHO){ avisarTopo('Not rested enough yet'); return; }
-  h.estado='procurar'; h.path=null;
+  if(!h.pausado && h.energia < h.st.energiaMax*MIN_TRABALHO){
+    avisarTopo('Too tired — needs a bit more rest'); return; }
+  h.estado='procurar'; h.path=null; h.pausado=false;
   salvar(); pintar();
 }
 function descansarHeroi(id){
   const h=ativos.find(x=>x.id===id);
   if(!h || h.estado==='dormir') return;
   h.estado='dormir'; h.path=null;
+  /* Parou por ORDEM, nao por exaustao. A trava dos 15% existe para quem caiu
+     sem energia; quem o jogador mandou parar volta quando ele quiser. */
+  h.pausado=true;
   salvar(); pintar();
 }
 
@@ -3102,10 +3108,12 @@ function pintarListaAtivos(vista){
         // e depois quanto falta para encher. Quem manda de volta e o jogador.
         const porMs=(x.tem&&x.tem.charge?1.7:1)/REGEN_MS;
         const minimo=x.st.energiaMax*MIN_TRABALHO;
-        est = x.energia < minimo
-          ? 'ready in '+duracaoCurta((minimo-x.energia)/porMs)
-          : (x.energia>=x.st.energiaMax ? 'fully rested'
-             : 'full in '+duracaoCurta((x.st.energiaMax-x.energia)/porMs));
+        est = x.pausado
+          ? 'paused by you'
+          : (x.energia < minimo
+              ? 'too tired \u00b7 ready in '+duracaoCurta((minimo-x.energia)/porMs)
+              : (x.energia>=x.st.energiaMax ? 'fully rested'
+                 : 'full in '+duracaoCurta((x.st.energiaMax-x.energia)/porMs)));
       }
       const icones = x.skills && x.skills.length
         ? x.skills.map(s=>`<span class="chipSkill mini" data-skill="${s}" tabindex="0"`+
@@ -3123,10 +3131,10 @@ function pintarListaAtivos(vista){
           `</span>`+
         `</div>`+
         `<span class="laDir">`+
-          `<button class="laBtn ${x.estado==='dormir'?'dormindo':'ativo'}"`+
+          `<button class="laBtn ${x.estado==='dormir'?(x.pausado?'pausado':'dormindo'):'ativo'}"`+
           ` data-id="${x.id}" data-acao="${x.estado==='dormir'?'acordar':'descansar'}"`+
-          `${x.estado==='dormir' && x.energia < x.st.energiaMax*MIN_TRABALHO ? ' disabled':''}>`+
-          `${x.estado==='dormir'?'Resting':'Farming'}</button>`+
+          `${x.estado==='dormir' && !x.pausado && x.energia < x.st.energiaMax*MIN_TRABALHO ? ' disabled':''}>`+
+          `${x.estado==='dormir'?(x.pausado?'Paused':'Resting'):'Farming'}</button>`+
           `<span class="laSkills">${icones}</span>`+
         `</span>`+
       `</div>`;
