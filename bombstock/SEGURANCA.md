@@ -239,3 +239,48 @@ minutos resolve.
 As duas primeiras rodadas olharam **dinheiro** e **controle**. Esta olhou
 **custo e abuso de recurso** — e era onde estava tudo o que faltava. Nenhum dos
 itens 7 a 12 rouba um centavo; todos degradam ou sujam o sistema.
+
+
+---
+
+# Quarta rodada — jogo de ponta a ponta como jogador (18/09)
+
+Carteira nova, com chave de verdade assinando no navegador: conectou, assinou o
+login, pegou $BSTOCK na torneira, **mintou 5 heróis pela loja** (saldo 1000 →
+950, cinco NFTs na chain), montou o time pelas duas caixas e desceu. Tudo pela
+interface, zero erro de página. Depois, com a sessão ativa, as trapaças:
+
+## Bloqueadas
+- 26 baús quebrados pelo console → saldo inalterado.
+- `bausCofre=99999` e puxar do servidor → volta a 0.
+- Preço forjado (`precos.NVDA=0.000001`) → só muda a tela; o servidor usa o dele.
+- Herói falso `S. Legendary` criado no console e mandado descer → entra no mapa
+  local (cosmético), **o servidor ignora**: só os 5 reais contam.
+
+## Encontrado
+
+### 13. Green Field pagava só USDG no servidor — CORRIGIDO
+No cliente a Green Field paga as sete ações sorteadas por baú; no servidor
+creditava tudo em USDG. O jogador veria `cofre: {USDG: 0}` numa mina que
+promete NVDA, META, GME. Corrigido: divide igual entre as sete, mesma
+esperança do sorteio.
+
+### 14. Squad não volta da mina ao recarregar — ABERTO
+Depois de descer 5 heróis e recarregar, o cliente mostra `ativos: 0` enquanto o
+servidor segue minerando com os 5. Cliente e servidor discordam sobre quem está
+na mina. Não é exploit — o servidor está certo — mas o jogador vê a mina vazia e
+manda descer de novo.
+
+### 15. `sacarOnchain()` continua acessível — ABERTO, JÁ CONHECIDO
+Com sessão ativa, chamar `sacarOnchain()` pelo console ainda mira o
+`CofreTeste` (`0x4C393939B35D9c7C58bb955b277ffF0C52C77f21`), que paga o que
+pedirem. É o mesmo furo do ataque nº 1, por outra porta. Fecha quando a
+carteira virar obrigatória e o caminho local sair do código. **Na mainnet o
+CofreTeste não existe.**
+
+## Não conseguido
+O saque pela interface com esta carteira: os 5 heróis são Common e um baú leva
+horas para eles. O saque com prova foi provado nas rodadas anteriores com outra
+carteira (épocas 4 e 5), e o calldata que o botão monta foi decodificado pelo
+contrato. Falta só ver os dois juntos com um jogador de verdade — depende de
+tempo de mineração, não de código.
