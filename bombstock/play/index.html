@@ -665,6 +665,12 @@
 
   /* nota no chip do farmado, no lugar do icone de moeda */
   #chipCofre canvas{width:22px;height:22px;image-rendering:pixelated;display:block;flex:none}
+
+  /* marca dos 35% na barra: e ali que o heroi acorda sozinho */
+  .laBarra{position:relative}
+  .laBarra u{position:absolute;left:35%;top:-1px;width:1px;height:6px;
+    background:var(--chalk);opacity:.55}
+  .laItem.dormindo .laEstado{color:var(--jail)}
 </style>
 </head>
 <body>
@@ -2957,6 +2963,16 @@ let cofrePedido=false;
    quatro numeros: "awake 10/10" e "cleared 3" nao ajudavam a decidir nada, e a
    taxa por hora oscilava demais para ser lida. Aqui da para ver quem esta
    trabalhando, quem dorme e quanto cada um ja rendeu. */
+// "3h 20m", "18m", "40s" — curto o bastante para caber na lista
+function duracaoCurta(ms){
+  const s=Math.max(0, Math.round(ms/1000));
+  if(s<60) return s+'s';
+  const m=Math.round(s/60);
+  if(m<60) return m+'m';
+  const hh=Math.floor(m/60), mm=m%60;
+  return mm ? `${hh}h ${mm}m` : `${hh}h`;
+}
+
 const ESTADO_ROTULO={dormir:'sleeping', fugir:'clear of blast',
   plantando:'planting', bombardear:'planting', andar:'walking',
   procurar:'looking', esperar:'waiting'};
@@ -3024,7 +3040,17 @@ function pintarListaAtivos(vista){
     lista.map(x=>{
       const f=Math.max(0, Math.min(1, x.energia/x.st.energiaMax));
       const cor = f>0.5?'var(--gain)' : f>0.2?'var(--amber)' : 'var(--loss)';
-      const est = ESTADO_ROTULO[x.estado] || 'mining';
+      /* Dormindo, o rotulo vira CONTAGEM: quanto falta para acordar. Sem isso
+         a lista dizia so "sleeping" e o jogador nao sabia se estava recuperando
+         nem quanto faltava — e a espera e longa (um S. Legendary dorme ~10h). */
+      let est = ESTADO_ROTULO[x.estado] || 'mining';
+      if(x.estado==='dormir'){
+        const alvo=x.st.energiaMax*0.35;
+        const falta=Math.max(0, alvo-x.energia);
+        const porMs=(x.tem&&x.tem.charge?1.7:1)/REGEN_MS;
+        const ms=porMs>0 ? falta/porMs : 0;
+        est = falta<=0 ? 'waking up' : 'wakes in '+duracaoCurta(ms);
+      }
       const icones = x.skills && x.skills.length
         ? x.skills.map(s=>`<span class="chipSkill mini" data-skill="${s}" tabindex="0"`+
             ` role="img" aria-label="${SKILLS[s]}: ${SKILL_DESC[s]}">`+
@@ -3035,7 +3061,10 @@ function pintarListaAtivos(vista){
         `<div class="laMeio">`+
           `<span class="laNome" style="color:${x.r.cor}">${x.p.n}</span>`+
           `<span class="laEstado">${est}</span>`+
-          `<span class="laBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></span>`+
+          `<span class="laBarra${x.estado==='dormir'?' dormindo':''}">`+
+            `<i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i>`+
+            (x.estado==='dormir'?'<u></u>':'')+   // marca dos 35%, onde ele acorda
+          `</span>`+
         `</div>`+
         `<span class="laSkills">${icones}</span>`+
       `</div>`;
