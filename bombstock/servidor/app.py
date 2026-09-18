@@ -260,7 +260,10 @@ def montar_epoca(cur, numero):
     cur.execute("select carteira, ticker, usd from saldo_epoca "
                 "where epoca=%s and usd > 0 order by carteira, ticker", (numero,))
     linhas = cur.fetchall()
-    precos = {}
+    # Cotacao congelada da epoca. Enquanto ela nao existe (epoca aberta), usa a
+    # do mercado — e por isso a previa de epoca aberta muda, como ela avisa.
+    cur.execute("select ticker, preco from preco_epoca where epoca=%s", (numero,))
+    precos = {t: float(p) for t, p in cur.fetchall()}
     folhas, itens = [], []
     for carteira, ticker, usd in linhas:
         if ticker not in ACAO_ADDR:
@@ -302,6 +305,14 @@ def fechar_epoca(f: Fechar):
         raise HTTPException(400, 'ja fechada')
     # o ciclo pode estar creditando agora: serializa
     cur.execute("select pg_advisory_xact_lock(hashtext('epoca'))")
+    # Congela a cotacao ANTES de montar a arvore: e ela que transforma dolar em
+    # quantidade de acao, e sem congelar a raiz nunca para de mudar.
+    cur.execute("select distinct ticker from saldo_epoca where epoca=%s and usd>0", (f.numero,))
+    for (tk,) in cur.fetchall():
+        p = _preco(tk)
+        if p:
+            cur.execute("insert into preco_epoca (epoca,ticker,preco) values (%s,%s,%s) "
+                        "on conflict (epoca,ticker) do nothing", (f.numero, tk, p))
     cur.execute("update epoca set fechada_em=now() where numero=%s", (f.numero,))
     cur.execute("insert into epoca (numero) values (%s) on conflict do nothing", (f.numero+1,))
     folhas, itens = montar_epoca(cur, f.numero)
