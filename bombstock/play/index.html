@@ -698,8 +698,12 @@
      figuras lado a lado. Ela so aparece no fim, quando o vidro ja quebrou. */
   /* A silhueta que fica passando precisa ocupar o vidro: 96px era metade da
      capsula e o heroi aparecia pequeno no fim da animacao. */
-  .abCapsula #abArte{position:absolute;left:50%;transform:translateX(-50%);
-    top:16%;width:47%;height:53%;z-index:2;opacity:0;transition:opacity .25s;
+  /* Medido na propria arte: a silhueta dela ocupa 31,5% de largura e 43,5% de
+     altura, comecando em 34,8% do topo. Antes eu tinha chutado 47% e 53%, e o
+     heroi do jogo flutuava acima do pedestal com a silhueta da arte aparecendo
+     atras. */
+  .abCapsula #abArte{position:absolute;left:47.9%;transform:translateX(-50%);
+    top:34.8%;width:31.5%;height:43.5%;z-index:2;opacity:0;transition:opacity .25s;
     image-rendering:pixelated}
   .abCapsula.revelando #abArte{opacity:1}
   .abCapsula .abBrilho{z-index:1}
