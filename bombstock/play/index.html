@@ -671,6 +671,14 @@
   .laBarra u{position:absolute;left:35%;top:-1px;width:1px;height:6px;
     background:var(--chalk);opacity:.55}
   .laItem.dormindo .laEstado{color:var(--jail)}
+
+  /* tempo de recuperacao na carta do squad */
+  .chBarra{position:relative}
+  .chBarra u{position:absolute;left:35%;top:-1px;width:1px;height:6px;
+    background:var(--chalk);opacity:.55}
+  .chTempo{margin-top:4px;font-size:9px;color:var(--jail);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chTempo.cheio{color:var(--gain)}
 </style>
 </head>
 <body>
@@ -2870,6 +2878,18 @@ function pintarCaixa(alvo, lista, naMina, destino){
     const f=Math.max(0, Math.min(1, h.energia/h.st.energiaMax));
     const cor = f>0.5?'var(--gain)' : f>0.2?'var(--amber)' : 'var(--loss)';
     const bloqueado = !naMina && cheia;
+    /* Tempo de recuperacao tambem AQUI. A lista da mina ja mostrava, mas esta e
+       a tela onde se escolhe quem desce — e escolher sem saber quem esta
+       descansado nao faz sentido. */
+    const cheio = h.energia>=h.st.energiaMax;
+    const porMs=(h.tem&&h.tem.charge?1.7:1)/REGEN_MS;
+    // NAO chamar de 'alvo': esse nome ja e o elemento da caixa nesta funcao
+    const metaE = h.estado==='dormir' ? h.st.energiaMax*0.35 : h.st.energiaMax;
+    const faltaE = Math.max(0, metaE-h.energia);
+    const rotulo = cheio ? 'full'
+      : (h.estado==='dormir'
+          ? 'wakes in '+duracaoCurta(faltaE/porMs)
+          : 'full in '+duracaoCurta((h.st.energiaMax-h.energia)/porMs));
     const el=document.createElement('div');
     el.className='cartaHeroi'+(bloqueado?' bloqueada':'');
     el.draggable=!bloqueado;
@@ -2880,7 +2900,11 @@ function pintarCaixa(alvo, lista, naMina, destino){
       `<div class="chNome">${h.p.n}</div>`+
       `<div class="chRar" style="color:${h.r.cor}">${h.r.nome}</div>`+
       `<div class="chStats"><span>${h.st.power}</span><span>${h.st.stamina}</span><span>${h.st.speed}</span></div>`+
-      `<div class="chBarra"><i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i></div>`+
+      `<div class="chBarra${h.estado==='dormir'?' dormindo':''}">`+
+        `<i style="width:${(f*100).toFixed(0)}%;background:${cor}"></i>`+
+        (h.estado==='dormir'?'<u></u>':'')+
+      `</div>`+
+      `<div class="chTempo${cheio?' cheio':''}">${rotulo}</div>`+
       (h.skills.length? `<div class="chSkills">`+h.skills.map(s=>
         `<img class="icoSkill" src="data:image/png;base64,${SKILL_ICONE_B64[s]}" alt="" title="${SKILLS[s]}">`).join('')+`</div>` : '');
     el.onclick=()=>{ naMina ? tirarDaMina(h) : (!cheia && mandarPara(destino,h)); };
