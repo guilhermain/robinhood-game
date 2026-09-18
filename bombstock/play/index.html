@@ -1482,7 +1482,8 @@ function desenhar(){
     const borda = x===0||y===0||x===COLS-1||y===ROWS-1;
     const canto = (x===0||x===COLS-1) && (y===0||y===ROWS-1);
     const idx = canto?P.canto : (borda?P.borda : P.pilar);
-    if(!parede(x,y+1)){ cx.fillStyle='rgba(0,0,0,.34)'; cx.fillRect(x*T+3,y*T+T,T,4); }
+    // Sem sombra desenhada: era um retangulo de 4px sob cada parede e, no tom
+    // do chao escurecido, virava uma barra verde-escura que parecia medidor.
     peca(CENA, idx*32, 32, 32,32, x*T,y*T,T,T);
   }
 
@@ -1505,9 +1506,15 @@ function desenhar(){
       const arte=bauTinto(c.bloco), M=bauMedida(c.bloco);
       if(arte) cx.drawImage(arte, q*M.W,0,M.W,M.H,
                             x*T+T/2-M.px, y*T+T-2-M.py, M.W,M.H);
-      // Sem barra de vida: o estrago ja aparece na propria arte do bau, em tres
-      // estagios. A barra dava a informacao menos util (o jogador nao escolhe
-      // alvo) e usava o mesmo verde da energia do heroi, o que confundia.
+      // Vida do bau, so depois da primeira pancada. Em AMBAR, nao em verde: o
+      // verde e a energia do heroi, e as duas juntas no mapa se confundiam.
+      if(f<1){
+        const L=20, A=3, bx=x*T+(T-L)/2, by=y*T+T-4;
+        cx.fillStyle='rgba(8,4,16,.85)'; cx.fillRect(bx-1,by-1,L+2,A+2);
+        cx.fillStyle='#3A2757';          cx.fillRect(bx,by,L,A);
+        cx.fillStyle = f>0.5 ? '#F5883A' : (f>0.2 ? '#FFC93C' : '#E5484D');
+        cx.fillRect(bx,by,Math.max(1,Math.round(L*f)),A);
+      }
       continue;
     }
     const i = c.hp/c.hpMax<0.45 ? ROCHA.rachada : (TIPOS[c.bloco].arte||0);
