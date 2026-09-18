@@ -1538,7 +1538,10 @@ function desenhar(){
     const p=1-b.fuse/1800;
     const rapido=Math.floor(Date.now()/(p>0.6?90:170))%2;
     const i = p>0.6 ? (rapido?3:2) : (rapido?1:0);
-    peca('bomba',i*R48,0,R48,R48,b.x*T-RECUO,b.y*T-RECUO,R48,R48);
+    // Bomba 20% menor, centrada na mesma celula: o tamanho vem do R48 (48px
+    // numa celula de 32), que a deixava grande demais perto do heroi.
+    const BL=Math.round(R48*0.8), BR=Math.round((BL-T)/2);
+    peca('bomba',i*R48,0,R48,R48, b.x*T-BR, b.y*T-BR, BL,BL);
     if(b.pierce){ cx.fillStyle='#C79BEE'; cx.fillRect(b.x*T+13,b.y*T+26,6,2); }
   }
 
