@@ -1990,6 +1990,43 @@ const SEL={
   sacarCofre:   '0x49ed96da',
 };
 const SEL_SACAR_BSTOCK='0xa09f5838';
+/* Saque pelo cofre de MERKLE. O CofreTeste paga o que qualquer um pedir — um
+   contrato de oito linhas levou 20.000 NVDA dele numa transacao. Aqui o
+   contrato so paga quem apresenta a prova que o servidor emitiu. */
+const SEL_SACAR_PROVA='0x915396bb';
+
+/* Codifica sacar(uint256 epoca, address token, uint256 valor, bytes32[] prova) */
+function calldataProva(epoca, token, valor, prova){
+  const cab = pad(epoca) + padEnd(token) + pad(valor) + pad(4*32);
+  const lista = pad(prova.length) + prova.map(x=>x.replace('0x','')).join('');
+  return SEL_SACAR_PROVA + cab + lista;
+}
+
+async function sacarComProva(){
+  if(!sessaoServidor){ avisarTopo('Sign in to claim'); return false; }
+  let d;
+  try{
+    d=await apiServidor('/epoca/'+epocaAtualNum+'/prova/'+sessaoServidor);
+  }catch(e){
+    avisarTopo(String(e.message||'').includes('404')
+      ? 'Nothing to claim in this epoch yet' : 'Could not fetch your proof');
+    return false;
+  }
+  if(!d.itens || !d.itens.length){ avisarTopo('Nothing to claim yet'); return false; }
+  let feitas=0;
+  for(const it of d.itens){
+    const ok=await enviarTx(VAULT_ADDR,
+      calldataProva(d.epoca, it.token, BigInt(it.quantidade), it.prova),
+      `Claiming ${it.ticker}`);
+    if(!ok) return feitas>0;
+    feitas++;
+  }
+  avisarTopo('Stocks are in your wallet');
+  puxarEstado();
+  return feitas>0;
+}
+let epocaAtualNum=1;
+
 const SEL_SACAR_LOTE ='0x24430476';
 const SEL_CONV_LOTE  ='0x4ae14d5d';
 
@@ -3082,7 +3119,9 @@ async function sacar(){
   // recebimento que nao aconteceu — diferente de comprar pacote, aqui nao
   // existe versao offline que faca sentido.
   if(!carteira || !redeOk){ avisarTopo('Connect your wallet to claim'); return; }
-  const ok=await sacarOnchain();
+  // Com servidor, o saque passa pelo cofre de Merkle: a prova vem de la e o
+  // contrato confere. Sem servidor, cai no cofre de teste (so testnet).
+  const ok = sessaoServidor ? await sacarComProva() : await sacarOnchain();
   if(!ok) return;                         // sem transacao confirmada, nao zera
   salvarLogo();
   sacado += bausCofre*(1-TAXA_SAQUE);

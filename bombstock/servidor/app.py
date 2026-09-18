@@ -280,12 +280,50 @@ def montar_epoca(cur, numero):
                       'token': tok, 'quantidade': str(qtd), 'usd': float(usd)})
     return folhas, itens
 
+class Fechar(BaseModel):
+    numero: int
+    chave: str
+
+@app.post('/epoca/fechar')
+def fechar_epoca(f: Fechar):
+    """Congela a epoca e abre a proxima. So o keeper faz isso.
+
+    Depois de fechada, nada mais e creditado nela: a raiz para de mudar e as
+    provas passam a valer. Esta e a diferenca entre publicar uma raiz util e
+    publicar uma que vence em segundos."""
+    if not KEEPER_CHAVE or f.chave != KEEPER_CHAVE:
+        raise HTTPException(401, 'so o keeper fecha epoca')
+    cur = cursor()
+    cur.execute("select fechada_em from epoca where numero=%s", (f.numero,))
+    r = cur.fetchone()
+    if not r:
+        raise HTTPException(404, 'epoca inexistente')
+    if r[0]:
+        raise HTTPException(400, 'ja fechada')
+    # o ciclo pode estar creditando agora: serializa
+    cur.execute("select pg_advisory_xact_lock(hashtext('epoca'))")
+    cur.execute("update epoca set fechada_em=now() where numero=%s", (f.numero,))
+    cur.execute("insert into epoca (numero) values (%s) on conflict do nothing", (f.numero+1,))
+    folhas, itens = montar_epoca(cur, f.numero)
+    raiz_hex = ('0x'+_raiz(folhas).hex()) if folhas else None
+    cur.execute("update epoca set raiz=%s where numero=%s", (raiz_hex, f.numero))
+    cur.execute("insert into evento (tipo,detalhe) values ('epoca_fechada',%s)",
+                (json.dumps({'epoca': f.numero, 'linhas': len(itens), 'raiz': raiz_hex}),))
+    return {'ok': True, 'epoca': f.numero, 'linhas': len(itens), 'raiz': raiz_hex,
+            'proxima': f.numero+1}
+
+KEEPER_CHAVE = os.environ.get('KEEPER_CHAVE', '')
+
 @app.get('/epoca/{numero}/previa')
 def previa_epoca(numero: int):
     """O que a epoca pagaria se fechasse agora. Leitura, nao fecha nada."""
     cur = cursor()
+    cur.execute("select fechada_em, raiz from epoca where numero=%s", (numero,))
+    e = cur.fetchone()
     folhas, itens = montar_epoca(cur, numero)
-    return {'epoca': numero, 'jogadores': len({i['carteira'] for i in itens}),
+    return {'epoca': numero, 'fechada': bool(e and e[0]),
+            'aviso': None if (e and e[0]) else 'epoca aberta: a raiz ainda muda',
+            'jogadores': len({i['carteira'] for i in itens}),
             'linhas': len(itens), 'raiz': ('0x'+_raiz(folhas).hex()) if folhas else None,
             'itens': itens[:50]}
 
@@ -294,6 +332,10 @@ def prova_do_jogador(numero: int, carteira: str):
     """A prova que o jogador leva ao contrato. Publica de proposito: ela so
     serve para quem e dono da carteira que esta dentro dela."""
     cur = cursor()
+    cur.execute("select fechada_em from epoca where numero=%s", (numero,))
+    e = cur.fetchone()
+    if not e or not e[0]:
+        raise HTTPException(409, 'epoca ainda aberta: a prova so vale depois de fechada')
     folhas, itens = montar_epoca(cur, numero)
     c = carteira.lower()
     saida = []
@@ -324,7 +366,17 @@ def estado(carteira: str, request: Request):
             'min_saque_usd': config(cur, 'min_saque_usd', 10)}
 
 def epoca_atual(cur):
-    cur.execute("select coalesce(max(numero),1) from epoca")
+    """A epoca ABERTA: a unica que recebe credito.
+
+    Antes isto devolvia a maior, fechada ou nao, e o ciclo continuava creditando
+    numa epoca ja publicada. Resultado: a raiz mudava depois de publicada e as
+    provas emitidas nasciam invalidas. Testado: a raiz da epoca 1 mudou de
+    0xa64321f0 para 0xe1ab680c entre duas chamadas."""
+    cur.execute("select numero from epoca where fechada_em is null order by numero limit 1")
+    r = cur.fetchone()
+    if r:
+        return r[0]
+    cur.execute("select coalesce(max(numero),0)+1 from epoca")
     n = cur.fetchone()[0]
     cur.execute("insert into epoca (numero) values (%s) on conflict do nothing", (n,))
     return n
