@@ -668,17 +668,27 @@
 
   /* marca dos 35% na barra: e ali que o heroi acorda sozinho */
   .laBarra{position:relative}
-  .laBarra u{position:absolute;left:35%;top:-1px;width:1px;height:6px;
+  .laBarra u{position:absolute;left:15%;top:-1px;width:1px;height:6px;
     background:var(--chalk);opacity:.55}
   .laItem.dormindo .laEstado{color:var(--jail)}
 
   /* tempo de recuperacao na carta do squad */
   .chBarra{position:relative}
-  .chBarra u{position:absolute;left:35%;top:-1px;width:1px;height:6px;
+  .chBarra u{position:absolute;left:15%;top:-1px;width:1px;height:6px;
     background:var(--chalk);opacity:.55}
   .chTempo{margin-top:4px;font-size:9px;color:var(--jail);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chTempo.cheio{color:var(--gain)}
+
+  /* botao de descansar/voltar ao farm, em cada linha da lista */
+  .laDir{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+  .laBtn{border:1px solid var(--rule);border-radius:3px;background:var(--panel);
+    color:var(--mute);font-family:inherit;font-size:10px;padding:4px 8px;cursor:pointer;
+    white-space:nowrap;transition:border-color .12s,color .12s,background .12s}
+  .laBtn.ativo{border-color:var(--gain);color:var(--gain)}
+  .laBtn.dormindo{border-color:var(--amber);color:var(--amber)}
+  .laBtn:hover:not(:disabled){background:#3A2757}
+  .laBtn:disabled{opacity:.42;cursor:not-allowed;border-color:var(--rule);color:var(--mute)}
 </style>
 </head>
 <body>
@@ -1305,7 +1315,9 @@ function pensar(h,dt){
     case 'dormir':
       h.regen += dt*(h.tem.charge?1.7:1);
       if(h.regen>=REGEN_MS){ h.regen=0; h.energia=Math.min(h.st.energiaMax,h.energia+1); }
-      if(h.energia>=h.st.energiaMax*0.35) h.estado='procurar';
+      /* NAO acorda sozinho. O jogador e que manda de volta, pelo botao da
+         lista. Antes ele voltava ao chegar em 35% e o jogador nao tinha
+         controle de quem trabalha e quem descansa. */
       break;
     case 'procurar': {
       // Caca bau primeiro; rocha so quando nao ha bau alcancavel.
@@ -2884,11 +2896,10 @@ function pintarCaixa(alvo, lista, naMina, destino){
     const cheio = h.energia>=h.st.energiaMax;
     const porMs=(h.tem&&h.tem.charge?1.7:1)/REGEN_MS;
     // NAO chamar de 'alvo': esse nome ja e o elemento da caixa nesta funcao
-    const metaE = h.estado==='dormir' ? h.st.energiaMax*0.35 : h.st.energiaMax;
-    const faltaE = Math.max(0, metaE-h.energia);
+    const minimo=h.st.energiaMax*MIN_TRABALHO;
     const rotulo = cheio ? 'full'
-      : (h.estado==='dormir'
-          ? 'wakes in '+duracaoCurta(faltaE/porMs)
+      : (h.energia < minimo
+          ? 'ready in '+duracaoCurta((minimo-h.energia)/porMs)
           : 'full in '+duracaoCurta((h.st.energiaMax-h.energia)/porMs));
     const el=document.createElement('div');
     el.className='cartaHeroi'+(bloqueado?' bloqueada':'');
@@ -3049,6 +3060,24 @@ function igualarAlturaLista(){
 }
 addEventListener('resize', igualarAlturaLista);
 
+/* Energia minima para trabalhar: abaixo disso ele planta uma bomba e dorme de
+   novo, entao o botao fica travado e diz quanto falta. */
+const MIN_TRABALHO=0.15;
+
+function acordarHeroi(id){
+  const h=ativos.find(x=>x.id===id) || inventario.find(x=>x.id===id);
+  if(!h || h.estado!=='dormir') return;
+  if(h.energia < h.st.energiaMax*MIN_TRABALHO){ avisarTopo('Not rested enough yet'); return; }
+  h.estado='procurar'; h.path=null;
+  salvar(); pintar();
+}
+function descansarHeroi(id){
+  const h=ativos.find(x=>x.id===id);
+  if(!h || h.estado==='dormir') return;
+  h.estado='dormir'; h.path=null;
+  salvar(); pintar();
+}
+
 function pintarListaAtivos(vista){
   const alvo=document.getElementById('listaAtivos');
   if(!alvo) return;
@@ -3069,11 +3098,14 @@ function pintarListaAtivos(vista){
          nem quanto faltava — e a espera e longa (um S. Legendary dorme ~10h). */
       let est = ESTADO_ROTULO[x.estado] || 'mining';
       if(x.estado==='dormir'){
-        const alvo=x.st.energiaMax*0.35;
-        const falta=Math.max(0, alvo-x.energia);
+        // Ninguem acorda sozinho: o texto diz quanto falta para PODER voltar,
+        // e depois quanto falta para encher. Quem manda de volta e o jogador.
         const porMs=(x.tem&&x.tem.charge?1.7:1)/REGEN_MS;
-        const ms=porMs>0 ? falta/porMs : 0;
-        est = falta<=0 ? 'waking up' : 'wakes in '+duracaoCurta(ms);
+        const minimo=x.st.energiaMax*MIN_TRABALHO;
+        est = x.energia < minimo
+          ? 'ready in '+duracaoCurta((minimo-x.energia)/porMs)
+          : (x.energia>=x.st.energiaMax ? 'fully rested'
+             : 'full in '+duracaoCurta((x.st.energiaMax-x.energia)/porMs));
       }
       const icones = x.skills && x.skills.length
         ? x.skills.map(s=>`<span class="chipSkill mini" data-skill="${s}" tabindex="0"`+
@@ -3090,9 +3122,20 @@ function pintarListaAtivos(vista){
             (x.estado==='dormir'?'<u></u>':'')+   // marca dos 35%, onde ele acorda
           `</span>`+
         `</div>`+
-        `<span class="laSkills">${icones}</span>`+
+        `<span class="laDir">`+
+          `<button class="laBtn ${x.estado==='dormir'?'dormindo':'ativo'}"`+
+          ` data-id="${x.id}" data-acao="${x.estado==='dormir'?'acordar':'descansar'}"`+
+          `${x.estado==='dormir' && x.energia < x.st.energiaMax*MIN_TRABALHO ? ' disabled':''}>`+
+          `${x.estado==='dormir'?'Resting':'Farming'}</button>`+
+          `<span class="laSkills">${icones}</span>`+
+        `</span>`+
       `</div>`;
     }).join('');
+  // os botoes so existem depois do innerHTML
+  for(const b of alvo.querySelectorAll('.laBtn')){
+    b.onclick=()=> b.dataset.acao==='acordar'
+      ? acordarHeroi(+b.dataset.id) : descansarHeroi(+b.dataset.id);
+  }
   igualarAlturaLista();
 }
 
