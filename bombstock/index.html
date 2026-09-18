@@ -473,6 +473,15 @@
   ::-webkit-scrollbar-thumb:hover{background:linear-gradient(#63497F,#4A3660)}
   ::-webkit-scrollbar-thumb:active{background:var(--color-action)}
   html{scrollbar-color:#4A3660 #1A0E2A}
+
+  .rw-resumo{color:var(--gain, #3FBF6F)}
+  .section-note{font-size:12px;color:var(--mute,#9AA3B2);margin-top:8px}
+
+  .stat-segments--18{grid-template-columns:repeat(18,minmax(0,1fr));gap:2px}
+  .stat-row dd{grid-template-columns:minmax(0,1fr) 56px}
+  .stat-value{white-space:nowrap}
+  .stat-segment.is-under{background:color-mix(in srgb, var(--rarity-accent) 22%, var(--color-stat-empty))}
+  .stat-row dt small{display:block;font-weight:400;font-size:11px;opacity:.7}
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->
@@ -490,14 +499,14 @@
         <ul class="nav-list">
           <li><a class="nav-link" href="#mines">MINES</a></li>
           <li><a class="nav-link" href="#heroes">HEROES</a></li>
-          <li><button class="nav-link"  data-action="open-squads" type="button" popovertarget="squads-preview">SQUADS</button></li>
+          <li><a class="nav-link" href="./play/#squad">SQUADS</a></li>
           <li><a class="nav-link" href="#rewards">REWARDS</a></li>
-          <li><button class="nav-link" type="button" popovertarget="shop-preview">SHOP</button></li>
+          <li><a class="nav-link" href="./play/#shop">SHOP</a></li>
           <li><a class="nav-link" href="#about">ABOUT</a></li>
         </ul>
       </nav>
       <div class="header-actions" id="header-actions">
-        <button class="button" type="button" popovertarget="wallet-preview" data-action="connect-wallet"><span class="wallet-icon" aria-hidden="true"></span>CONNECT WALLET</button>
+        <a class="button" href="./play/#connect" data-action="connect-wallet"><span class="wallet-icon" aria-hidden="true"></span>CONNECT WALLET</a>
         <a class="button button--primary" href="./play/" data-action="play">PLAY</a>
       </div>
     </div>
@@ -510,7 +519,7 @@
         <h1 class="hero-title display" id="hero-heading"><span>BLAST BLOCKS.</span><span>CLAIM STOCKS.</span></h1>
         <p class="hero-supporting">Send heroes into mines. Open chests. Earn tokenized stocks.</p>
         <div class="hero-actions">
-          <a class="button button--primary" href="./play/" data-action="play">PLAY PROTOTYPE</a>
+          <a class="button button--primary" href="./play/" data-action="play">PLAY NOW</a>
           <a class="button" href="#gameplay"><span class="play-icon" aria-hidden="true"></span>HOW IT WORKS</a>
         </div>
       </div>
@@ -519,7 +528,7 @@
       </figure>
     </section>
 
-    <section class="ticker" aria-label="Illustrative stock ticker">
+    <section class="ticker" aria-label="Live stock ticker">
       <div class="ticker-viewport">
         <div class="ticker-track">
           <ul class="ticker-list" aria-label="Stock prices"><li class="ticker-item" data-stock="spcx"><span class="ticker-symbol">SPCX</span><span class="stock-price stock-price--up"><span class="sr-only">Price up:</span> $150.00 <span aria-hidden="true">▲</span></span></li>
@@ -539,7 +548,7 @@
       </div>
       <div class="ticker-meta container">
         <label class="ticker-toggle"><input class="ticker-pause" type="checkbox">Pause ticker</label>
-        <p class="data-note">Illustrative prices</p>
+        <p class="data-note">Live prices</p>
       </div>
     </section>
 
@@ -586,44 +595,44 @@
       </li></ul>
     </section>
     <section class="section container" id="rewards" aria-labelledby="rewards-heading">
-      <div class="section-heading"><h2 class="section-title display" id="rewards-heading">STOCK REWARDS</h2><p>Tokenized stocks, earned in the mines.</p></div>
+      <div class="section-heading"><h2 class="section-title display" id="rewards-heading">STOCK REWARDS</h2><p>Every chest pays in dollars. Dollars turn into real tokenized stocks when you claim. <span id="rw-resumo" class="rw-resumo"></span></p></div>
       <div class="stock-grid"><article class="stock-card" data-stock="spcx" aria-labelledby="stock-spcx">
   <img class="stock-logo game-image" src="assets/logo-spcx.png" width="384" height="160" alt="SpaceX logo" loading="lazy">
   <h3 id="stock-spcx" class="stock-card__symbol">SPCX</h3>
-  <p class="stock-card__amount"><span data-field="distributed">128.40</span> shares</p>
-  <p class="stock-card__caption">Distributed</p>
+  <p class="stock-card__amount"><span data-field="preco">—</span></p>
+  <p class="stock-card__caption">live price</p>
 </article>
 <article class="stock-card" data-stock="gme" aria-labelledby="stock-gme">
   <img class="stock-logo game-image" src="assets/logo-gme.png" width="384" height="160" alt="GameStop logo" loading="lazy">
   <h3 id="stock-gme" class="stock-card__symbol">GME</h3>
-  <p class="stock-card__amount"><span data-field="distributed">842.00</span> shares</p>
-  <p class="stock-card__caption">Distributed</p>
+  <p class="stock-card__amount"><span data-field="preco">—</span></p>
+  <p class="stock-card__caption">live price</p>
 </article>
 <article class="stock-card" data-stock="amzn" aria-labelledby="stock-amzn">
   <img class="stock-logo game-image" src="assets/logo-amzn.png" width="384" height="160" alt="Amazon logo" loading="lazy">
   <h3 id="stock-amzn" class="stock-card__symbol">AMZN</h3>
-  <p class="stock-card__amount"><span data-field="distributed">173.80</span> shares</p>
-  <p class="stock-card__caption">Distributed</p>
+  <p class="stock-card__amount"><span data-field="preco">—</span></p>
+  <p class="stock-card__caption">live price</p>
 </article>
 <article class="stock-card" data-stock="mstr" aria-labelledby="stock-mstr">
   <img class="stock-logo game-image" src="assets/logo-mstr.png" width="384" height="160" alt="Strategy logo" loading="lazy">
   <h3 id="stock-mstr" class="stock-card__symbol">MSTR</h3>
-  <p class="stock-card__amount"><span data-field="distributed">95.60</span> shares</p>
-  <p class="stock-card__caption">Distributed</p>
+  <p class="stock-card__amount"><span data-field="preco">—</span></p>
+  <p class="stock-card__caption">live price</p>
 </article>
 <article class="stock-card" data-stock="nvda" aria-labelledby="stock-nvda">
   <img class="stock-logo game-image" src="assets/logo-nvda.png" width="384" height="160" alt="NVIDIA logo" loading="lazy">
   <h3 id="stock-nvda" class="stock-card__symbol">NVDA</h3>
-  <p class="stock-card__amount"><span data-field="distributed">216.75</span> shares</p>
-  <p class="stock-card__caption">Distributed</p>
+  <p class="stock-card__amount"><span data-field="preco">—</span></p>
+  <p class="stock-card__caption">live price</p>
 </article>
 <article class="stock-card" data-stock="meta" aria-labelledby="stock-meta">
   <img class="stock-logo game-image" src="assets/logo-meta.png" width="384" height="160" alt="Meta logo" loading="lazy">
   <h3 id="stock-meta" class="stock-card__symbol">META</h3>
-  <p class="stock-card__amount"><span data-field="distributed">304.20</span> shares</p>
-  <p class="stock-card__caption">Distributed</p>
+  <p class="stock-card__amount"><span data-field="preco">—</span></p>
+  <p class="stock-card__caption">live price</p>
 </article></div>
-      <p class="data-note">Illustrative distribution totals</p>
+      <p class="section-note" id="rw-fonte">Prices from the Robinhood Chain pool, updated every minute.</p>
     </section>
 
     <section class="section container" id="heroes" aria-labelledby="heroes-heading">
@@ -640,8 +649,11 @@
         </figure>
         <div class="hero-profile">
           <h3 class="hero-name display" id="hero-name">ROARING KITTY</h3>
-          <dl class="hero-stats"><div class="stat-row"><dt id="stat-power-label">Power</dt><dd><div class="stat-meter" role="meter" data-stat="power" aria-labelledby="stat-power-label" aria-valuemin="0" aria-valuemax="5" aria-valuenow="4" aria-valuetext="4 out of 5"><span class="stat-segments" aria-hidden="true"><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment"></span></span></div><span class="stat-value" aria-hidden="true">4/5</span></dd></div><div class="stat-row"><dt id="stat-range-label">Range</dt><dd><div class="stat-meter" role="meter" data-stat="range" aria-labelledby="stat-range-label" aria-valuemin="0" aria-valuemax="5" aria-valuenow="3" aria-valuetext="3 out of 5"><span class="stat-segments" aria-hidden="true"><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment"></span><span class="stat-segment"></span></span></div><span class="stat-value" aria-hidden="true">3/5</span></dd></div><div class="stat-row"><dt id="stat-energy-label">Energy</dt><dd><div class="stat-meter" role="meter" data-stat="energy" aria-labelledby="stat-energy-label" aria-valuemin="0" aria-valuemax="5" aria-valuenow="5" aria-valuetext="5 out of 5"><span class="stat-segments" aria-hidden="true"><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span><span class="stat-segment is-filled"></span></span></div><span class="stat-value" aria-hidden="true">5/5</span></dd></div></dl>
-          <p class="data-note">Illustrative attributes</p>
+          <dl class="hero-stats" id="hero-stats">
+  <!-- preenchido pelo JS com as faixas REAIS por raridade: 1 a 18, cinco atributos -->
+</dl>
+<p class="section-note" id="hero-chance"></p>
+          <p class="section-note">Five attributes, 1 to 18. Rarity sets the range; the pack roll sets the number.</p>
         </div>
       </div>
       <p class="sr-only" id="rarity-status" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -649,27 +661,21 @@
 
     <section class="section container" id="gameplay" aria-labelledby="gameplay-heading">
       <div class="section-heading"><h2 class="section-title display" id="gameplay-heading">WATCH THE GAMEPLAY</h2></div>
-      <div class="gameplay-grid"><figure class="gameplay-card"><button class="gameplay-preview" type="button" popovertarget="video-preview" aria-label="Preview: Enter the mines"><img class="game-image gameplay-image" src="assets/gameplay-mines.png" width="480" height="270" alt="A grid mine with the hero and bomb obstacles" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></button><figcaption>Enter the mines</figcaption></figure>
-<figure class="gameplay-card"><button class="gameplay-preview" type="button" popovertarget="video-preview" aria-label="Preview: Open chests"><img class="game-image gameplay-image" src="assets/gameplay-chests.png" width="480" height="270" alt="A hero approaching a reward chest" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></button><figcaption>Open chests</figcaption></figure>
-<figure class="gameplay-card"><button class="gameplay-preview" type="button" popovertarget="video-preview" aria-label="Preview: Play your way"><img class="game-image gameplay-image" src="assets/gameplay-bomb.png" width="480" height="270" alt="A pixel bomb gameplay preview" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></button><figcaption>Play your way</figcaption></figure></div>
+      <div class="gameplay-grid"><figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Enter the mines"><img class="game-image gameplay-image" src="assets/gameplay-mines.png" width="480" height="270" alt="A grid mine with the hero and bomb obstacles" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></a><figcaption>Enter the mines</figcaption></figure>
+<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Open chests"><img class="game-image gameplay-image" src="assets/gameplay-chests.png" width="480" height="270" alt="A hero approaching a reward chest" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></a><figcaption>Open chests</figcaption></figure>
+<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Play your way"><img class="game-image gameplay-image" src="assets/gameplay-bomb.png" width="480" height="270" alt="A pixel bomb gameplay preview" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></a><figcaption>Play your way</figcaption></figure></div>
     </section>
   </main>
 
   <footer class="site-footer" id="about">
     <div class="footer-inner container">
-      <div class="footer-copy"><p><strong>BOMBSTOCK / $BSTOCK</strong></p><p>A pixel art mine adventure with tokenized-stock rewards.</p><p>Design preview · Prices, rewards, and attributes are illustrative.</p></div>
-      <nav class="footer-links" aria-label="Footer navigation"><a href="#mines">Mines</a><a href="#heroes">Heroes</a><button class="text-button" data-action="open-squads" type="button" popovertarget="squads-preview">Squads</button><button class="text-button" type="button" popovertarget="shop-preview">Shop</button></nav>
+      <div class="footer-copy"><p><strong>BOMBSTOCK / $BSTOCK</strong></p><p>A pixel art mine adventure with tokenized-stock rewards.</p><p>Testnet. Heroes are NFTs, chests pay in dollars, rewards are tokenized stocks.</p></div>
+      <nav class="footer-links" aria-label="Footer navigation"><a href="#mines">Mines</a><a href="#heroes">Heroes</a><a href="./play/#squad">Squads</a><a href="./play/#shop">Shop</a></nav>
     </div>
   </footer>
 
   <!-- Native popovers provide honest, keyboard-operable preview actions with
        no additional JavaScript. Replace these hooks with real integrations. -->
-  <section class="preview-dialog" id="wallet-preview" popover role="dialog" aria-labelledby="wallet-preview-title"><h2 id="wallet-preview-title">Wallet connection</h2><p>This design preview does not connect a wallet or request a signature.</p><button class="button" type="button" popovertarget="wallet-preview" popovertargetaction="hide" autofocus>Close</button></section>
-  <section class="preview-dialog" id="prototype-preview" popover role="dialog" aria-labelledby="prototype-preview-title"><h2 id="prototype-preview-title">Play BOMBSTOCK</h2><p>The playable prototype opens from this control when the developer connects its existing game route.</p><button class="button" type="button" popovertarget="prototype-preview" popovertargetaction="hide" autofocus>Close</button></section>
-  <section class="preview-dialog" id="squads-preview" popover role="dialog" aria-labelledby="squads-preview-title"><h2 id="squads-preview-title">Squads</h2><p>Choose a mine, then send your heroes down. Up to 10 heroes per mine; resting heroes recharge their energy.</p><button class="button"   popovertargetaction="hide" autofocus data-action="open-squads" type="button" popovertarget="squads-preview">Close</button></section>
-  <section class="preview-dialog" id="shop-preview" popover role="dialog" aria-labelledby="shop-preview-title"><h2 id="shop-preview-title">Shop</h2><p>The shop is a preview here. Items, prices, and purchases belong to the game integration.</p><button class="button"   popovertargetaction="hide" autofocus type="button" popovertarget="shop-preview">Close</button></section>
-  <section class="preview-dialog" id="video-preview" popover role="dialog" aria-labelledby="video-preview-title"><h2 id="video-preview-title">Gameplay preview</h2><p>Gameplay clips will appear here when the real videos are supplied.</p><button class="button" type="button" popovertarget="video-preview" popovertargetaction="hide" autofocus>Close</button></section>
-
   <script>
     // Only menu and tab behavior. No framework, data requests, or game logic.
     const header = document.querySelector('.site-header');
@@ -739,6 +745,92 @@
       });
     });
   </script>
+
+<script>
+/* Cotacoes AO VIVO, do mesmo pool que o jogo le. Antes eram numeros escritos
+   no HTML com o aviso "Illustrative prices". E o resumo do servidor: quantos
+   jogadores e quanto ja foi pago, em dolar. */
+(function(){
+  const MAINNET={
+    USDG:'0x5fc5360d0400a0fd4f2af552add042d716f1d168',
+    NVDA:'0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec',
+    GME :'0x1b0e319c6a659f002271b69db8a7df2f911c153e',
+    AMZN:'0x12f190a9f9d7d37a250758b26824b97ce941bf54',
+    MSTR:'0xec262a75e413fafd0df80480274532c79d42da09',
+    META:'0xc0d6457c16cc70d6790dd43521c899c87ce02f35',
+    SPCX:'0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea'};
+  const ultimo={};
+  const fmt=v=>'$'+(v>=100? v.toFixed(2) : v.toFixed(2));
+  async function cotacoes(){
+    try{
+      const ends=Object.values(MAINNET).join(',');
+      const r=await fetch('https://api.geckoterminal.com/api/v2/simple/networks/robinhood/token_price/'+ends);
+      const j=await r.json(); const m=j.data.attributes.token_prices;
+      for(const [t,addr] of Object.entries(MAINNET)){
+        const p=parseFloat(m[addr.toLowerCase()]); if(!p) continue;
+        const dir = ultimo[t]==null ? null : (p>ultimo[t]?'up':(p<ultimo[t]?'down':null));
+        ultimo[t]=p;
+        // fita (pode haver duas copias para o loop)
+        document.querySelectorAll('.ticker-item[data-stock="'+t.toLowerCase()+'"] .stock-price').forEach(el=>{
+          el.className='stock-price'+(dir?' stock-price--'+dir:'');
+          el.innerHTML=(dir?'<span class="sr-only">Price '+dir+':</span> ':'')+fmt(p)+
+            (dir?' <span aria-hidden="true">'+(dir==='up'?'\u25B2':'\u25BC')+'</span>':'');
+        });
+        // cards de recompensa
+        const c=document.querySelector('.stock-card[data-stock="'+t.toLowerCase()+'"] [data-field="preco"]');
+        if(c) c.textContent=fmt(p);
+      }
+    }catch(e){}
+  }
+  async function resumo(){
+    try{
+      const r=await fetch('https://robinhood-game-production-3577.up.railway.app/epoca/estado');
+      const j=await r.json();
+      const fechadas=j.epocas.filter(e=>e.fechada && e.raiz).length;
+      const el=document.getElementById('rw-resumo');
+      if(el && fechadas) el.textContent=fechadas+' payout epoch'+(fechadas>1?'s':'')+' published on-chain so far.';
+    }catch(e){}
+  }
+  cotacoes(); resumo();
+  setInterval(cotacoes, 60000);
+})();
+</script>
+
+<script>
+/* Atributos do jogo de verdade: cinco, de 1 a 18, e a faixa depende da
+   raridade. Antes eram tres barras de 5 escritas no HTML (Power 4/5), uma
+   escala que o jogo nunca usou. A chance tambem e a real, de 10.000. */
+(function(){
+  const R={
+    'common':         {faixa:[1,3],   chance:8287},
+    'rare':           {faixa:[4,6],   chance:1036},
+    'super-rare':     {faixa:[7,9],   chance:518},
+    'epic':           {faixa:[10,12], chance:104},
+    'legendary':      {faixa:[13,15], chance:52},
+    'super-legendary':{faixa:[16,18], chance:4}};
+  const ATR=[['Power','Damage per bomb'],['Stamina','Energy reserve'],['Speed','How fast they walk'],
+             ['Bombs','Bombs at once'],['Range','Blast reach']];
+  function pintar(rar){
+    const d=R[rar]; if(!d) return;
+    const [lo,hi]=d.faixa;
+    const dl=document.getElementById('hero-stats'); if(!dl) return;
+    dl.innerHTML=ATR.map(([n,desc])=>
+      '<div class="stat-row"><dt>'+n+' <small>'+desc+'</small></dt><dd>'+
+      '<div class="stat-meter" role="meter" aria-valuemin="1" aria-valuemax="18" aria-valuenow="'+hi+'" aria-valuetext="'+lo+' to '+hi+' out of 18">'+
+      '<span class="stat-segments stat-segments--18" aria-hidden="true">'+
+      Array.from({length:18},(_,k)=>'<span class="stat-segment'+(k+1>=lo&&k+1<=hi?' is-filled':(k+1<lo?' is-under':''))+'"></span>').join('')+
+      '</span></div><span class="stat-value">'+lo+'\u2013'+hi+'</span></dd></div>').join('');
+    const ch=document.getElementById('hero-chance');
+    if(ch) ch.textContent='Rolled on-chain. Chance per pack: '+(d.chance/100).toFixed(2)+'%  \u00b7  ' + (d.chance>=100? '1 in '+Math.round(10000/d.chance) : '1 in '+Math.round(10000/d.chance).toLocaleString());
+  }
+  const atual=()=>document.querySelector('[data-rarity]:not(style)')?.dataset.rarity
+             || document.querySelector('.rarity-tab[aria-selected="true"]')?.dataset.rarity || 'common';
+  pintar(atual());
+  document.addEventListener('click', e=>{
+    const t=e.target.closest('[data-rarity]'); if(t) setTimeout(()=>pintar(t.dataset.rarity), 0);
+  });
+})();
+</script>
 </body>
 </html>
 <!--

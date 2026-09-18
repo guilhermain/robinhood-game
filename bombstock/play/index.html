@@ -3823,7 +3823,14 @@ for(const b of document.querySelectorAll('.abas button'))
 // a navegacao dele leva de fato ao lugar certo em vez de cair sempre na mina.
 const ATALHO={'#mine':'mina','#squad':'equipe','#heroes':'inventario','#shop':'loja'};
 function abrirPorEndereco(){
-  const t=ATALHO[location.hash.toLowerCase()];
+  const hash=location.hash.toLowerCase();
+  // #connect vem do botao do site: abre na mina e ja pede a carteira
+  if(hash==='#connect'){
+    ir('mina');
+    setTimeout(()=>{ const b=document.getElementById('btnCarteira'); if(b && !carteira) b.click(); }, 400);
+    return;
+  }
+  const t=ATALHO[hash];
   if(t){ entrar(); ir(t); }
 }
 addEventListener('hashchange', abrirPorEndereco);
