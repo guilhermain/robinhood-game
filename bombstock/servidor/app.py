@@ -40,6 +40,16 @@ def preparar():
     # Faxina: minas de tema invalido criadas antes da lista de temas existir.
     cur.execute("delete from mina where tema <> all(%s)", (list(TEMAS),))
     asyncio.get_event_loop().create_task(ciclo())
+    # O keeper so roda se houver chave: sem ela o servidor sobe igual, apenas
+    # sem fechar epoca sozinho.
+    try:
+        import keeper
+        ligado = keeper.iniciar(cursor, fechar_agora, previa_epoca, config)
+        cur.execute("insert into evento (tipo,detalhe) values ('keeper',%s)",
+                    (json.dumps({'ligado': bool(ligado)}),))
+    except Exception as e:
+        cur.execute("insert into evento (tipo,detalhe) values ('erro',%s)",
+                    (json.dumps({'onde':'keeper_start','erro':str(e)[:200]}),))
 
 import httpx
 
@@ -287,43 +297,53 @@ class Fechar(BaseModel):
     numero: int
     chave: str
 
-@app.post('/epoca/fechar')
-def fechar_epoca(f: Fechar):
-    """Congela a epoca e abre a proxima. So o keeper faz isso.
-
-    Depois de fechada, nada mais e creditado nela: a raiz para de mudar e as
-    provas passam a valer. Esta e a diferenca entre publicar uma raiz util e
-    publicar uma que vence em segundos."""
-    if not KEEPER_CHAVE or f.chave != KEEPER_CHAVE:
-        raise HTTPException(401, 'so o keeper fecha epoca')
+def fechar_agora(numero: int):
+    """Fecha de verdade. Usado pelo endpoint e pelo keeper."""
     cur = cursor()
-    cur.execute("select fechada_em from epoca where numero=%s", (f.numero,))
+    cur.execute("select fechada_em from epoca where numero=%s", (numero,))
     r = cur.fetchone()
     if not r:
         raise HTTPException(404, 'epoca inexistente')
     if r[0]:
         raise HTTPException(400, 'ja fechada')
-    # o ciclo pode estar creditando agora: serializa
     cur.execute("select pg_advisory_xact_lock(hashtext('epoca'))")
-    # Congela a cotacao ANTES de montar a arvore: e ela que transforma dolar em
-    # quantidade de acao, e sem congelar a raiz nunca para de mudar.
-    cur.execute("select distinct ticker from saldo_epoca where epoca=%s and usd>0", (f.numero,))
+    cur.execute("select distinct ticker from saldo_epoca where epoca=%s and usd>0", (numero,))
     for (tk,) in cur.fetchall():
         p = _preco(tk)
         if p:
             cur.execute("insert into preco_epoca (epoca,ticker,preco) values (%s,%s,%s) "
-                        "on conflict (epoca,ticker) do nothing", (f.numero, tk, p))
-    cur.execute("update epoca set fechada_em=now() where numero=%s", (f.numero,))
-    cur.execute("insert into epoca (numero) values (%s) on conflict do nothing", (f.numero+1,))
-    folhas, itens = montar_epoca(cur, f.numero)
+                        "on conflict (epoca,ticker) do nothing", (numero, tk, p))
+    cur.execute("update epoca set fechada_em=now() where numero=%s", (numero,))
+    cur.execute("insert into epoca (numero) values (%s) on conflict do nothing", (numero+1,))
+    folhas, itens = montar_epoca(cur, numero)
     raiz_hex = ('0x'+_raiz(folhas).hex()) if folhas else None
-    cur.execute("update epoca set raiz=%s where numero=%s", (raiz_hex, f.numero))
+    cur.execute("update epoca set raiz=%s where numero=%s", (raiz_hex, numero))
     cur.execute("insert into evento (tipo,detalhe) values ('epoca_fechada',%s)",
-                (json.dumps({'epoca': f.numero, 'linhas': len(itens), 'raiz': raiz_hex}),))
-    return {'ok': True, 'epoca': f.numero, 'linhas': len(itens), 'raiz': raiz_hex,
-            'proxima': f.numero+1}
+                (json.dumps({'epoca': numero, 'linhas': len(itens), 'raiz': raiz_hex}),))
+    return {'ok': True, 'epoca': numero, 'linhas': len(itens), 'raiz': raiz_hex,
+            'proxima': numero+1}
+
+@app.post('/epoca/fechar')
+def fechar_epoca(f: Fechar):
+    if not KEEPER_CHAVE or f.chave != KEEPER_CHAVE:
+        raise HTTPException(401, 'so o keeper fecha epoca')
+    return fechar_agora(f.numero)
 
 KEEPER_CHAVE = os.environ.get('KEEPER_CHAVE', '')
+
+@app.get('/epoca/estado')
+def estado_epocas():
+    """Onde as epocas estao: aberta desde quando, fechada, raiz, publicada."""
+    cur = cursor()
+    cur.execute("select numero, aberta_em, fechada_em, raiz, publicada_em "
+                "from epoca order by numero desc limit 8")
+    eps = [{'numero':r[0], 'aberta_em':r[1].isoformat() if r[1] else None,
+            'fechada': bool(r[2]), 'raiz': r[3],
+            'publicada': bool(r[4])} for r in cur.fetchall()]
+    cur.execute("select detalhe, quando from evento where tipo in "
+                "('epoca_fechada','epoca_publicada','keeper') order by id desc limit 6")
+    ult = [{'detalhe':r[0], 'quando':r[1].isoformat()} for r in cur.fetchall()]
+    return {'epocas': eps, 'eventos': ult, 'horas_por_epoca': config(cur,'epoca_horas',24)}
 
 @app.get('/epoca/{numero}/previa')
 def previa_epoca(numero: int):
