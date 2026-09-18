@@ -113,6 +113,12 @@ alter table jogador add column if not exists sessao_expira timestamptz;
 -- Batida do cliente: o servidor so minera o tempo em que a mina esteve ABERTA
 -- na tela. Sem isto o jogo farmava com o navegador fechado, o que o G nao quer.
 alter table mina add column if not exists visto_em timestamptz;
+-- Teto DIARIO de producao por heroi. E o que impede um bot de ganhar mais que
+-- quem joga: os dois batem no mesmo teto, o bot so chega la mais cedo.
+-- O teto de energia sozinho nao resolve, porque a energia MAXIMA e stamina*50 e
+-- enche em poucas horas: quem fecha a aba perde recarga, o bot captura tudo.
+alter table heroi add column if not exists usd_dia numeric not null default 0;
+alter table heroi add column if not exists dia_ref date;
 -- Cotacao congelada no fechamento. Sem isto a quantidade era dolar dividido
 -- pelo preco DO MOMENTO, e a raiz mudava a cada chamada mesmo com a epoca
 -- fechada: 0xb9c995d4 virou 0xe09e9d78 em 35 segundos.

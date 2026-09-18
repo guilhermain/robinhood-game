@@ -444,6 +444,17 @@ async def ciclo():
                 pass
         await asyncio.sleep(CICLO_S)
 
+# 720 bombas por dia e o maximo que a recarga permite (0,5/min). O teto de
+# producao de cada heroi sai dai, pelo dano dele.
+BOMBAS_DIA = 720
+_PM, _PP = 28/44, 16/44
+_VIDA = _PM*80 + _PP*170
+_PAGA = _PM*1 + _PP*2.31
+
+def teto_diario(power, base):
+    """US$ que este heroi pode produzir num dia, no maximo."""
+    return BOMBAS_DIA * power / _VIDA * _PAGA * base
+
 def avancar_todas():
     cur = cursor()
     agora = datetime.now(timezone.utc)
@@ -470,9 +481,20 @@ def avancar_todas():
             continue
         cur.execute("""select token_id, power, stamina, speed, bombas, alcance, skills, energia
                        from heroi where mina_id=%s""", (mid,))
+        crus = cur.fetchall()
         herois = [{'id': r[0], 'power': r[1], 'stamina': r[2], 'speed': r[3],
                    'bombas': r[4], 'alcance': r[5], 'skills': r[6],
-                   'hunter': bool(r[6] & 64)} for r in cur.fetchall()]
+                   'hunter': bool(r[6] & 64)} for r in crus]
+        # quanto cada um ainda pode produzir hoje
+        cur.execute("""select token_id, usd_dia, dia_ref from heroi where mina_id=%s""", (mid,))
+        gasto = {r[0]: (float(r[1]), r[2]) for r in cur.fetchall()}
+        hoje = agora.date()
+        restante = 0.0
+        for h in herois:
+            usado, dia = gasto.get(h['id'], (0.0, None))
+            if dia != hoje:
+                usado = 0.0
+            restante += max(0.0, teto_diario(h['power'], base) - usado)
         if not herois:
             cur.execute("update mina set atualizada_em=%s where id=%s", (agora, mid))
             continue
@@ -481,6 +503,19 @@ def avancar_todas():
             m.grade = grade
         ganho_unidades = m.avancar(segundos)
         ganho_usd = ganho_unidades * base
+        # O TETO manda: o bot e o jogador honesto param no mesmo lugar.
+        ganho_usd = min(ganho_usd, restante)
+        if ganho_usd <= 0:
+            cur.execute("update mina set atualizada_em=%s where id=%s", (agora, mid))
+            continue
+        # divide o consumo do teto entre os herois, na proporcao do dano
+        soma_pw = sum(h['power'] for h in herois) or 1
+        for h in herois:
+            parte = ganho_usd * h['power'] / soma_pw
+            cur.execute("""update heroi set
+                   usd_dia = case when dia_ref = %s then usd_dia + %s else %s end,
+                   dia_ref = %s
+                 where token_id = %s""", (hoje, parte, parte, hoje, h['id']))
         # Green Field paga as SETE acoes, como no jogo. Antes o servidor creditava
         # tudo em USDG — achado no teste de ponta a ponta: o jogador via o cofre
         # com "USDG: 0" numa mina que no cliente paga NVDA, META, GME...
