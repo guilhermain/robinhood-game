@@ -483,18 +483,31 @@
   .stat-segment.is-under{background:color-mix(in srgb, var(--rarity-accent) 22%, var(--color-stat-empty))}
   .stat-row dt small{display:block;font-weight:400;font-size:11px;opacity:.7}
 
-    /* whitepaper: mesma tipografia das outras secoes */
-    .wp{max-width:760px}
-    .wp-toc{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 28px;font-size:14px}
-    .wp-toc a{text-decoration:none}
-    .wp h3{font-size:16px;margin:30px 0 8px;color:var(--color-text, #F2ECDD)}
-    .wp p{margin:0 0 12px;line-height:1.65}
-    .wp-table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:14px}
-    .wp-table th,.wp-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--color-border,#3A2757)}
-    .wp-table th{font-size:12px;text-transform:uppercase;letter-spacing:.4px;opacity:.7}
-    .wp-list{padding-left:20px} .wp-list li{margin:6px 0}
-    .wp-small{font-size:13px;opacity:.75}
+
+    /* whitepaper em cards, no mesmo padrao visual das minas */
+    .wp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5, 20px)}
+    .wp-card{position:relative;display:flex;flex-direction:column;gap:.55rem;padding:var(--space-5, 20px);
+      background:var(--color-panel);border:2px solid var(--color-ivory);box-shadow:6px 6px 0 var(--color-shadow)}
+    .wp-card--wide{grid-column:1/-1}
+    .wp-card h3{font-size:12px;margin:0;color:var(--color-action);letter-spacing:.5px}
+    .wp-card p{margin:0;line-height:1.6;font-size:14px}
+    .wp-art{position:absolute;top:14px;right:16px;width:44px;height:auto;image-rendering:pixelated;opacity:.9}
+    .wp-card:has(.wp-art) p{padding-right:64px}
+    .wp-rar{display:grid;gap:4px;margin-top:8px;font-size:13px}
+    .wp-rar__row,.wp-rar__head{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;padding:6px 8px;
+      background:var(--color-background);font-variant-numeric:tabular-nums}
+    .wp-rar__head{order:-1;font-size:10px;text-transform:uppercase;letter-spacing:.4px;opacity:.65;background:none;padding-top:0}
+    .wp-split{margin-top:6px}
+    .wp-split__bar{display:flex;height:16px;border:2px solid var(--color-ivory);overflow:hidden}
+    .wp-split__bar i{display:block;height:100%}
+    .s60{background:#3FBF6F;color:#3FBF6F} .s20{background:#F5883A;color:#F5883A} .s10a{background:#E5484D;color:#E5484D} .s10b{background:#35C4E8;color:#35C4E8}
+    .wp-split__legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px}
+    .wp-split__legend b{margin-right:4px}
+    .wp-card--honest{border-color:var(--color-action)}
+    .wp-list{margin:0;padding-left:18px;font-size:14px;line-height:1.6} .wp-list li{margin:4px 0}
+    .wp-small{font-size:12px;opacity:.75}
     .rc-common{color:#9AA3B2}.rc-rare{color:#35C4E8}.rc-sr{color:#6F8CFF}.rc-epic{color:#A45CF0}.rc-leg{color:#FFC93C}.rc-sleg{color:#E94FD8}
+    @media (max-width:720px){.wp-grid{grid-template-columns:1fr} .wp-rar__row,.wp-rar__head{font-size:12px}}
 </style>
   <!-- The only network dependency is Google Fonts. If offline, the declared
        system/monospace fallback stacks render the complete layout immediately. -->
@@ -674,66 +687,81 @@
 
     <section class="section container" id="gameplay" aria-labelledby="gameplay-heading">
       <div class="section-heading"><h2 class="section-title display" id="gameplay-heading">WATCH THE GAMEPLAY</h2></div>
-      <div class="gameplay-grid"><figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Enter the mines"><img class="game-image gameplay-image" src="assets/gameplay-mines.png" width="480" height="270" alt="A grid mine with the hero and bomb obstacles" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></a><figcaption>Enter the mines</figcaption></figure>
-<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Open chests"><img class="game-image gameplay-image" src="assets/gameplay-chests.png" width="480" height="270" alt="A hero approaching a reward chest" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></a><figcaption>Open chests</figcaption></figure>
-<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Play your way"><img class="game-image gameplay-image" src="assets/gameplay-bomb.png" width="480" height="270" alt="A pixel bomb gameplay preview" loading="lazy"><span class="play-control" aria-hidden="true"><span class="play-icon"></span></span></a><figcaption>Play your way</figcaption></figure></div>
+      <div class="gameplay-grid"><figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Enter the mines"><img class="game-image gameplay-image" src="assets/gameplay-mines.png" width="480" height="270" alt="A grid mine with the hero and bomb obstacles" loading="lazy"></a><figcaption>Enter the mines</figcaption></figure>
+<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Open chests"><img class="game-image gameplay-image" src="assets/gameplay-chests.png" width="480" height="270" alt="A hero approaching a reward chest" loading="lazy"></a><figcaption>Open chests</figcaption></figure>
+<figure class="gameplay-card"><a class="gameplay-preview" href="./play/" aria-label="Open the game: Play your way"><img class="game-image gameplay-image" src="assets/gameplay-bomb.png" width="480" height="270" alt="A pixel bomb gameplay preview" loading="lazy"></a><figcaption>Play your way</figcaption></figure></div>
     </section>
   </main>
 
   
     <section class="section container" id="whitepaper" aria-labelledby="wp-heading">
-      <div class="section-heading"><h2 class="section-title display" id="wp-heading">HOW IT WORKS</h2><p>The whole game, with the real numbers.</p></div>
+      <div class="section-heading"><h2 class="section-title display" id="wp-heading">HOW IT WORKS</h2><p>The whole game in seven cards, with the real numbers.</p></div>
 
-      <div class="wp">
-        <nav class="wp-toc" aria-label="Whitepaper contents">
-          <a href="#wp-loop">The loop</a><a href="#wp-heroes">Heroes</a><a href="#wp-mines">Mines</a>
-          <a href="#wp-energy">Energy</a><a href="#wp-money">The money</a><a href="#wp-claim">Claiming</a>
-          <a href="#wp-honest">Security</a>
-        </nav>
+      <div class="wp-grid">
 
-        <h3 id="wp-loop">The loop</h3>
-        <p>You buy heroes with <b>$BSTOCK</b> and send up to ten into a mine. They walk, plant bombs and break chests on their own. Every chest pays a small amount in <b>dollars</b>. When you claim, those dollars become <b>real tokenized stocks</b> on Robinhood Chain: NVDA, GME, AMZN, MSTR, META, SPCX or USDG. The mining is counted by the server, so it keeps going after you close the tab.</p>
+        <article class="wp-card">
+          <img class="wp-art" src="assets/hero-elon.png" alt="" loading="lazy">
+          <h3 class="display">1 · SEND HEROES</h3>
+          <p>Buy heroes with <b>$BSTOCK</b>, send up to ten into a mine. They walk, plant bombs and break chests on their own. The server counts the mining, so it keeps running when you close the tab.</p>
+        </article>
 
-        <h3 id="wp-heroes">Heroes</h3>
-        <p>A hero costs <b>10 $BSTOCK</b>; packs of 5 and 10 cost 50 and 100. No discount and no guaranteed rarity: every hero is rolled the same way, on-chain.</p>
-        <table class="wp-table">
-          <tr><th>Rarity</th><th>Attributes</th><th>Chance</th><th>Pays for itself in</th></tr>
-          <tr><td class="rc-common">Common</td><td>1–3</td><td>82.87%</td><td>~52 days</td></tr>
-          <tr><td class="rc-rare">Rare</td><td>4–6</td><td>10.36%</td><td>~15 days</td></tr>
-          <tr><td class="rc-sr">Super Rare</td><td>7–9</td><td>5.18%</td><td>~8 days</td></tr>
-          <tr><td class="rc-epic">Epic</td><td>10–12</td><td>1.04%</td><td>~5 days</td></tr>
-          <tr><td class="rc-leg">Legendary</td><td>13–15</td><td>0.52%</td><td>~3 days</td></tr>
-          <tr><td class="rc-sleg">S. Legendary</td><td>16–18</td><td>0.04%</td><td>~2.4 days</td></tr>
-        </table>
-        <p>Five attributes inside the rarity's range: <b>Power</b> (damage per bomb), <b>Stamina</b> (energy, ×50), <b>Speed</b>, <b>Bombs</b> and <b>Range</b>. Some heroes carry skills: Jail Breaker, Pierce Block, Save Battery, Fast Charge, Bomb Pass, Block Pass, Treasure Hunter. The average hero pays for itself in about <b>30 days</b>.</p>
+        <article class="wp-card">
+          <img class="wp-art" src="assets/chest-gme.png" alt="" loading="lazy">
+          <h3 class="display">2 · OPEN CHESTS</h3>
+          <p>Every chest pays in <b>dollars</b>. Brown pays 1×, purple 2.31×. Same work, same money in any mine; only the stock you receive changes. The Green Field is free and pays all seven at random.</p>
+        </article>
 
-        <h3 id="wp-mines">Mines and chests</h3>
-        <p>The <b>Green Field</b> is free and pays all seven stocks at random. The other six cost 10 $BSTOCK and pay their own stock. <b>Same work, same money, in any mine</b> — only the stock changes.</p>
-        <table class="wp-table">
-          <tr><th>Chest</th><th>Health</th><th>Pays</th></tr>
-          <tr><td>Brown</td><td>80</td><td>1×</td></tr>
-          <tr><td>Purple</td><td>170</td><td>2.31×</td></tr>
-          <tr><td>Jail</td><td>2,000</td><td>a free hero, rarity rolled</td></tr>
-        </table>
+        <article class="wp-card wp-card--wide">
+          <h3 class="display">3 · ROLL YOUR RARITY</h3>
+          <p>A hero costs <b>10 $BSTOCK</b>, packs of 5 and 10 cost 50 and 100. No discount, no guaranteed rarity: every hero is rolled on-chain. The average hero pays for itself in about <b>30 days</b>.</p>
+          <div class="wp-rar">
+            <div class="wp-rar__row"><span class="rc-common">Common</span><span>1–3</span><span>82.87%</span><span>~52 d</span></div>
+            <div class="wp-rar__row"><span class="rc-rare">Rare</span><span>4–6</span><span>10.36%</span><span>~15 d</span></div>
+            <div class="wp-rar__row"><span class="rc-sr">Super Rare</span><span>7–9</span><span>5.18%</span><span>~8 d</span></div>
+            <div class="wp-rar__row"><span class="rc-epic">Epic</span><span>10–12</span><span>1.04%</span><span>~5 d</span></div>
+            <div class="wp-rar__row"><span class="rc-leg">Legendary</span><span>13–15</span><span>0.52%</span><span>~3 d</span></div>
+            <div class="wp-rar__row"><span class="rc-sleg">S. Legendary</span><span>16–18</span><span>0.04%</span><span>~2.4 d</span></div>
+            <div class="wp-rar__head"><span>rarity</span><span>attributes</span><span>chance</span><span>pays off in</span></div>
+          </div>
+        </article>
 
-        <h3 id="wp-energy">Energy and rest</h3>
-        <p>A bomb costs 1 energy. Energy is <b>Stamina × 50</b> and recharges <b>0.5 per minute</b>, always. At zero the hero sits down and <b>does not get up on his own</b>: you send him back when you decide. Since recharge is the same for everyone, no hero plants more than <b>720 bombs a day</b>.</p>
+        <article class="wp-card">
+          <h3 class="display">4 · REST</h3>
+          <p>A bomb costs 1 energy. Energy is <b>Stamina × 50</b> and recharges <b>0.5 a minute</b>, always. At zero the hero sits down and <b>does not get up alone</b>: you send him back. Nobody plants more than <b>720 bombs a day</b>.</p>
+        </article>
 
-        <h3 id="wp-money">The money</h3>
-        <p>The game prints nothing. $BSTOCK trades on Pons with a <b>3% creator fee</b>: <b>60%</b> buys the seven stocks for the reward vault, 20% team, 10% burns $BSTOCK, 10% reserve. $BSTOCK spent inside the game goes to a separate vault.</p>
+        <article class="wp-card">
+          <img class="wp-art" src="assets/bomb.png" alt="" loading="lazy">
+          <h3 class="display">5 · THE JAIL</h3>
+          <p>One map in eight has a jail: <b>2,000</b> health, the toughest block in the game. Break it and a free hero walks out, rarity rolled like any other.</p>
+        </article>
 
-        <h3 id="wp-claim">Claiming</h3>
-        <p>Mining runs in <b>24-hour epochs</b>. At the end the server freezes what everyone earned and the prices, builds a Merkle tree and publishes its root on-chain. You claim with a proof; the contract pays only addresses in the tree. <b>3% withdrawal fee</b>, <b>$10 minimum</b>. You receive real tokenized stocks.</p>
+        <article class="wp-card wp-card--wide">
+          <h3 class="display">6 · WHERE THE MONEY COMES FROM</h3>
+          <p>The game prints nothing. $BSTOCK trades on Pons with a <b>3% creator fee</b> that funds everything:</p>
+          <div class="wp-split">
+            <div class="wp-split__bar"><i style="width:60%" class="s60"></i><i style="width:20%" class="s20"></i><i style="width:10%" class="s10a"></i><i style="width:10%" class="s10b"></i></div>
+            <div class="wp-split__legend"><span><b class="s60">60%</b> buys the seven stocks for the reward vault</span><span><b class="s20">20%</b> team</span><span><b class="s10a">10%</b> burns $BSTOCK</span><span><b class="s10b">10%</b> reserve</span></div>
+          </div>
+        </article>
 
-        <h3 id="wp-honest">What keeps it honest</h3>
-        <ul class="wp-list">
-          <li><b>Your browser cannot cheat.</b> The server counts; chests broken from the console credit nothing.</li>
-          <li><b>The vault cannot be drained.</b> It pays only what a published Merkle root says, once per address per epoch.</li>
-          <li><b>Rarity is rolled on-chain.</b> Nobody picks who gets a Legendary.</li>
-          <li><b>One signature to sign in.</b> Never a seed phrase; token approvals are for the exact amount only.</li>
-          <li><b>Bots gain nothing.</b> Mining is server-side and every hero has the same daily ceiling.</li>
-        </ul>
-        <p class="wp-small">Testnet. Every attack we ran and what it found is public in the <a href="https://github.com/guilhermain/robinhood-game/blob/main/bombstock/SEGURANCA.md">audit</a>. Before mainnet: multisig, commit-reveal minting, external audit, bug bounty.</p>
+        <article class="wp-card wp-card--wide">
+          <h3 class="display">7 · CLAIM</h3>
+          <p>Mining runs in <b>24-hour epochs</b>. Each one is frozen, hashed into a Merkle tree and published on-chain. You claim with a proof and receive <b>real tokenized stocks</b>. 3% fee, $10 minimum.</p>
+        </article>
+
+        <article class="wp-card wp-card--wide wp-card--honest">
+          <h3 class="display">WHAT KEEPS IT HONEST</h3>
+          <ul class="wp-list">
+            <li><b>Your browser cannot cheat.</b> The server counts; console-broken chests credit nothing.</li>
+            <li><b>The vault cannot be drained.</b> It pays only what a published Merkle root says.</li>
+            <li><b>Rarity is rolled on-chain.</b> Nobody picks who gets a Legendary.</li>
+            <li><b>One signature to sign in.</b> Never a seed phrase; approvals are for the exact amount.</li>
+            <li><b>Bots gain nothing.</b> Server-side mining and the same daily ceiling for every hero.</li>
+          </ul>
+          <p class="wp-small">Testnet. Every attack we ran is public in the <a href="https://github.com/guilhermain/robinhood-game/blob/main/bombstock/SEGURANCA.md">audit</a>. Before mainnet: multisig, commit-reveal minting, external audit, bug bounty.</p>
+        </article>
+
       </div>
     </section>
 
