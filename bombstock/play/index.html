@@ -3525,14 +3525,21 @@ function iniciarFaviconBomba(){
   const link=document.getElementById('favicon');
   const folha=FOLHA['bomba'];
   if(!link || !folha) return;
-  const cv=document.createElement('canvas'); cv.width=cv.height=32;
+  const cv=document.createElement('canvas'); cv.width=cv.height=64;
   const g=cv.getContext('2d');
+  /* A bomba ocupa so 27 de 48 pixels da celula: metade e vazio. Recortar essa
+     margem faz ela quase dobrar de tamanho na aba. A caixa cobre os quatro
+     quadros, senao a bomba pularia entre eles. */
+  const CX=10, CY=4, CL=29, CA=38;      // recorte comum aos 4 quadros
   let q=0;
   const passo=()=>{
     if(!folha.complete || !folha.naturalWidth) return;
     g.imageSmoothingEnabled=false;
-    g.clearRect(0,0,32,32);
-    g.drawImage(folha, q*48,0,48,48, 0,0,32,32);
+    g.clearRect(0,0,64,64);
+    // mantem a proporcao: a bomba e mais alta que larga
+    const esc=Math.min(64/CL, 64/CA);
+    const L=Math.round(CL*esc), A=Math.round(CA*esc);
+    g.drawImage(folha, q*48+CX, CY, CL, CA, Math.round((64-L)/2), Math.round((64-A)/2), L, A);
     try{ link.href=cv.toDataURL('image/png'); }catch(e){}
     q=(q+1)%4;
   };
