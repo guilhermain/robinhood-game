@@ -368,7 +368,7 @@
 
     @media (width >= 40rem) {
       .stock-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
-      .rarity-tabs { grid-template-columns: repeat(5,minmax(0,1fr)); }
+      .rarity-tabs { grid-template-columns: repeat(6,minmax(0,1fr)); }
       .stat-row { grid-template-columns: var(--stat-label-width) minmax(0,1fr); gap: var(--space-4); }
     }
     @media (width < 48rem) {
@@ -427,12 +427,21 @@
   @media (width < 48rem){ .site-header .menu-toggle{display:inline-flex} }
 
   /* secao de minas: o menu prometia MINES e apontava para o topo da pagina */
-  .mine-grid{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3);
-    grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
-  .mine-card{display:flex;flex-direction:column;gap:.35rem;padding:var(--space-3);
+  .mine-grid{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-4);
+    grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  /* A foto e o mapa de verdade, capturado no jogo: cada mina tem cenario,
+     baus e jaula proprios, e a lista so com nome e preco nao mostrava isso. */
+  .mine-card__foto{inline-size:100%;block-size:auto;aspect-ratio:608/416;
+    margin:calc(var(--space-3) * -1) calc(var(--space-3) * -1) var(--space-3);
+    inline-size:calc(100% + var(--space-3) * 2);max-inline-size:none;
+    border-block-end:2px solid var(--color-ivory)}
+  .mine-card{display:flex;flex-direction:column;gap:.35rem;padding:var(--space-3);overflow:hidden;
     background:var(--color-panel);border:2px solid var(--color-ivory);
     box-shadow:6px 6px 0 var(--color-shadow)}
-  .mine-card--locked{opacity:.62;border-style:dashed}
+  .mine-card--locked{border-style:dashed}
+  .mine-card--locked .mine-card__name,
+  .mine-card--locked .mine-card__price,
+  .mine-card--locked .mine-card__lock{opacity:.7}
   .mine-card__ticker{font-family:var(--font-display);font-size:.65rem;color:var(--color-action)}
   .mine-card__name{margin:0;font-size:1rem}
   .mine-card__price{margin:0 0 .5rem;font-size:.85rem;color:var(--color-ivory);opacity:.72}
@@ -619,36 +628,43 @@
       <p class="section-lead">One mine is open to everyone. The other six unlock with $BSTOCK.
         Every mine runs the same map and pays the same &mdash; the stock it shows is the theme.</p>
       <ul class="mine-grid"><li class="mine-card mine-card--open">
+        <img class="mine-card__foto game-image" src="assets/mines/m-verde.png" width="608" height="416" loading="lazy" alt="Green Field mine map">
         <span class="mine-card__ticker">GRATUITA</span>
         <h3 class="mine-card__name">Green Field</h3>
         <p class="mine-card__price">Free</p>
         <span class="mine-card__free">Free to enter</span>
       </li><li class="mine-card mine-card--locked">
+        <img class="mine-card__foto game-image" src="assets/mines/m-nvda.png" width="608" height="416" loading="lazy" alt="NVDA mine map">
         <span class="mine-card__ticker">NVDA</span>
         <h3 class="mine-card__name">NVDA Mine</h3>
         <p class="mine-card__price">10 $BSTOCK</p>
         <span class="mine-card__lock">Locked</span>
       </li><li class="mine-card mine-card--locked">
+        <img class="mine-card__foto game-image" src="assets/mines/m-gme.png" width="608" height="416" loading="lazy" alt="GME mine map">
         <span class="mine-card__ticker">GME</span>
         <h3 class="mine-card__name">GME Mine</h3>
         <p class="mine-card__price">10 $BSTOCK</p>
         <span class="mine-card__lock">Locked</span>
       </li><li class="mine-card mine-card--locked">
+        <img class="mine-card__foto game-image" src="assets/mines/m-amzn.png" width="608" height="416" loading="lazy" alt="AMZN mine map">
         <span class="mine-card__ticker">AMZN</span>
         <h3 class="mine-card__name">AMZN Mine</h3>
         <p class="mine-card__price">10 $BSTOCK</p>
         <span class="mine-card__lock">Locked</span>
       </li><li class="mine-card mine-card--locked">
+        <img class="mine-card__foto game-image" src="assets/mines/m-mstr.png" width="608" height="416" loading="lazy" alt="MSTR mine map">
         <span class="mine-card__ticker">MSTR</span>
         <h3 class="mine-card__name">MSTR Mine</h3>
         <p class="mine-card__price">10 $BSTOCK</p>
         <span class="mine-card__lock">Locked</span>
       </li><li class="mine-card mine-card--locked">
+        <img class="mine-card__foto game-image" src="assets/mines/m-meta.png" width="608" height="416" loading="lazy" alt="META mine map">
         <span class="mine-card__ticker">META</span>
         <h3 class="mine-card__name">META Mine</h3>
         <p class="mine-card__price">10 $BSTOCK</p>
         <span class="mine-card__lock">Locked</span>
       </li><li class="mine-card mine-card--locked">
+        <img class="mine-card__foto game-image" src="assets/mines/m-spcx.png" width="608" height="416" loading="lazy" alt="SPCX mine map">
         <span class="mine-card__ticker">SPCX</span>
         <h3 class="mine-card__name">SPCX Mine</h3>
         <p class="mine-card__price">10 $BSTOCK</p>
